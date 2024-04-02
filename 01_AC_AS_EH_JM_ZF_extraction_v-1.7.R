@@ -34,14 +34,14 @@ fix.seq <- function(seq, rgenome, seq_width) {
 ## function to add the methylation coordinates to the name of the sequence file. "seqs" are the extracted sequences, "seqs_GR" are the ranges saved as a GRanges object, "methylsites" the GRanges object of the methylation coordinates (start=end; meaning one bp)and "name" is a string which is added between the existing name of seqs and the methylation coordinates
 
 ## NOT IN USE because the names get too long to convert aligned data (.sam) into .bam files. Other method (see below) is used instead
-add.Methylnames <- function(seqs, seqs_GR, methylsites, name = "CpGs") {
-  overlaps <- findOverlaps(seqs_GR, methylsites)
-  seq_names <- names(seqs)
-  methyl_sites <- start(methylsites[subjectHits(overlaps)])
-  concat_methyl_sites <- tapply(methyl_sites, INDEX = queryHits(overlaps), FUN = function(x) paste0(x, collapse = "_"))
-  names(seqs) <- paste0(seq_names, "_", name, "_", concat_methyl_sites)
-  return(seqs)
-}
+# add.Methylnames <- function(seqs, seqs_GR, methylsites, name = "CpGs") {
+#   overlaps <- findOverlaps(seqs_GR, methylsites)
+#   seq_names <- names(seqs)
+#   methyl_sites <- start(methylsites[subjectHits(overlaps)])
+#   concat_methyl_sites <- tapply(methyl_sites, INDEX = queryHits(overlaps), FUN = function(x) paste0(x, collapse = "_"))
+#   names(seqs) <- paste0(seq_names, "_", name, "_", concat_methyl_sites)
+#   return(seqs)
+# }
 
 ## this creates a dataframe which stores the positions of the CpGs sites, the names of the seqs and the number of methylation sites per sequence
 create.MethylPos <- function(seqs, seqs_GR, methylsites, name = "CpGs") {
@@ -58,14 +58,12 @@ create.MethylPos <- function(seqs, seqs_GR, methylsites, name = "CpGs") {
 }
 
 #### Loading data ####
-# loading data for European hake (EH) and Atlantic cod (AC) and setting wd
-
+# working directory
 setwd("/powerplant/workspace/cfngle")
 
 ## EH
 EH_raw <- read.table("/powerplant/workspace/cfngle/raw-data/EH/BisRAD-CpGs-Hake.txt", sep = "\t", header = TRUE)
 EH_rgenome <- readDNAStringSet("raw-data/EH/fMerMel2.1_cnag1.scaffolds.fa")
-
 # renaming the rgenome
 EH_rgenome_nvec <- names(EH_rgenome) %>%
   gsub("fMerMel2.1_cnag1_", "", .)
@@ -95,7 +93,6 @@ names(AS_rgenome) <- AS_rgenome_nvec
 JM_raw <- load("raw-data/JM/zzz-methyldata/00_JM_methylpos_243285_CpGs.Rdata")
 JM_raw <- JM_24_methyl_pos
 JM_rgenome <- readDNAStringSet("raw-data/JM/rgenome/GCF_002234675.1_ASM223467v1_genomic.fasta")
-
 # renaming the rgenome 
 JM_rgenome_nvec <- names(JM_rgenome) %>% 
   gsub(" Ory.*$", "", .)
@@ -106,16 +103,15 @@ names(JM_rgenome) <- JM_rgenome_nvec
 ZF_raw <- load("raw-data/ZF/zzz_methyldata/ZF_methylpos_88.RData")
 ZF_raw <- ZF_methyl_pos
 ZF_rgenome <- readDNAStringSet("raw-data/ZF/rgenome/GCF_000002035.6_GRCz11_genomic.fasta")
-
 # renaming the rgenome 
 ZF_rgenome_nvec <- names(ZF_rgenome) %>% 
   gsub(" Danio.*$", "", .)
 names(ZF_rgenome) <- ZF_rgenome_nvec
 
 
-#### Manipulation Genomic Ranges ####
+#### Data manipulation ####
 
-## EH
+### EH
 # load data as GRanges class
 EH_methyl <- GRanges(
   seqnames = Rle(EH_raw$chr),
@@ -134,7 +130,7 @@ EH <- fix.seq(EH,EH_rgenome,bp_ext)
 # "reduce" can be used to get merge overlapping sequences. "coverage" can be used to identify how much bp are overlapping
 EH <- reduce(EH)
 
-## AC
+### AC
 AC_methyl <- GRanges(
   seqnames = Rle(AC_raw$chr),
   ranges = IRanges(c(start = AC_raw$start), end = c(AC_raw$end), names = 1:length(AC_raw$chr)),
@@ -152,7 +148,7 @@ AC <- fix.seq(AC,AC_rgenome,bp_ext)
 # "reduce" can be used to get merge overlapping sequences "coverage" can be used to identify how much bp are overlapping
 AC <- reduce(AC)
 
-## AS
+### AS
 AS_methyl <- GRanges(
   seqnames = Rle(AS_raw$chr),
   ranges = IRanges(c(start = AS_raw$start), end = c(AS_raw$end), names = 1:length(AS_raw$chr)),
@@ -170,7 +166,7 @@ AS <- fix.seq(AS,AS_rgenome,bp_ext)
 # "reduce" can be used to get merge overlapping sequences "coverage" can be used to identify how much bp are overlapping
 AS <- reduce(AS)
 
-## JM
+### JM
 # load data as GRanges class
 JM_methyl <- GRanges(
   seqnames = Rle(JM_raw$chr),
@@ -189,7 +185,7 @@ JM <- fix.seq(JM,JM_rgenome,bp_ext)
 # "reduce" can be used to get merge overlapping sequences. "coverage" can be used to identify how much bp are overlapping
 JM <- GenomicRanges::reduce(JM)
 
-## ZF
+### ZF
 # load data as GRanges class
 ZF_methyl <- GRanges(
   seqnames = Rle(ZF_raw$chr),
@@ -217,7 +213,6 @@ unique(JM_raw$chr) %in% names(JM_rgenome)
 unique(ZF_raw$chr) %in% names(ZF_rgenome)
 
 #### Extraction ####
-
 ### EH
 # extracting sequences using chromosome location and rgenome with the "Biostrings" package
 EH_seq <- getSeq(EH_rgenome, EH)
@@ -232,6 +227,7 @@ writeXStringSet(EH_seq, file = EH_filename)
 ## METADATA
 # creating df with metadata (methylation)
 EH_metadata <- create.MethylPos(EH_seq, EH, EH_methyl)
+
 # saving df
 EH_metadata_filename <- paste0(save_folder, "EH_metadata_", bp_ext, "bp.csv")
 write.csv(EH_metadata, EH_metadata_filename)
@@ -250,6 +246,7 @@ writeXStringSet(AC_seq, file = AC_filename)
 ## METADATA
 # creating df with metadata (methylation)
 AC_metadata <- create.MethylPos(AC_seq, AC, AC_methyl)
+
 # saving df
 AC_metadata_filename <- paste0(save_folder, "AC_metadata_", bp_ext, "bp.csv")
 write.csv(AC_metadata, AC_metadata_filename)
@@ -268,6 +265,7 @@ writeXStringSet(AS_seq, file = AS_filename)
 ## METADATA
 # creating df with metadata (methylation)
 AS_metadata <- create.MethylPos(AS_seq, AS, AS_methyl)
+
 # saving df
 AS_metadata_filename <- paste0(save_folder, "AS_metadata_", bp_ext, "bp.csv")
 write.csv(AS_metadata, AS_metadata_filename)
@@ -286,6 +284,7 @@ writeXStringSet(JM_seq, file = JM_filename)
 ## METADATA
 # creating df with metadata (methylation)
 JM_metadata <- create.MethylPos(JM_seq, JM, JM_methyl)
+
 # saving df
 JM_metadata_filename <- paste0(save_folder, "JM_metadata_243285_", bp_ext, "bp.csv")
 write.csv(JM_metadata, JM_metadata_filename)
