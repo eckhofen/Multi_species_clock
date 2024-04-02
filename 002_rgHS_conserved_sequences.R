@@ -15,7 +15,7 @@ library(tidyr)
 library(Rsamtools)
 library(ggplot2)
 
-#### loading data ####
+#### Loading data ####
 # working directory
 setwd("/powerplant/workspace/cfngle")
 
