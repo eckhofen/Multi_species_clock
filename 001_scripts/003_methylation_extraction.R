@@ -8,12 +8,11 @@ setwd("/powerplant/workspace/cfngle")
 library(GenomicRanges) # https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html
 library(Biostrings) # https://bioconductor.org/packages/release/bioc/html/Biostrings.html
 library(tidyverse)
+library(ggplot2)
 library(ggforce)
 
-#### getting SHARED METHYLATION REGION
-
 ## loading data 
-# loading overlapping alignment reads (rgenome: human)
+# loading overlapping alignment reads (rgenome: human) (see script "002....R")
 load("results-data/02_conserved_seq/HS_AC_AS_EH_ZF_overlaps_bt2.Rdata")
 
 # assign overlapping sequences for each species
@@ -24,17 +23,20 @@ overlap_HS_ZF_bt2 <- HS_overlap_seqs_bt2[[4]]
 
 # transforming aligned reads into GRanges object
 HS_gr_overlap_seqs_bt2 <- lapply(HS_overlap_seqs_bt2, function(x) granges(x))
-# using the overlap of the sequences to get the SMRs
-HS_group_gr_overlap_bt2 <-  c(HS_gr_overlap_seqs_bt2[[1]], HS_gr_overlap_seqs_bt2[[2]], HS_gr_overlap_seqs_bt2[[3]], HS_gr_overlap_seqs_bt2[[4]])
+
+# using the overlap of the sequences to get the shared methylation regions (SMRs)
+HS_group_gr_overlap_bt2 <- c(HS_gr_overlap_seqs_bt2[[1]], HS_gr_overlap_seqs_bt2[[2]], HS_gr_overlap_seqs_bt2[[3]], HS_gr_overlap_seqs_bt2[[4]])
 HS_SMR_b_bt2 <- GenomicRanges::reduce(HS_group_gr_overlap_bt2)
 names(HS_SMR_b_bt2) <- sprintf("HS_SMR_b_bt2_%03d", 1:length(HS_SMR_b_bt2))
+
 # renaming
 HS_AC_AS_EH_ZF_SMR_b_bt2 <- HS_SMR_b_bt2
 
 save(HS_AC_AS_EH_ZF_SMR_b_bt2, file = "/workspace/cfngle/results-data/04_SMRs/HS_AC_AS_EH_ZF_SMR_b_bt2.Rdata")
 
-### function for methylation extraction
+#### Methylation extraction ####
 
+## function for extraction
 get.methyl.sites <- function(seqs_aligned, species = "undefined", SMRs = "undefined") {
   ### A) extractinformation from CIGAR code
   cigar_sep <- cigar(seqs_aligned) %>% 
@@ -78,7 +80,6 @@ get.methyl.sites <- function(seqs_aligned, species = "undefined", SMRs = "undefi
   ### C) finding overlaps between sequences and SMRs
   SMR_index <- subjectHits(findOverlaps(seqs_aligned, SMRs))
   
-  
   final_methyl_sites_AS <- lapply(seq_along(mapped_methyl_sites), function(i) {
     df <- data.frame(seq_names = cigar_width_df$seq_names[i], 
                      pos_rgenome = methyl_sites[[i]],
@@ -97,29 +98,25 @@ get.methyl.sites <- function(seqs_aligned, species = "undefined", SMRs = "undefi
   df_final_methyl_sites_AS <- bind_rows(final_methyl_sites_AS)
   return(df_final_methyl_sites_AS)
 }
-#### getting all species transformed ####
+#### Getting all species transformed ####
 
-AC_methyl_df_bt2 <- get.methyl.sites(overlap_HS_AC_bt2, species = "AC", SMRs = HS_SMR_b_bt2)
-AS_methyl_df_bt2 <- get.methyl.sites(overlap_HS_AS_bt2, species = "AS", SMRs = HS_SMR_b_bt2)
-EH_methyl_df_bt2 <- get.methyl.sites(overlap_HS_EH_bt2, species = "EH", SMRs = HS_SMR_b_bt2)
-ZF_methyl_df_bt2 <- get.methyl.sites(overlap_HS_ZF_bt2, species = "ZF", SMRs = HS_SMR_b_bt2)
+AC_methyl_sites <- get.methyl.sites(overlap_HS_AC_bt2, species = "AC", SMRs = HS_SMR_b_bt2)
+AS_methyl_sites <- get.methyl.sites(overlap_HS_AS_bt2, species = "AS", SMRs = HS_SMR_b_bt2)
+EH_methyl_sites <- get.methyl.sites(overlap_HS_EH_bt2, species = "EH", SMRs = HS_SMR_b_bt2)
+ZF_methyl_sites <- get.methyl.sites(overlap_HS_ZF_bt2, species = "ZF", SMRs = HS_SMR_b_bt2)
 
-combined_df_bt2 <- bind_rows(AC_methyl_df_bt2, AS_methyl_df_bt2, EH_methyl_df_bt2, ZF_methyl_df_bt2)
+methyl_sites_combined <- bind_rows(AC_methyl_sites, AS_methyl_sites, EH_methyl_sites, ZF_methyl_sites)
 
-HS_chr_names <- sort(unique(combined_df_bt2$chr_align))
+HS_chr_names <- sort(unique(methyl_sites_combined$chr_align))
 
-### plotting data 
-
-library(ggplot2)
-# library(ggpattern)
-
+#### plotting data ####
 # adding color palette
 colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
   as.vector() %>%
   .[c(-1,-9)]
 
-# this is visualising the genomic locations and the frequency of CpGs per species
-ggplot(combined_df_bt2, aes(x = pos_align, fill = species)) +
+# visualising the genomic locations and the frequency of CpGs per species
+ggplot(methyl_sites_combined, aes(x = pos_align, fill = species)) +
   geom_histogram(position = "dodge") +  
   facet_wrap(~ chr_align, scales = "free_x") +
   labs(x = "Position", y = "CpGs", title = "All CpGs") +
@@ -128,15 +125,8 @@ ggplot(combined_df_bt2, aes(x = pos_align, fill = species)) +
   theme_minimal() +
   theme(strip.text.y = element_text(angle = 0), )  
 
-#### getting methyl sites for all species
 
-AC_methyl_sites <- AC_methyl_df_bt2
-AS_methyl_sites <- AS_methyl_df_bt2
-EH_methyl_sites <- EH_methyl_df_bt2
-ZF_methyl_sites <- ZF_methyl_df_bt2
-
-### load methylation data for samples as well as age vector for each species
-
+#### Methylation metadata ####
 ##AC
 xx <- load("/workspace/cfngle/raw-data/AC/zzz_methyl_data/meth-corrected-batchcorrected-cod.Rdata")
 # xx <- load("/workspace/cfngle/raw-data/AC/zzz_methyl_data/Meth-complete-nobatchcorrection-cod.RData")
@@ -167,8 +157,7 @@ ZF_meth_data <- ZF_methyl_data
 
 ZF_age <- ZF_meth_data$age/52
 
-#### extract methylation data for all samples ####
-
+#### Extract methylation data for all samples ####
 # Not all the datasets have the same naming structure, hence the steps are different and are done one by one
 
 ##AC
@@ -217,11 +206,10 @@ meth_columns_tmp <- unlist(meth_columns_tmp)
 # ZF_meth_values_JM <- ZF_meth_data[,meth_columns_tmp] 
 ZF_meth_values <- ZF_meth_data[meth_sites_names_tmp]
 
-
-  
-### saving data
+## saving data
 save_dir <- "/workspace/cfngle/results-data/05_shared_methyl_values/"
 
+### saving methylation VALUES
 ##AC
 write.csv(AC_meth_values, file = paste0(save_dir, "HS_AC_meth_values.csv") )
 save(AC_meth_values, file = paste0(save_dir, "HS_AC_meth_values.Rdata"))
@@ -234,11 +222,11 @@ save(AS_meth_values, file = paste0(save_dir, "HS_AS_meth_values.Rdata"))
 write.csv(EH_meth_values, file = paste0(save_dir, "HS_EH_meth_values.csv") )
 save(EH_meth_values, file = paste0(save_dir, "HS_EH_meth_values.Rdata"))
 
-##ZF
+##ZF CONTAIN NA values, check below for imputation
 write.csv(ZF_meth_values, file = paste0(save_dir, "HS_ZF_meth_values.csv") )
 save(ZF_meth_values, file = paste0(save_dir, "HS_ZF_meth_values.Rdata"))
 
-### saving methyl_sites
+### saving methylation SITES
 ##AC
 write.csv(AC_methyl_sites, file = paste0(save_dir, "HS_AC_methyl_sites.csv") )
 save(AC_methyl_sites, file = paste0(save_dir, "HS_AC_methyl_sites.Rdata"))
@@ -255,29 +243,10 @@ save(EH_methyl_sites, file = paste0(save_dir, "HS_EH_methyl_sites.Rdata"))
 write.csv(ZF_methyl_sites, file = paste0(save_dir, "HS_ZF_methyl_sites.csv") )
 save(ZF_methyl_sites, file = paste0(save_dir, "HS_ZF_methyl_sites.Rdata"))
 
-### age metadata
+### saving age metadata
 save(AC_age, AS_age, EH_age, ZF_age, file = paste0(save_dir, "HS_all_age.Rdata"))
+
 #### Imputation ####
-
-# There are several ways of imputing missing values, here we present two of them. Always set.seed() for imputations.
-#a) Method 1 using package “mice” (Multiple Imputation by Chained Equation)
-# library(mice)
-# 
-# set.seed(123)
-# 
-# init <- mice(ZF_meth_values, maxit=0)
-# 
-# m_method <- init$method
-# 
-# pred_matrix <- init$predictorMatrix
-# 
-# colnames(ZF_meth_values)
-# predM[, c("age")]=0
-# meth[c("age")]=""
-# 
-# imputed <- mice(ZF_meth_values, method = m_method, predictorMatrix = pred_matrix, m = 5)
-
-#b) Method 2 using package “zoo” (Missing values replaced by the mean or other function of its group)
 library(zoo)
 set.seed(123)
 ZF_meth_values_imputed <- na.aggregate(ZF_meth_values)
@@ -360,6 +329,7 @@ AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot +
 ## max age span modifier
 AC_max_age_mod <- 1.3 #30% more
 
+# transofrming all the values into a plottable dataframe for ggplot2
 AS_meth_values_long <- pivot_longer(AS_meth_values, cols = everything(), names_to = "Site", values_to = "Methylation_Value")
 AS_meth_values_long$age <- rep(AS_age, each = ncol(AS_meth_values))
 AS_meth_values_long$max_age <- 54

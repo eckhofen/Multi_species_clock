@@ -1,32 +1,30 @@
 #### Overview ####
 # Conserved sequences will be extracted from the aligned sequences
 
+#### settings ####
+save_path <- "/workspace/cfngle/results-data/02_conserved_seq/"
+suffix <- ".fasta"
+
 #### Preparation ####
 # loading libraries
 library(GenomicRanges) # https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html
 library(GenomicAlignments)
 library(Biostrings) # https://bioconductor.org/packages/release/bioc/html/Biostrings.html
-# library(ggbio) # https://www.bioconductor.org/packages/release/bioc/vignettes/ggbio/inst/doc/ggbio.pdf
 library(dplyr)
 library(tidyr)
 library(Rsamtools)
 library(ggplot2)
-#require(BiocManager)
 
-
-#### loading data ####
+#### Loading data ####
+# working directory
 setwd("/powerplant/workspace/cfngle")
 
-# defining objects 
-save_path <- "/workspace/cfngle/results-data/02_conserved_seq/"
-suffix <- ".fasta"
-
-# data bowtie2 
+# loading bam files
 HS_AC_1000_bt2 <- readGAlignments("results-data/bowtie2/human_AC_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 HS_AS_1000_bt2 <- readGAlignments("results-data/bowtie2/human_AS_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 HS_EH_1000_bt2 <- readGAlignments("results-data/bowtie2/human_EH_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
-HS_JM_1000_bt2 <- readGAlignments("results-data/bowtie2/human_JM_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
-
+HS_JM_1000_bt2 <- readGAlignments("results-data/bowtie2/human_JM_243285_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
+HS_ZF_1000_bt2 <- readGAlignments("results-data/bowtie2/human_ZF_757883_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 
 ## BOWTIE2
 AC_metadata <- read.csv("results-data/sequences/AC_metadata_1000bp.csv")
@@ -44,16 +42,21 @@ EH_metadata_matched <- EH_metadata[match(names(HS_EH_1000_bt2), EH_metadata$seq)
 mcols(HS_EH_1000_bt2) <- data.frame(mcols(HS_EH_1000_bt2), EH_metadata_matched$methyl_pos,EH_metadata_matched$methyl_n)
 colnames(mcols(HS_EH_1000_bt2)) <- c("mapq", "methyl_pos", "methyl_n")
 
-JM_metadata <- read.csv("results-data/sequences/JM_metadata_1000bp.csv")
+JM_metadata <- read.csv("results-data/sequences/JM_metadata_243285_1000bp.csv")
 JM_metadata_matched <- JM_metadata[match(names(HS_JM_1000_bt2), JM_metadata$seq),]
 mcols(HS_JM_1000_bt2) <- data.frame(mcols(HS_JM_1000_bt2), JM_metadata_matched$methyl_pos,JM_metadata_matched$methyl_n)
 colnames(mcols(HS_JM_1000_bt2)) <- c("mapq", "methyl_pos", "methyl_n")
 
+ZF_metadata <- read.csv("results-data/sequences/ZF_metadata_7578831000bp.csv")
+ZF_metadata_matched <- ZF_metadata[match(names(HS_ZF_1000_bt2), ZF_metadata$seq),]
+mcols(HS_ZF_1000_bt2) <- data.frame(mcols(HS_ZF_1000_bt2), ZF_metadata_matched$methyl_pos,ZF_metadata_matched$methyl_n)
+colnames(mcols(HS_ZF_1000_bt2)) <- c("mapq", "methyl_pos", "methyl_n")
 
 # This is just checking which chromosomes/scaffolds/contigs are shared between all aligned seqs
 # shared_AC_1000_mini <- AC_AC_1000_mini[seqnames(AC_AC_1000_mini) %in% seqnames(AC_AS_1000_mini) & seqnames(AC_AC_1000_mini) %in% seqnames(AC_EH_1000_mini)]
 
 #### Finding overlapping sequences ####
+## function to find overlaps from multiple GRanges objects
 find.Overlap <- function(...) {
   seq_list <- list(...)
   seqs <- seq_list[[1]]
@@ -74,11 +77,11 @@ find.Overlap <- function(...) {
 }
 
 #### Run sequences through function ####
+# vector for aligned sequences
+HS_seqs <- c(HS_AC_1000_bt2, HS_AS_1000_bt2, HS_EH_1000_bt2, HS_JM_1000_bt2, HS_ZF_1000_bt2)
 
-## Bowtie2
-HS_overlap_seqs_bt2 <- find.Overlap(HS_AC_1000_bt2,
-                                 HS_AS_1000_bt2,
-                                 HS_EH_1000_bt2, 
-                                 HS_JM_1000_bt2)
-save(HS_overlap_seqs_bt2, file = "results-data/02_conserved_seq/HS_AC_AS_EH_JM_overlaps_bt2.Rdata")
+# getting overlaps
+HS_overlap_seqs_bt2 <- find.Overlap(HS_AC_1000_bt2, HS_AS_1000_bt2, HS_EH_1000_bt2, HS_ZF_1000_bt2)
 
+# saving overlaps 
+save(HS_overlap_seqs_bt2, file = "results-data/02_conserved_seq/HS_AC_EH_ZF_overlaps_bt2.Rdata")

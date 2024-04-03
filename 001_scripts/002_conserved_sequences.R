@@ -1,31 +1,23 @@
 #### Overview ####
 # Conserved sequences will be extracted from the aligned sequences
 
+#### settings ####
+save_path <- "/workspace/cfngle/results-data/02_conserved_seq/"
+suffix <- ".fasta"
+
 #### Preparation ####
 # loading libraries
 library(GenomicRanges) # https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html
 library(GenomicAlignments)
 library(Biostrings) # https://bioconductor.org/packages/release/bioc/html/Biostrings.html
-# library(ggbio) # https://www.bioconductor.org/packages/release/bioc/vignettes/ggbio/inst/doc/ggbio.pdf
 library(dplyr)
 library(tidyr)
 library(Rsamtools)
 library(ggplot2)
-#require(BiocManager)
-
 
 #### loading data ####
+# working directory
 setwd("/powerplant/workspace/cfngle")
-
-# defining objects 
-save_path <- "/workspace/cfngle/results-data/02_conserved_seq/"
-suffix <- ".fasta"
-
-# data minimap2
-AC_EH_1000_mini <- readGAlignments("results-data/minimap2/AC_EH_1000_minimap.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq"))) #creates another type of object which is similar to granges object
-AC_AC_1000_mini <- readGAlignments("results-data/minimap2/AC_AC_1000_minimap.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
-AC_AS_1000_mini <- readGAlignments("results-data/minimap2/AC_AS_1000_minimap.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
-AC_JM_1000_mini <- readGAlignments("results-data/minimap2/AC_JM_1000_minimap.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 
 # data bowtie2 
 AC_AC_1000_bt2 <- readGAlignments("results-data/bowtie2/AC_AC_CpG_1000bp_bt2_.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
@@ -34,30 +26,7 @@ AC_EH_1000_bt2 <- readGAlignments("results-data/bowtie2/AC_EH_CpG_1000bp_bt2_.ba
 AC_JM_1000_bt2 <- readGAlignments("results-data/bowtie2/AC_JM_243285_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 AC_ZF_1000_bt2 <- readGAlignments("results-data/bowtie2/AC_ZF_757883_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 
-
 #### add metadata do GA object ####
-## MINIMAP2 
-AC_metadata <- read.csv("results-data/sequences/AC_metadata_1000bp.csv")
-AC_metadata_matched <- AC_metadata[match(names(AC_AC_1000_mini), AC_metadata$seq),]
-mcols(AC_AC_1000_mini) <- data.frame(mcols(AC_AC_1000_mini), AC_metadata_matched$methyl_pos,AC_metadata_matched$methyl_n)
-colnames(mcols(AC_AC_1000_mini)) <- c("mapq", "methyl_pos", "methyl_n")
-
-AS_metadata <- read.csv("results-data/sequences/AS_metadata_1000bp.csv")
-AS_metadata_matched <- AS_metadata[match(names(AC_AS_1000_mini), AS_metadata$seq),]
-mcols(AC_AS_1000_mini) <- data.frame(mcols(AC_AS_1000_mini), AS_metadata_matched$methyl_pos,AS_metadata_matched$methyl_n)
-colnames(mcols(AC_AS_1000_mini)) <- c("mapq", "methyl_pos", "methyl_n")
-
-EH_metadata <- read.csv("results-data/sequences/EH_metadata_1000bp.csv")
-EH_metadata_matched <- EH_metadata[match(names(AC_EH_1000_mini), EH_metadata$seq),]
-mcols(AC_EH_1000_mini) <- data.frame(mcols(AC_EH_1000_mini), EH_metadata_matched$methyl_pos,EH_metadata_matched$methyl_n)
-colnames(mcols(AC_EH_1000_mini)) <- c("mapq", "methyl_pos", "methyl_n")
-
-JM_metadata <- read.csv("results-data/sequences/JM_metadata_1000bp.csv")
-JM_metadata_matched <- JM_metadata[match(names(AC_JM_1000_mini), JM_metadata$seq),]
-mcols(AC_JM_1000_mini) <- data.frame(mcols(AC_JM_1000_mini), JM_metadata_matched$methyl_pos,JM_metadata_matched$methyl_n)
-colnames(mcols(AC_JM_1000_mini)) <- c("mapq", "methyl_pos", "methyl_n")
-
-
 ## BOWTIE2
 AC_metadata <- read.csv("results-data/sequences/AC_metadata_1000bp.csv")
 AC_metadata_matched <- AC_metadata[match(names(AC_AC_1000_bt2), AC_metadata$seq),]
@@ -84,10 +53,8 @@ ZF_metadata_matched <- ZF_metadata[match(names(AC_ZF_1000_bt2), ZF_metadata$seq)
 mcols(AC_ZF_1000_bt2) <- data.frame(mcols(AC_ZF_1000_bt2), ZF_metadata_matched$methyl_pos,ZF_metadata_matched$methyl_n)
 colnames(mcols(AC_ZF_1000_bt2)) <- c("mapq", "methyl_pos", "methyl_n")
 
-# This is just checking which chromosomes/scaffolds/contigs are shared between all aligned seqs
-# shared_AC_1000_mini <- AC_AC_1000_mini[seqnames(AC_AC_1000_mini) %in% seqnames(AC_AS_1000_mini) & seqnames(AC_AC_1000_mini) %in% seqnames(AC_EH_1000_mini)]
-
 #### Finding overlapping sequences ####
+## creating function to find overlaps from multiple GRanges objects
 find.Overlap <- function(...) {
   seq_list <- list(...)
   seqs <- seq_list[[1]]
@@ -108,15 +75,8 @@ find.Overlap <- function(...) {
 }
 
 #### Filtering ####
-
-## using mapq score from bam files
-# AC_AS_1000_bt2[mcols(AC_AS_1000_bt2)$mapq > 20]
-
-# filtering by alignment width
-# AC_AS_1000_bt2[width(AC_AS_1000_bt2) > 200 & mcols(AC_AS_1000_bt2)$mapq > 20] 
-
-## function combining filter parameters
-
+## function combining filter parameters 
+## NOT USED
 filter.GAlignments <- function(seq, min_mapq, min_alignwidth, input = "single") {
   if(input == "single") {
     seq <- seq[mcols(seq)$mapq >= min_mapq]
