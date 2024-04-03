@@ -3,7 +3,8 @@
 
 #### Settings ####
 bp_ext <- 1000 # this will be the length of the extracted sequences around the CpG 
-save_folder <- "/powerplant/workspace/cfngle/results-data/sequences/" # folder where extracted sequences will be saved
+data_folder <- "/powerplant/workspace/cfngle/scripts/000_data/"
+save_folder <- paste0(data_folder, "sequences/") # folder where extracted sequences will be saved
 file_ext <- ".fasta" # which file extension will be used for the sequences
 
 #### Preparation ####
@@ -21,7 +22,7 @@ library(tidyr)
 # in some cases extending the sequence width may lead to some sequences being positioned in nonexistent areas (negative, or number is greater than scaffold/chromosome).
 # This happens when they are close to the start/end and then being extended 
 
-# function to fix this problem (see explanation at appendix)
+## function to fix this problem
 fix.seq <- function(seq, rgenome, seq_width) {
   seq[seq@ranges@start <= 0] <- shift(seq[seq@ranges@start <= 0], -1*c(seq@ranges@start[seq@ranges@start <= 0])+1)
   matching_rgenome <- rgenome[unique(rgenome@ranges@NAMES) %in% unique(seq@seqnames@values)]
@@ -30,18 +31,6 @@ fix.seq <- function(seq, rgenome, seq_width) {
   # start(seq[width(seq) < seq_width]) <- start(seq[width(seq) < seq_width]) - c(seq_width-width(seq[width(seq) < seq_width]))
   return(seq)
 }
-
-## function to add the methylation coordinates to the name of the sequence file. "seqs" are the extracted sequences, "seqs_GR" are the ranges saved as a GRanges object, "methylsites" the GRanges object of the methylation coordinates (start=end; meaning one bp)and "name" is a string which is added between the existing name of seqs and the methylation coordinates
-
-## NOT IN USE because the names get too long to convert aligned data (.sam) into .bam files. Other method (see below) is used instead
-# add.Methylnames <- function(seqs, seqs_GR, methylsites, name = "CpGs") {
-#   overlaps <- findOverlaps(seqs_GR, methylsites)
-#   seq_names <- names(seqs)
-#   methyl_sites <- start(methylsites[subjectHits(overlaps)])
-#   concat_methyl_sites <- tapply(methyl_sites, INDEX = queryHits(overlaps), FUN = function(x) paste0(x, collapse = "_"))
-#   names(seqs) <- paste0(seq_names, "_", name, "_", concat_methyl_sites)
-#   return(seqs)
-# }
 
 ## this creates a dataframe which stores the positions of the CpGs sites, the names of the seqs and the number of methylation sites per sequence
 create.MethylPos <- function(seqs, seqs_GR, methylsites, name = "CpGs") {
