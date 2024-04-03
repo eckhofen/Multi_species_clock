@@ -1,5 +1,5 @@
-#### correlation testing ####
-## correlation testing between the selected CpGs and to age as well
+#### Overview ####
+# testing different statistical models 
 
 #### Settings ####
 setwd("/powerplant/workspace/cfngle")
@@ -13,280 +13,12 @@ library(ggplot2)
 library(patchwork)
 library(caret)
 
-## loading data 
-# methyl values
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_AC_meth_values.Rdata")
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_AS_meth_values.Rdata")
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_EH_meth_values.Rdata")
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_ZF_meth_values_imputed.Rdata")
-# shared methylation sites
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_AC_methyl_sites.Rdata")
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_AS_methyl_sites.Rdata")
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_EH_methyl_sites.Rdata")
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_ZF_methyl_sites.Rdata")
-# age metadata
-load("/workspace/cfngle/results-data/05_shared_methyl_values/HS_all_age.Rdata")
+#### Loading data ####
 
-#### functions ####
-# function to run correlation tests for all the CpGs 
-cor.test.age <- function(methyl_values, age, SMR = "not_defined", species = "undefined", method = "pearson") {
-  correlation_results <- list()
-  print(paste0("Running correlation test against age with ", method, " method. Results are stored in tibble."))
-  
-  for (i in 1:ncol(methyl_values)) {
-    site_name <- colnames(methyl_values)[i]
-    # perform correlation test with age
-    test_result <- cor.test(methyl_values[,i], age, method = method)
-    
-    # store the results
-    correlation_results[[site_name]] <- list(
-      correlation_coefficient = test_result$estimate,
-      p_value = test_result$p.value
-    )
-  }
-  
-  # convert the results list to a more convenient format
-  correlation_summary <- tibble(
-    Site = names(correlation_results),
-    Correlation = sapply(correlation_results, function(x) x$correlation_coefficient),
-    P_value = sapply(correlation_results, function(x) x$p_value),
-    SMR = SMR,
-    species = species
-  )
-  return(correlation_summary)
-}
+load("/workspace/cfngle/results-data/06_model_creation/all_meth_values_selected.RData")
 
-# checks whether the correlation is significant or not (p-value should be defined)
-cor.test.age.filter <- function(input, p_value = 0.05) {
-  significant_vector <- as.vector(ifelse(input$P_value <= p_value, TRUE, FALSE))
-  input$significant <- significant_vector
-  return(input)
-}
+#### Data splitting ####
 
-#### Correlation tests ####
-
-AC_cor_age_pearson <- cor.test.age(AC_meth_values, AC_age, AC_methyl_sites$SMR, species = "AC")
-AC_cor_age_filtered_pearson <- cor.test.age.filter(AC_cor_age_pearson, 0.05)
-
-AS_cor_age_pearson <- cor.test.age(AS_meth_values, AS_age, AS_methyl_sites$SMR, species = "AS")
-AS_cor_age_filtered_pearson <- cor.test.age.filter(AS_cor_age_pearson, 0.05)
-
-EH_cor_age_pearson <- cor.test.age(EH_meth_values, EH_age, EH_methyl_sites$SMR, species = "EH")
-EH_cor_age_filtered_pearson <- cor.test.age.filter(EH_cor_age_pearson, 0.05)
-
-ZF_cor_age_pearson <- cor.test.age(ZF_meth_values_imputed, ZF_age, ZF_methyl_sites$SMR, species = "ZF")
-ZF_cor_age_filtered_pearson <- cor.test.age.filter(ZF_cor_age_pearson, 0.05)
-
-cor_all <- rbind(AC_cor_age_filtered_pearson,
-                 AS_cor_age_filtered_pearson,
-                 EH_cor_age_filtered_pearson, 
-                 ZF_cor_age_filtered_pearson)
-
-## check number of selected CpGs which are significant
-ncol(AC_meth_values[AC_cor_age_filtered_pearson$significant] == TRUE)
-ncol(AS_meth_values[AS_cor_age_filtered_pearson$significant] == TRUE)
-ncol(EH_meth_values[EH_cor_age_filtered_pearson$significant] == TRUE)
-ncol(ZF_meth_values_imputed[ZF_cor_age_filtered_pearson$significant] == TRUE)
-### 154, 120, 224, 64
-
-#### function to choose only the highest correlating CpGs per SMR ####
-
-select.max.cor <- function(cor_tibble, filter_significant = FALSE) {
-  filtered_data <- cor_tibble
-  if(filter_significant == TRUE) {filtered_data <- filter(filtered_data, significant)}
-  
-  filtered_data <- filtered_data %>% 
-    group_by(SMR) %>%
-    # Add a temporary column for the absolute correlation values
-    mutate(abs_correlation = abs(Correlation)) %>%
-    # For each group, filter the row with the max absolute correlation
-    filter(abs_correlation == max(abs_correlation)) %>%
-    # Remove the temporary column
-    select(-abs_correlation) %>%
-    # Optionally, ensure only one row per group if there are ties
-    slice(1)
-  return(filtered_data)
-}
-
-## selecting only positively correlating samples
-AC_pos_cor_CpGs <- select.max.cor(AC_cor_age_filtered_pearson[AC_cor_age_filtered_pearson$Correlation > 0,])
-AS_pos_cor_CpGs <- select.max.cor(AS_cor_age_filtered_pearson[AS_cor_age_filtered_pearson$Correlation > 0,])
-EH_pos_cor_CpGs <- select.max.cor(EH_cor_age_filtered_pearson[EH_cor_age_filtered_pearson$Correlation > 0,])
-ZF_pos_cor_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson[ZF_cor_age_filtered_pearson$Correlation > 0,])
-
-all_pos_cor_CpG <- rbind(AC_pos_cor_CpGs, AS_pos_cor_CpGs, EH_pos_cor_CpGs, ZF_pos_cor_CpGs)
-
-# keeping only CpGs when occurring in all species 
-all_pos_cor_CpG_common  <- all_pos_cor_CpG %>% 
-  group_by(SMR) %>% 
-  filter(n() == 4) %>% 
-  ungroup
-
-## selecting only negatively correlating samples
-AC_neg_cor_CpGs <- select.max.cor(AC_cor_age_filtered_pearson[AC_cor_age_filtered_pearson$Correlation < 0,])
-AS_neg_cor_CpGs <- select.max.cor(AS_cor_age_filtered_pearson[AS_cor_age_filtered_pearson$Correlation < 0,])
-EH_neg_cor_CpGs <- select.max.cor(EH_cor_age_filtered_pearson[EH_cor_age_filtered_pearson$Correlation < 0,])
-ZF_neg_cor_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson[ZF_cor_age_filtered_pearson$Correlation < 0,])
-
-all_neg_cor_CpG <- rbind(AC_neg_cor_CpGs, AS_neg_cor_CpGs, EH_neg_cor_CpGs, ZF_neg_cor_CpGs)
-
-# keeping only CpGs when occurring in all species 
-all_neg_cor_CpG_common  <- all_neg_cor_CpG %>% 
-  group_by(SMR) %>% 
-  filter(n() == 4) %>% 
-  ungroup
-
-## selecting a mixture of both
-temp_index_vec <- (all_pos_cor_CpG_common$SMR %in% all_neg_cor_CpG_common$SMR) == FALSE
-all_mix_cor_CpG_common  <- rbind(all_neg_cor_CpG_common, all_pos_cor_CpG_common[temp_index_vec,]) %>% 
-  group_by(SMR) %>% 
-  filter(n() == 4) %>% 
-  ungroup
-
-## selecting significant ones
-AC_sig_CpGs <- select.max.cor(AC_cor_age_filtered_pearson, TRUE)
-AS_sig_CpGs <- select.max.cor(AS_cor_age_filtered_pearson, TRUE)
-EH_sig_CpGs <- select.max.cor(EH_cor_age_filtered_pearson, TRUE)
-ZF_sig_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson, TRUE)
-
-all_sig_CpGs <- rbind(AC_sig_CpGs, AS_sig_CpGs, EH_sig_CpGs, ZF_sig_CpGs)
-
-all_sig_CpGs_common <- all_sig_CpGs %>% 
-  group_by(SMR) %>% 
-  filter(n() == 4) %>% 
-  ungroup
-
-
-#### model creation ####
-library(glmnet)
-
-#### ----
-### selecting only pos cor ones 
-#### ----
-#AC
-AC_meth_values_selected <- AC_meth_values[,colnames(AC_meth_values) %in% all_pos_cor_CpG_common$Site]
-AC_name_index <- match(colnames(AC_meth_values_selected), all_pos_cor_CpG_common$Site)
-colnames(AC_meth_values_selected) <- all_pos_cor_CpG_common$SMR[AC_name_index]
-AC_meth_values_selected <- AC_meth_values_selected[, order(colnames(AC_meth_values_selected))]
-AC_meth_values_selected$rel_age <- AC_age/25
-AC_meth_values_selected$species <- "AC"
-
-#AS
-AS_meth_values_selected <- AS_meth_values[,colnames(AS_meth_values) %in% all_pos_cor_CpG_common$Site]
-AS_name_index <- match(colnames(AS_meth_values_selected), all_pos_cor_CpG_common$Site)
-colnames(AS_meth_values_selected) <- all_pos_cor_CpG_common$SMR[AS_name_index]
-AS_meth_values_selected <- AS_meth_values_selected[, order(colnames(AS_meth_values_selected))]
-AS_meth_values_selected$rel_age <- AS_age/54
-AS_meth_values_selected$species <- "AS"
-
-#EH
-EH_meth_values_selected <- EH_meth_values[,colnames(EH_meth_values) %in% all_pos_cor_CpG_common$Site]
-EH_name_index <- match(colnames(EH_meth_values_selected), all_pos_cor_CpG_common$Site)
-colnames(EH_meth_values_selected) <- all_pos_cor_CpG_common$SMR[EH_name_index]
-EH_meth_values_selected <- EH_meth_values_selected[, order(colnames(EH_meth_values_selected))]
-EH_meth_values_selected$rel_age <- EH_age/20
-EH_meth_values_selected$species <- "EH"
-
-#ZF
-ZF_meth_values_selected <- ZF_meth_values_imputed[,colnames(ZF_meth_values) %in% all_pos_cor_CpG_common$Site]
-ZF_name_index <- match(colnames(ZF_meth_values_selected), all_pos_cor_CpG_common$Site)
-colnames(ZF_meth_values_selected) <- all_pos_cor_CpG_common$SMR[ZF_name_index]
-ZF_meth_values_selected <- ZF_meth_values_selected[, order(colnames(ZF_meth_values_selected))]
-ZF_meth_values_selected$rel_age <- ZF_age/5
-ZF_meth_values_selected$species <- "ZF"
-
-#### ----
-### selecting only neg cor ones 
-#### ----
-#AC
-AC_meth_values_selected <- AC_meth_values[,colnames(AC_meth_values) %in% all_neg_cor_CpG_common$Site]
-AC_name_index <- match(colnames(AC_meth_values_selected), all_neg_cor_CpG_common$Site)
-colnames(AC_meth_values_selected) <- all_neg_cor_CpG_common$SMR[AC_name_index]
-AC_meth_values_selected <- AC_meth_values_selected[, order(colnames(AC_meth_values_selected))]
-AC_meth_values_selected$rel_age <- AC_age/25
-AC_meth_values_selected$species <- "AC"
-
-#AS
-AS_meth_values_selected <- AS_meth_values[,colnames(AS_meth_values) %in% all_neg_cor_CpG_common$Site]
-AS_name_index <- match(colnames(AS_meth_values_selected), all_neg_cor_CpG_common$Site)
-colnames(AS_meth_values_selected) <- all_neg_cor_CpG_common$SMR[AS_name_index]
-AS_meth_values_selected <- AS_meth_values_selected[, order(colnames(AS_meth_values_selected))]
-AS_meth_values_selected$rel_age <- AS_age/54
-AS_meth_values_selected$species <- "AS"
-
-#EH
-EH_meth_values_selected <- EH_meth_values[,colnames(EH_meth_values) %in% all_neg_cor_CpG_common$Site]
-EH_name_index <- match(colnames(EH_meth_values_selected), all_neg_cor_CpG_common$Site)
-colnames(EH_meth_values_selected) <- all_neg_cor_CpG_common$SMR[EH_name_index]
-EH_meth_values_selected <- EH_meth_values_selected[, order(colnames(EH_meth_values_selected))]
-EH_meth_values_selected$rel_age <- EH_age/20
-EH_meth_values_selected$species <- "EH"
-
-#ZF
-ZF_meth_values_selected <- ZF_meth_values_imputed[,colnames(ZF_meth_values) %in% all_neg_cor_CpG_common$Site]
-ZF_name_index <- match(colnames(ZF_meth_values_selected), all_neg_cor_CpG_common$Site)
-colnames(ZF_meth_values_selected) <- all_neg_cor_CpG_common$SMR[ZF_name_index]
-ZF_meth_values_selected <- ZF_meth_values_selected[, order(colnames(ZF_meth_values_selected))]
-ZF_meth_values_selected$rel_age <- ZF_age/5
-ZF_meth_values_selected$species <- "ZF"
-
-#### ----
-# selecting a mixture of them 
-#### ----
-#AC
-AC_meth_values_selected <- AC_meth_values[,colnames(AC_meth_values) %in% all_mix_cor_CpG_common$Site]
-AC_name_index <- match(colnames(AC_meth_values_selected), all_mix_cor_CpG_common$Site)
-colnames(AC_meth_values_selected) <- all_mix_cor_CpG_common$SMR[AC_name_index]
-AC_meth_values_selected <- AC_meth_values_selected[, order(colnames(AC_meth_values_selected))]
-AC_meth_values_selected$rel_age <- AC_age/25
-AC_meth_values_selected$species <- "AC"
-
-#AS
-AS_meth_values_selected <- AS_meth_values[,colnames(AS_meth_values) %in% all_mix_cor_CpG_common$Site]
-AS_name_index <- match(colnames(AS_meth_values_selected), all_mix_cor_CpG_common$Site)
-colnames(AS_meth_values_selected) <- all_mix_cor_CpG_common$SMR[AS_name_index]
-AS_meth_values_selected <- AS_meth_values_selected[, order(colnames(AS_meth_values_selected))]
-AS_meth_values_selected$rel_age <- AS_age/54
-AS_meth_values_selected$species <- "AS"
-
-#EH
-EH_meth_values_selected <- EH_meth_values[,colnames(EH_meth_values) %in% all_mix_cor_CpG_common$Site]
-EH_name_index <- match(colnames(EH_meth_values_selected), all_mix_cor_CpG_common$Site)
-colnames(EH_meth_values_selected) <- all_mix_cor_CpG_common$SMR[EH_name_index]
-EH_meth_values_selected <- EH_meth_values_selected[, order(colnames(EH_meth_values_selected))]
-EH_meth_values_selected$rel_age <- EH_age/20
-EH_meth_values_selected$species <- "EH"
-
-#ZF
-ZF_meth_values_selected <- ZF_meth_values_imputed[,colnames(ZF_meth_values_imputed) %in% all_mix_cor_CpG_common$Site]
-ZF_name_index <- match(colnames(ZF_meth_values_selected), all_mix_cor_CpG_common$Site)
-colnames(ZF_meth_values_selected) <- all_mix_cor_CpG_common$SMR[ZF_name_index]
-ZF_meth_values_selected <- ZF_meth_values_selected[, order(colnames(ZF_meth_values_selected))]
-ZF_meth_values_selected$rel_age <- ZF_age/5
-ZF_meth_values_selected$species <- "ZF"
-
-#### ----
-# Setting up data
-#### ----
-# combining all data 
-all_meth_values_selected <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
-
-## plotting age distribution
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
-  as.vector() %>%
-  .[c(-1,-9)]
-
-plot_age_dist <- ggplot(all_meth_values_selected) +
-  geom_density(aes(x = rel_age, color = species), linewidth = 2) +
-  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.2, size = 0) +
-  scale_color_manual(values = colpalOI) +
-  scale_fill_manual(values = colpalOI[5]) +
-  theme_minimal() +
-  labs(title = "Relative age distribution for all samples")
-
-## the plot shows that our dependent variable is not normally distributed (as expected from age) 
-## splitting into training and testing data
- 
 # option A):
 meth_train <- all_meth_values_selected[-seq(1, nrow(all_meth_values_selected), 4),]
 meth_test <- all_meth_values_selected[seq(1, nrow(all_meth_values_selected), 4),]
@@ -315,10 +47,20 @@ meth_test <- rbind(testing(AC_split),
 nrow(meth_train)
 nrow(meth_test)
 
-# checking the distribution of age in the two data sets
+## plotting age distribution
 colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
   as.vector() %>%
   .[c(-1,-9)]
+
+plot_age_dist <- ggplot(all_meth_values_selected) +
+  geom_density(aes(x = rel_age, color = species), linewidth = 2) +
+  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.2, size = 0) +
+  scale_color_manual(values = colpalOI) +
+  scale_fill_manual(values = colpalOI[5]) +
+  theme_minimal() +
+  labs(title = "Relative age distribution for all samples")
+
+# >> the plot shows that our dependent variable is not normally distributed (as expected from age) 
 
 plot_sample_age_dist <- ggplot() +
   geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, size = 0) +
@@ -333,7 +75,6 @@ plot(density(EH_meth_values_selected$rel_age))
 plot_age_dist + plot_sample_age_dist +
   plot_layout(nrow=1)
 
-
 ### defining training data
 X <- meth_train %>% 
   select(-rel_age, -species)
@@ -346,26 +87,10 @@ X_test <- meth_test %>%
 
 Y_test <- meth_test[,"rel_age"]
 
-### Leaving a species out
-# X <- all_meth_values_selected %>% 
-#   filter(species != "ZF") %>% 
-#   select(-rel_age, -species)
-# 
-# Y <- all_meth_values_selected %>% 
-#   filter(species != "ZF") %>% 
-#   .$rel_age
-# 
-# X_test <- all_meth_values_selected %>% 
-#   filter(species == "ZF") %>% 
-#   select(-rel_age, -species) 
-# 
-# Y_test <- all_meth_values_selected %>% 
-#   filter(species == "ZF") %>% 
-#   .$rel_age
+#### model evaluation ####
 
-# creating function for model testing
-#### ----
-evaluate_model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
+## function for model testing plus calculating metrics (MSE, MAE, R)
+evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
                            species_test, transform = FALSE, colpalOI, plot_title = "Model evaluation:", 
                            y_lim = c(0,.3), x_lim = c(0,.3), CpGs = "not defined") {
   # Calculate predictions
@@ -575,19 +300,19 @@ colpal_CB_a_01 <- colpal_CB_a[1:6]
 colpal_CB_a_02 <- colpal_CB_a[7:12]
 
 # testing normal mlm
-mlm_eval <-  evaluate_model(mlm_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
+mlm_eval <-  evaluate.model(mlm_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
                             colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
-mlm_alt_eval <-  evaluate_model(mlm_alt, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
-                            colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
-mlm_eval_t <-  evaluate_model(mlm_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, 
+mlm_alt_eval <-  evaluate.model(mlm_alt, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
+                                colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+mlm_eval_t <-  evaluate.model(mlm_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, 
                               colpalOI= colpal_CB, plot_title = "MLM (age -log-log transformed) prediction", CpGs = length(mlm_test_t$coefficients)-1)
 
 # testing optimized mlm
 mlm_eval_opt <-
-  evaluate_model(mlm_test_opt, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only) prediction", CpGs = length(mlm_test_opt$coefficients) - 1
+  evaluate.model(mlm_test_opt, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only) prediction", CpGs = length(mlm_test_opt$coefficients) - 1
   )
 mlm_eval_opt_t <-
-  evaluate_model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only; age -log-log transformed) prediction", CpGs = length(mlm_test_opt$coefficients) - 1
+  evaluate.model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only; age -log-log transformed) prediction", CpGs = length(mlm_test_opt$coefficients) - 1
   )
 
 ## plotting 
@@ -639,9 +364,9 @@ print(performanceResults)
 
 #tuning model 
 MLM_tuned <- train(rel_age ~ ., data = testingData, 
-               method = "glmnet",
-               tuneLength = 10, # Number of tuning parameter values
-               trControl = trainControl)
+                   method = "glmnet",
+                   tuneLength = 10, # Number of tuning parameter values
+                   trControl = trainControl)
 
 importance <- varImp(MLM_tuned, scale = FALSE)
 plot(importance)
@@ -692,13 +417,13 @@ RF_mae_test <- mean(abs(RF_predictions_test - Y_test)) %>%
 
 # for normal Y
 RF_result_df <- data.frame(predictions = RF_predictions_test,
-                            rel_age = Y_test,
-                            species = meth_test$species)
+                           rel_age = Y_test,
+                           species = meth_test$species)
 # for transformed Y!
 
 RF_result_df <- data.frame(predictions = exp(-exp(-RF_predictions_test)),
-                            rel_age = exp(-exp(-Y_test)),
-                            species = meth_test$species)
+                           rel_age = exp(-exp(-Y_test)),
+                           species = meth_test$species)
 # for transformed Y!
 RF_mse_test <- mean((exp(-exp(-RF_predictions_test)) - exp(-exp(-Y_test)))^2) %>% 
   round(4) 
@@ -731,13 +456,13 @@ RF_mae_train <- mean(abs(RF_predictions_train - Y)) %>%
 
 # for normal Y
 RF_result_df_train <- data.frame(predictions = RF_predictions_train,
-                                  rel_age = Y,
-                                  species = meth_train$species)
+                                 rel_age = Y,
+                                 species = meth_train$species)
 
 # for transformed Y!
 RF_result_df_train <- data.frame(predictions = exp(-exp(-RF_predictions_train)),
-                                  rel_age = exp(-exp(-Y)),
-                                  species = meth_train$species)
+                                 rel_age = exp(-exp(-Y)),
+                                 species = meth_train$species)
 # for transformed Y!
 RF_mse_train <- mean((exp(-exp(-RF_predictions_train)) - exp(-exp(-Y)))^2) %>% 
   round(4) 
@@ -787,8 +512,8 @@ SVM_mae_test <- mean(abs(SVM_predictions_test - Y_test)) %>%
 
 # for normal Y
 SVM_result_df <- data.frame(predictions = SVM_predictions_test,
-                        rel_age = Y_test,
-                        species = meth_test$species)
+                            rel_age = Y_test,
+                            species = meth_test$species)
 # for transformed Y!
 
 SVM_result_df <- data.frame(predictions = exp(-exp(-SVM_predictions_test)),
@@ -826,13 +551,13 @@ SVM_mae_train <- mean(abs(SVM_predictions_train - Y)) %>%
 
 # for normal Y
 SVM_result_df_train <- data.frame(predictions = SVM_predictions_train,
-                              rel_age = Y,
-                              species = meth_train$species)
+                                  rel_age = Y,
+                                  species = meth_train$species)
 
 # for transformed Y!
 SVM_result_df_train <- data.frame(predictions = exp(-exp(-SVM_predictions_train)),
-                            rel_age = exp(-exp(-Y)),
-                            species = meth_train$species)
+                                  rel_age = exp(-exp(-Y)),
+                                  species = meth_train$species)
 # for transformed Y!
 SVM_mse_train <- mean((exp(-exp(-SVM_predictions_train)) - exp(-exp(-Y)))^2) %>% 
   round(4) 
@@ -872,7 +597,7 @@ plot(conditional_effects(BM_model, effects = sel_cols))
 pp_check(BM_model)
 
 BM_pp <- posterior_predict(BM_model) 
-  
+
 BM_predict_test <- predict(BM_model, testingData)
 
 
@@ -892,7 +617,7 @@ ggplot(prediction_data, aes(x = Observed, y = Predicted)) +
   xlim(0,0.25) +
   labs(x = "Observed Age", y = "Predicted Age", title = "Bayesian Model Predictions with Uncertainty Intervals")
 
-evaluate_model(BM_model, trainingData[-length(trainingData)], trainingData$rel_age, testingData[-length(testingData)], testingData$rel_age, meth_train$species, meth_test$species,  CpGs = ncol(training_data)-1)
+evaluate.model(BM_model, trainingData[-length(trainingData)], trainingData$rel_age, testingData[-length(testingData)], testingData$rel_age, meth_train$species, meth_test$species,  CpGs = ncol(training_data)-1)
 
 #### Testing deep learning models ####
 install.packages("keras")

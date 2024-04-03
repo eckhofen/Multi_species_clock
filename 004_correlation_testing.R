@@ -1,4 +1,4 @@
-#### correlation testing ####
+#### Overview ####
 ## correlation testing between the selected CpGs and to age as well
 
 #### Settings ####
@@ -143,24 +143,24 @@ all_mix_cor_CpG_common  <- rbind(all_neg_cor_CpG_common, all_pos_cor_CpG_common[
   filter(n() == 4) %>% 
   ungroup
 
+save(all_mix_cor_CpG_common, file = "/workspace/cfngle/results-data/06_model_creation/all_mix_cor_CpG_common.RData")
+
 ## selecting significant ones
-AC_sig_CpGs <- select.max.cor(AC_cor_age_filtered_pearson, TRUE)
-AS_sig_CpGs <- select.max.cor(AS_cor_age_filtered_pearson, TRUE)
-EH_sig_CpGs <- select.max.cor(EH_cor_age_filtered_pearson, TRUE)
-ZF_sig_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson, TRUE)
+# AC_sig_CpGs <- select.max.cor(AC_cor_age_filtered_pearson, TRUE)
+# AS_sig_CpGs <- select.max.cor(AS_cor_age_filtered_pearson, TRUE)
+# EH_sig_CpGs <- select.max.cor(EH_cor_age_filtered_pearson, TRUE)
+# ZF_sig_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson, TRUE)
+# 
+# all_sig_CpGs <- rbind(AC_sig_CpGs, AS_sig_CpGs, EH_sig_CpGs, ZF_sig_CpGs)
+# 
+# # only keeping SMR which are present in all species (n = 4)
+# all_sig_CpGs_common <- all_sig_CpGs %>% 
+#   group_by(SMR) %>% 
+#   filter(n() == 4) %>% 
+#   ungroup
 
-all_sig_CpGs <- rbind(AC_sig_CpGs, AS_sig_CpGs, EH_sig_CpGs, ZF_sig_CpGs)
+#### Retrieving methylation values ####
 
-all_sig_CpGs_common <- all_sig_CpGs %>% 
-  group_by(SMR) %>% 
-  filter(n() == 4) %>% 
-  ungroup
-
-
-#### model creation ####
-library(glmnet)
-
-#### ----
 ### selecting only pos cor ones 
 #### ----
 #AC
@@ -271,6 +271,9 @@ ZF_meth_values_selected$species <- "ZF"
 # combining all data 
 all_meth_values_selected <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
 
+# saving selected values
+save(all_meth_values_selected, file = "/workspace/cfngle/results-data/06_model_creation/all_meth_values_selected.RData")
+
 ## plotting age distribution
 colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
   as.vector() %>%
@@ -284,7 +287,9 @@ plot_age_dist <- ggplot(all_meth_values_selected) +
   theme_minimal() +
   labs(title = "Relative age distribution for all samples")
 
-## the plot shows that our dependent variable is not normally distributed (as expected from age) 
+# >> the plot shows that our dependent variable is not normally distributed (as expected from age) 
+
+
 ## splitting into training and testing data
  
 # option A):
