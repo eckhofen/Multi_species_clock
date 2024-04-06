@@ -29,8 +29,14 @@ meth_test <- all_meth_values_selected[seq(1, nrow(all_meth_values_selected), 4),
 # using a stratified splitting technique
 set.seed(123)
 AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age")
+
+set.seed(123)
 AS_split <- initial_split(AS_meth_values_selected, strata = "rel_age")
+
+set.seed(123)
 EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age")
+
+set.seed(123)
 ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age")
 
 meth_train <- rbind(training(AC_split),
@@ -72,6 +78,7 @@ plot_sample_age_dist <- ggplot() +
 
 plot(density(EH_meth_values_selected$rel_age))
 
+# plotting both graphs 
 plot_age_dist + plot_sample_age_dist +
   plot_layout(nrow=1)
 
