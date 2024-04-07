@@ -28,13 +28,11 @@ HS_gr_overlap_seqs <- lapply(HS_overlap_seqs, function(x) granges(x))
 
 # using the overlap of the sequences to get the shared methylation regions (SMRs)
 HS_group_gr_overlap <- do.call(c, HS_gr_overlap_seqs)
-HS_SMR_b_bt2 <- GenomicRanges::reduce(HS_group_gr_overlap)
-names(HS_SMR_b_bt2) <- sprintf("HS_SMR_b_bt2_%03d", 1:length(HS_SMR_b_bt2))
+HS_SMR_b <- GenomicRanges::reduce(HS_group_gr_overlap)
+names(HS_SMR_b) <- sprintf("HS_SMR_b_bt2_%03d", 1:length(HS_SMR_b_bt2))
 
-# renaming
-HS_AC_AS_EH_ZF_SMR_b_bt2 <- HS_SMR_b_bt2
-
-save(HS_AC_AS_EH_ZF_SMR_b_bt2, file = "/workspace/cfngle/results-data/04_SMRs/HS_AC_AS_EH_ZF_SMR_b_bt2.Rdata")
+# Saving file
+save(HS_SMR_b, file = "/workspace/cfngle/results-data/04_SMRs/HS_SMR_b.Rdata")
 
 #### Methylation extraction ####
 
@@ -102,10 +100,10 @@ get.methyl.sites <- function(seqs_aligned, species = "undefined", SMRs = "undefi
 }
 #### Getting all species transformed ####
 
-AC_methyl_sites <- get.methyl.sites(overlap_HS_AC, species = "AC", SMRs = HS_SMR_b_bt2)
-AS_methyl_sites <- get.methyl.sites(overlap_HS_AS, species = "AS", SMRs = HS_SMR_b_bt2)
-EH_methyl_sites <- get.methyl.sites(overlap_HS_EH, species = "EH", SMRs = HS_SMR_b_bt2)
-ZF_methyl_sites <- get.methyl.sites(overlap_HS_ZF, species = "ZF", SMRs = HS_SMR_b_bt2)
+AC_methyl_sites <- get.methyl.sites(overlap_HS_AC, species = "AC", SMRs = HS_SMR_b)
+AS_methyl_sites <- get.methyl.sites(overlap_HS_AS, species = "AS", SMRs = HS_SMR_b)
+EH_methyl_sites <- get.methyl.sites(overlap_HS_EH, species = "EH", SMRs = HS_SMR_b)
+ZF_methyl_sites <- get.methyl.sites(overlap_HS_ZF, species = "ZF", SMRs = HS_SMR_b)
 
 methyl_sites_combined <- bind_rows(AC_methyl_sites, AS_methyl_sites, EH_methyl_sites, ZF_methyl_sites)
 
@@ -148,7 +146,7 @@ AS_age <- AS_meth_data$age
 xx <- load("/workspace/cfngle/raw-data/EH/zzz-methyl_data/Meth-complete-hake.RData")
 assign("EH_meth_data", get(xx))
 # tail(colnames(EH_meth_data))
-EH_age <- EH_meth_data$age
+EH_age <- EH_meth_data$age # this is the average age and was calculated
 EH_metadata_samples <- read.csv("/workspace/cfngle/raw-data/EH/zzz-methyl_data/hake-samples.txt", sep = "\t")
 EH_sex <- EH_metadata_samples$sex
 EH_age <- EH_metadata_samples$age
@@ -189,16 +187,15 @@ meth_columns_tmp <- sapply(meth_sites_names_tmp, function(x) grep(x, colnames(EH
 
 # EH_meth_values <- EH_meth_data[,meth_columns_tmp]
 EH_meth_values <- EH_meth_data[meth_sites_names_tmp]
-EH_age <- EH_meth_data$age
 
 # # if males ONLY
 # EH_meth_values <- EH_meth_values[EH_sex == "M",]
 # EH_age <- EH_age[EH_sex == "M"]
 
-# if only fish younger than 0.25 relative age
-EH_meth_values <- EH_meth_values[EH_age <= 5,]
-EH_sex <- EH_metadata_samples$sex[EH_age <= 5]
-EH_age <- EH_age[EH_age <= 5]
+# # if only fish younger than 0.25 relative age
+# EH_meth_values <- EH_meth_values[EH_age <= 5,]
+# EH_sex <- EH_metadata_samples$sex[EH_age <= 5]
+# EH_age <- EH_age[EH_age <= 5]
 
 ##ZF
 meth_sites_names_tmp <- paste0(gsub("ZF_", "",ZF_methyl_sites$Chr), ":", ZF_methyl_sites$pos_rgenome)
@@ -209,44 +206,44 @@ meth_columns_tmp <- unlist(meth_columns_tmp)
 ZF_meth_values <- ZF_meth_data[meth_sites_names_tmp]
 
 ## saving data
-save_dir <- "/workspace/cfngle/results-data/05_shared_methyl_values/"
+save_folder <- paste0(data_folder, "004_methyl_values/")
 
 ### saving methylation VALUES
 ##AC
-write.csv(AC_meth_values, file = paste0(save_dir, "HS_AC_meth_values.csv") )
-save(AC_meth_values, file = paste0(save_dir, "HS_AC_meth_values.Rdata"))
+write.csv(AC_meth_values, file = paste0(save_folder, "HS_AC_meth_values.csv") )
+save(AC_meth_values, file = paste0(save_folder, "HS_AC_meth_values.Rdata"))
 
 ##AS
-write.csv(AS_meth_values, file = paste0(save_dir, "HS_AS_meth_values.csv") )
-save(AS_meth_values, file = paste0(save_dir, "HS_AS_meth_values.Rdata"))
+write.csv(AS_meth_values, file = paste0(save_folder, "HS_AS_meth_values.csv") )
+save(AS_meth_values, file = paste0(save_folder, "HS_AS_meth_values.Rdata"))
 
 ##EH
-write.csv(EH_meth_values, file = paste0(save_dir, "HS_EH_meth_values.csv") )
-save(EH_meth_values, file = paste0(save_dir, "HS_EH_meth_values.Rdata"))
+write.csv(EH_meth_values, file = paste0(save_folder, "HS_EH_meth_values.csv") )
+save(EH_meth_values, file = paste0(save_folder, "HS_EH_meth_values.Rdata"))
 
 ##ZF CONTAIN NA values, check below for imputation
-write.csv(ZF_meth_values, file = paste0(save_dir, "HS_ZF_meth_values.csv") )
-save(ZF_meth_values, file = paste0(save_dir, "HS_ZF_meth_values.Rdata"))
+write.csv(ZF_meth_values, file = paste0(save_folder, "HS_ZF_meth_values.csv") )
+save(ZF_meth_values, file = paste0(save_folder, "HS_ZF_meth_values.Rdata"))
 
 ### saving methylation SITES
 ##AC
-write.csv(AC_methyl_sites, file = paste0(save_dir, "HS_AC_methyl_sites.csv") )
-save(AC_methyl_sites, file = paste0(save_dir, "HS_AC_methyl_sites.Rdata"))
+write.csv(AC_methyl_sites, file = paste0(save_folder, "HS_AC_methyl_sites.csv") )
+save(AC_methyl_sites, file = paste0(save_folder, "HS_AC_methyl_sites.Rdata"))
 
 ##AS
-write.csv(AS_methyl_sites, file = paste0(save_dir, "HS_AS_methyl_sites.csv") )
-save(AS_methyl_sites, file = paste0(save_dir, "HS_AS_methyl_sites.Rdata"))
+write.csv(AS_methyl_sites, file = paste0(save_folder, "HS_AS_methyl_sites.csv") )
+save(AS_methyl_sites, file = paste0(save_folder, "HS_AS_methyl_sites.Rdata"))
 
 ##EH
-write.csv(EH_methyl_sites, file = paste0(save_dir, "HS_EH_methyl_sites.csv") )
-save(EH_methyl_sites, file = paste0(save_dir, "HS_EH_methyl_sites.Rdata"))
+write.csv(EH_methyl_sites, file = paste0(save_folder, "HS_EH_methyl_sites.csv") )
+save(EH_methyl_sites, file = paste0(save_folder, "HS_EH_methyl_sites.Rdata"))
 
 ##ZF
-write.csv(ZF_methyl_sites, file = paste0(save_dir, "HS_ZF_methyl_sites.csv") )
-save(ZF_methyl_sites, file = paste0(save_dir, "HS_ZF_methyl_sites.Rdata"))
+write.csv(ZF_methyl_sites, file = paste0(save_folder, "HS_ZF_methyl_sites.csv") )
+save(ZF_methyl_sites, file = paste0(save_folder, "HS_ZF_methyl_sites.Rdata"))
 
 ### saving age metadata
-save(AC_age, AS_age, EH_age, ZF_age, file = paste0(save_dir, "HS_all_age.Rdata"))
+save(AC_age, AS_age, EH_age, ZF_age, file = paste0(save_folder, "HS_all_age.Rdata"))
 
 #### Imputation ####
 library(zoo)
@@ -254,8 +251,8 @@ set.seed(123)
 ZF_meth_values_imputed <- na.aggregate(ZF_meth_values)
 
 ##ZF
-write.csv(ZF_meth_values_imputed, file = paste0(save_dir, "HS_ZF_meth_values_imputed.csv"))
-save(ZF_meth_values_imputed, file = paste0(save_dir, "HS_ZF_meth_values_imputed.Rdata"))
+write.csv(ZF_meth_values_imputed, file = paste0(save_folder, "HS_ZF_meth_values_imputed.csv"))
+save(ZF_meth_values_imputed, file = paste0(save_folder, "HS_ZF_meth_values_imputed.Rdata"))
 
 #### PCA ####
 
@@ -323,15 +320,14 @@ ZF_pca_plot <- ggplot(PCA_values_ZF, aes(x = PC1, y = PC2, color = ZF_age)) +
   theme_classic()
 
 ## plot all 
-AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot +
+(AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot) +
   plot_layout(nrow=2)
-
 
 #### Plotting Methylation values ####
 ## max age span modifier
 AC_max_age_mod <- 1.3 #30% more
 
-# transofrming all the values into a plottable dataframe for ggplot2
+# transforming all the values into a plot-frindly dataframe for ggplot2
 AS_meth_values_long <- pivot_longer(AS_meth_values, cols = everything(), names_to = "Site", values_to = "Methylation_Value")
 AS_meth_values_long$age <- rep(AS_age, each = ncol(AS_meth_values))
 AS_meth_values_long$max_age <- 54
@@ -373,8 +369,8 @@ all_meth_values_long <- rbind(AC_meth_values_long, AS_meth_values_long, EH_meth_
 ### plotting
 
 ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +
-  geom_sina(aes(color = age, alpha = 0.7)) +
-  geom_boxplot(aes(group = Site_f, alpha = 0.5)) +
+  geom_sina(aes(color = age), alpha = 0.7) +
+  geom_boxplot(aes(group = Site_f), alpha = 0.5) +
   facet_wrap(~SMR, scale = "free_x") +
   scale_color_gradient(low = colpal[1], high = colpal[7], guide = "legend") +
   theme_classic() +
@@ -382,8 +378,8 @@ ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   labs(title = "Methylation values AS (human rgenome)")
 
 ggplot(AC_meth_values_long, aes(x = Site, y = Methylation_Value)) +
-  geom_sina(aes(color = age, alpha = 0.7)) +
-  geom_boxplot(aes(group = Site_f, alpha = 0.5)) +
+  geom_sina(aes(color = age), alpha = 0.7) +
+  geom_boxplot(aes(group = Site_f), alpha = 0.5) +
   facet_wrap(~SMR, scale = "free_x") +
   scale_color_gradient(low = cbbPalette[2], high = cbbPalette[6], guide = "legend") +
   theme_classic() +

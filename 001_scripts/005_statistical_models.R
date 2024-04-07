@@ -2,7 +2,7 @@
 # testing different statistical models 
 
 #### Settings ####
-setwd("/powerplant/workspace/cfngle")
+setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 
 #### Preparation ####
 library(tidyverse)
