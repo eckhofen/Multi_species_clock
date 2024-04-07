@@ -2,5 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+.DS_Store
 000_data/001_sequences/
 000_data/000_metdata/
