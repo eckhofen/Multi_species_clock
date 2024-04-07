@@ -2,7 +2,9 @@
 # Extraction of methylation data based on overlapping sequences
 
 #### Settings ####
-setwd("/powerplant/workspace/cfngle")
+setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
+data_folder <- "/powerplant/workspace/cfngle/script_GH/Multi_species_clock/000_data/"
+save_folder <- paste0(data_folder, "003_SMR/") # folder where extracted sequences will be saved
 
 #### Preparation ####
 library(GenomicRanges) # https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html
@@ -13,20 +15,20 @@ library(ggforce)
 
 ## loading data 
 # loading overlapping alignment reads (rgenome: human) (see script "002....R")
-load("results-data/02_conserved_seq/HS_AC_AS_EH_ZF_overlaps_bt2.Rdata")
+load("000_data/002_conserved_seq/HS_AC_AS_EH_ZF_overlaps.Rdata")
 
 # assign overlapping sequences for each species
-overlap_HS_AC_bt2 <- HS_overlap_seqs_bt2[[1]]
-overlap_HS_AS_bt2 <- HS_overlap_seqs_bt2[[2]]
-overlap_HS_EH_bt2 <- HS_overlap_seqs_bt2[[3]]
-overlap_HS_ZF_bt2 <- HS_overlap_seqs_bt2[[4]]
+overlap_HS_AC <- HS_overlap_seqs[[1]]
+overlap_HS_AS <- HS_overlap_seqs[[2]]
+overlap_HS_EH <- HS_overlap_seqs[[3]]
+overlap_HS_ZF <- HS_overlap_seqs[[4]]
 
 # transforming aligned reads into GRanges object
-HS_gr_overlap_seqs_bt2 <- lapply(HS_overlap_seqs_bt2, function(x) granges(x))
+HS_gr_overlap_seqs <- lapply(HS_overlap_seqs, function(x) granges(x))
 
 # using the overlap of the sequences to get the shared methylation regions (SMRs)
-HS_group_gr_overlap_bt2 <- c(HS_gr_overlap_seqs_bt2[[1]], HS_gr_overlap_seqs_bt2[[2]], HS_gr_overlap_seqs_bt2[[3]], HS_gr_overlap_seqs_bt2[[4]])
-HS_SMR_b_bt2 <- GenomicRanges::reduce(HS_group_gr_overlap_bt2)
+HS_group_gr_overlap <- do.call(c, HS_gr_overlap_seqs)
+HS_SMR_b_bt2 <- GenomicRanges::reduce(HS_group_gr_overlap)
 names(HS_SMR_b_bt2) <- sprintf("HS_SMR_b_bt2_%03d", 1:length(HS_SMR_b_bt2))
 
 # renaming
@@ -100,10 +102,10 @@ get.methyl.sites <- function(seqs_aligned, species = "undefined", SMRs = "undefi
 }
 #### Getting all species transformed ####
 
-AC_methyl_sites <- get.methyl.sites(overlap_HS_AC_bt2, species = "AC", SMRs = HS_SMR_b_bt2)
-AS_methyl_sites <- get.methyl.sites(overlap_HS_AS_bt2, species = "AS", SMRs = HS_SMR_b_bt2)
-EH_methyl_sites <- get.methyl.sites(overlap_HS_EH_bt2, species = "EH", SMRs = HS_SMR_b_bt2)
-ZF_methyl_sites <- get.methyl.sites(overlap_HS_ZF_bt2, species = "ZF", SMRs = HS_SMR_b_bt2)
+AC_methyl_sites <- get.methyl.sites(overlap_HS_AC, species = "AC", SMRs = HS_SMR_b_bt2)
+AS_methyl_sites <- get.methyl.sites(overlap_HS_AS, species = "AS", SMRs = HS_SMR_b_bt2)
+EH_methyl_sites <- get.methyl.sites(overlap_HS_EH, species = "EH", SMRs = HS_SMR_b_bt2)
+ZF_methyl_sites <- get.methyl.sites(overlap_HS_ZF, species = "ZF", SMRs = HS_SMR_b_bt2)
 
 methyl_sites_combined <- bind_rows(AC_methyl_sites, AS_methyl_sites, EH_methyl_sites, ZF_methyl_sites)
 

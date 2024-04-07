@@ -3,8 +3,8 @@
 
 #### Settings ####
 bp_ext <- 1000 # this will be the length of the extracted sequences around the CpG 
-data_folder <- "/powerplant/workspace/cfngle/scripts/000_data/"
-save_folder <- paste0(data_folder, "sequences/") # folder where extracted sequences will be saved
+data_folder <- "/powerplant/workspace/cfngle/script_GH/Multi_species_clock/000_data/"
+save_folder <- paste0(data_folder, "001_sequences/") # folder where extracted sequences will be saved
 file_ext <- ".fasta" # which file extension will be used for the sequences
 
 #### Preparation ####
@@ -294,5 +294,5 @@ writeXStringSet(ZF_seq, file = ZF_filename)
 ZF_metadata <- create.MethylPos(ZF_seq, ZF, ZF_methyl)
 
 # saving df
-ZF_metadata_filename <- paste0(save_folder, "ZF_metadata_757883", bp_ext, "bp.csv")
+ZF_metadata_filename <- paste0(save_folder, "ZF_metadata_757883_", bp_ext, "bp.csv")
 write.csv(ZF_metadata, ZF_metadata_filename)
