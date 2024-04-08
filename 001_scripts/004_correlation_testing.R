@@ -203,4 +203,4 @@ all_meth_values_selected <- rbind(AC_meth_values_selected, AS_meth_values_select
 # saving selected values
 save_folder <- paste0(data_folder, "006_model_creation/")
 save_path <- paste0(save_folder, "all_meth_values_selected.RData")
-save(all_meth_values_selected, file = save_path)
+save(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected, all_meth_values_selected, file = save_path)

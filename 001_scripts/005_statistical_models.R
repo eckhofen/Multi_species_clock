@@ -4,6 +4,15 @@
 #### Settings ####
 setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 
+# setting up color palette 
+colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
+colpal_CB_01 <- colpal_CB[c(TRUE, FALSE)]
+colpal_CB_02 <- colpal_CB[c(FALSE, TRUE)]
+
+colpal_CB_a <- c("#f8cbb1","#006786","#182057","#6b6300","#ff8ab9","#f1aaff","#bb005a","#013aa8","#01ef9a","#fa8200","#ee0028","#26c100")
+colpal_CB_a_01 <- colpal_CB_a[1:6]
+colpal_CB_a_02 <- colpal_CB_a[7:12]
+
 #### Preparation ####
 library(tidyverse)
 library(tidymodels)
@@ -12,20 +21,13 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 library(caret)
+library(glmnet)
 
 #### Loading data ####
 
-load("/workspace/cfngle/results-data/06_model_creation/all_meth_values_selected.RData")
+load("000_data/006_model_creation/all_meth_values_selected.RData")
 
 #### Data splitting ####
-
-# option A):
-meth_train <- all_meth_values_selected[-seq(1, nrow(all_meth_values_selected), 4),]
-meth_test <- all_meth_values_selected[seq(1, nrow(all_meth_values_selected), 4),]
-
-# save(all_meth_values_selected, file = "/workspace/cfngle/results-data/06_model_creation/HS_all_meth_values_selected.RData")
-
-# option B):
 # using a stratified splitting technique
 set.seed(123)
 AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age")
@@ -39,19 +41,14 @@ EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age")
 set.seed(123)
 ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age")
 
-meth_train <- rbind(training(AC_split),
-                    training(AS_split),
-                    training(EH_split),
-                    training(ZF_split))
+# combining data into training and testing sets 
+meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
 
-meth_test <- rbind(testing(AC_split),
-                   testing(AS_split),
-                   testing(EH_split),
-                   testing(ZF_split))
+meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
 
 # checking how many CpGs are present per data set
-nrow(meth_train)
-nrow(meth_test)
+nrow(meth_train) #272
+nrow(meth_test) #99
 
 ## plotting age distribution
 colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
@@ -60,7 +57,7 @@ colpalOI <- palette.colors(palette = "Okabe-Ito") %>%
 
 plot_age_dist <- ggplot(all_meth_values_selected) +
   geom_density(aes(x = rel_age, color = species), linewidth = 2) +
-  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.2, size = 0) +
+  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.2, linewidth = 0) +
   scale_color_manual(values = colpalOI) +
   scale_fill_manual(values = colpalOI[5]) +
   theme_minimal() +
@@ -68,6 +65,16 @@ plot_age_dist <- ggplot(all_meth_values_selected) +
 
 # >> the plot shows that our dependent variable is not normally distributed (as expected from age) 
 
+# visually comparing training and testing sets (BOXPLOTS)
+plot_sample_age_dist <- ggplot() +
+  geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -1)) +
+  geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = 1)) +
+  scale_fill_manual(values = colpalOI) +
+  labs(fill = "Dataset") +
+  theme_minimal() +
+  ggtitle("Age Distribution in Training and Testing Sets")
+
+# visually comparing training and testing sets
 plot_sample_age_dist <- ggplot() +
   geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, size = 0) +
   geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, size = 0) +
@@ -76,7 +83,15 @@ plot_sample_age_dist <- ggplot() +
   theme_minimal() +
   ggtitle("Age Distribution in Training and Testing Sets")
 
-plot(density(EH_meth_values_selected$rel_age))
+# visually comparing sets (Q-Q plot)
+qqplot(meth_train$rel_age, meth_test$rel_age,
+       xlab = "Training data",
+       ylab = "Testing data",
+       main = "Age Distribution in Training and Testing Sets")
+abline(0, 1, col = "black")
+
+# comparing data sets with Kolmogorov-Smirnov test
+ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p-value = 0.966
 
 # plotting both graphs 
 plot_age_dist + plot_sample_age_dist +
@@ -99,10 +114,15 @@ Y_test <- meth_test[,"rel_age"]
 ## function for model testing plus calculating metrics (MSE, MAE, R)
 evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
                            species_test, transform = FALSE, colpalOI, plot_title = "Model evaluation:", 
-                           y_lim = c(0,.3), x_lim = c(0,.3), CpGs = "not defined") {
+                           y_lim = c(0,.3), x_lim = c(0,.3), CpGs = "not defined", s = NA) {
   # Calculate predictions
-  predictions_train <- predict(model, X_train)
-  predictions_test <- predict(model, X_test)
+  if (!is.na(s)) {
+    predictions_train <- predict(model, X_train, s = s)
+    predictions_test <- predict(model, X_test, s = s)
+  } else {
+    predictions_train <- predict(model, X_train)
+    predictions_test <- predict(model, X_test)
+  }
   
   # Optional transformation
   if (transform) {
@@ -128,8 +148,14 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   )
   
   # Prepare data frames for plotting
-  result_df_train <- data.frame(age_predicted = predictions_train, age = Y_train, species = species_train)
-  result_df_test <- data.frame(age_predicted = predictions_test, age = Y_test, species = species_test)
+  if(is.matrix(predictions_train)) {
+    result_df_train <- data.frame(age_predicted = c(predictions_train), age = Y_train, species = species_train)
+    result_df_test <- data.frame(age_predicted = c(predictions_test), age = Y_test, species = species_test)
+  } else {
+    result_df_train <- data.frame(age_predicted = predictions_train, age = Y_train, species = species_train)
+    result_df_test <- data.frame(age_predicted = predictions_test, age = Y_test, species = species_test)
+  }
+
   
   # Create plots
   plot_train <- ggplot(result_df_train, aes(x = age, y = age_predicted, color = species)) +
@@ -159,119 +185,47 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test))
 }
 
-X <- X
-#### Testing model CV GLM ####
+
+#### CV GLM ####
 
 # change age here!
-# Y <- meth_train[,"rel_age"]
-# Y_test <- meth_test[,"rel_age"]
+Y <- meth_train[,"rel_age"]
+Y_test <- meth_test[,"rel_age"]
 
-#changing value
-Y <- -log(-log(Y))
-Y_test <- -log(-log(Y_test))
+# age transformation
+Y_log <- -log(-log(Y))
+Y_log_test <- -log(-log(Y_test))
 
-# define alpha
+# define alpha for either lasso, rigid or elastic net regression
 glm_alpha <- 0.5
 
+### 1) normal model
 # setting seed for reproducibility 
 set.seed(123)
 
-# model
+## model
 GLM_test <- cv.glmnet(as.matrix(X), Y, alpha = glm_alpha)
 plot(GLM_test)
-
 coef(GLM_test, s=GLM_test$lambda.min)
 
-### running model on testing data
-### plotting
-GLM_predictions_test <- predict(GLM_test, as.matrix(X_test), s=GLM_test$lambda.min) %>% 
-  as.vector()
-GLM_predictions_cor_test <- cor(GLM_predictions_test, Y_test, method = "pearson") %>% 
-  round(4)
-GLM_mse_test <- mean((GLM_predictions_test - Y_test)^2) %>% 
-  round(4) 
-GLM_mae_test <- mean(abs(GLM_predictions_test - Y_test)) %>% 
-  round(4)
+blob <- predict(GLM_test, as.matrix(X_test))
+ccc <- unlist(blob)
+str(ccc)
+### 2) log transformed
+# setting seed for reproducibility 
+set.seed(123)
 
-# for normal Y
-GLM_result_df <- data.frame(predictions = GLM_predictions_test,
-                            rel_age = Y_test,
-                            species = "ZF")
-# for transformed Y!
+## model
+GLM_test_log <- cv.glmnet(as.matrix(X), Y_log, alpha = glm_alpha)
 
-GLM_result_df <- data.frame(predictions = exp(-exp(-GLM_predictions_test)),
-                            rel_age = exp(-exp(-Y_test)),
-                            species = "ZF")
-# for transformed Y!
-GLM_mse_test <- mean((exp(-exp(-GLM_predictions_test)) - exp(-exp(-Y_test)))^2) %>% 
-  round(4) 
-GLM_mae_test <- mean(abs(exp(-exp(-GLM_predictions_test)) - exp(-exp(-Y_test)))) %>% 
-  round(4)
+### running models on testing data
+GLM_eval <-  evaluate.model(GLM_test, s = GLM_test$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = FALSE, 
+                            colpalOI= colpal_CB_01, plot_title = "MLM prediction", CpGs = "unknown")
 
-
-colnames(GLM_result_df) <- c("age_predicted", "age", "species")
-
-GLM_plot_test <- ggplot(GLM_result_df, aes(color = species)) +
-  geom_point(aes(x = age, y = age_predicted), size = 3) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +
-  scale_color_manual(values = colpalOI[4]) +
-  ylab("Estimated age (relative)") +
-  xlab("Chronological age") +
-  ylim(0,0.30) +
-  xlim(0,0.30) +
-  labs(title = "Multispecies age (relative, -log(-log(x))) prediction GLM (test data set)",
-       subtitle = paste0("R=", GLM_predictions_cor_test,
-                         " MSE=", GLM_mse_test,
-                         " MAE=", GLM_mae_test,
-                         " N=", nrow(X_test), 
-                         " alpha=", glm_alpha)) +
-  theme_classic()
-
-### running model on training data
-GLM_predictions_train <- predict(GLM_test, newx= as.matrix(X), s=GLM_test$lambda.min)
-GLM_predictions_cor_train <- cor(GLM_predictions_train, Y, method = "pearson") %>% 
-  round(4)
-GLM_mse_train <- mean((GLM_predictions_train - Y)^2) %>% 
-  round(4)
-GLM_mae_train <- mean(abs(GLM_predictions_train - Y)) %>% 
-  round(4)
-
-# for normal Y
-GLM_result_df_train <- data.frame(predictions = GLM_predictions_train,
-                                  rel_age = Y,
-                                  species = all_meth_values_selected[all_meth_values_selected$species != "ZF",]$species)
-
-# for transformed Y!
-GLM_result_df_train <- data.frame(predictions = exp(-exp(-GLM_predictions_train)),
-                                  rel_age = exp(-exp(-Y)),
-                                  species = all_meth_values_selected[all_meth_values_selected$species != "ZF",]$species)
-# for transformed Y!
-GLM_mse_train <- mean((exp(-exp(-GLM_predictions_train)) - exp(-exp(-Y)))^2) %>% 
-  round(4) 
-GLM_mae_train <- mean(abs(exp(-exp(-GLM_predictions_train)) - exp(-exp(-Y)))) %>% 
-  round(4)
-
-colnames(GLM_result_df_train) <- c("age_predicted", "age", "species")
-
-GLM_plot_train <- ggplot(GLM_result_df_train, aes(color = species)) +
-  geom_point(aes(x = age, y = age_predicted), size = 3) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +
-  scale_color_manual(values = colpalOI) +
-  ylab("Estimated age (relative)") +
-  xlab("Chronological age") +
-  ylim(0,0.30) +
-  xlim(0,0.30) +
-  labs(title = "Multispecies age (relative, -log(-log(x))) prediction GLM (train data set)",
-       subtitle = paste0("R=", GLM_predictions_cor_train, " MSE=", GLM_mse_train, " MAE=", GLM_mae_train, " N=", nrow(X))) +
-  theme_classic()
-
-GLM_plot_train + GLM_plot_test +
-  plot_layout(nrow = 1)
-
+GLM_eval_t <-  evaluate.model(GLM_test_log, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
+                              colpalOI= colpal_CB_02, plot_title = "GLM (age -log-log transformed) prediction", CpGs = "unknown")
 
 #### Testing multivariate linear regression models ####
-
-
 ### pre-testing with base R package
 mlm_test <- lm(Y ~., data = X)
 summary(mlm_test)
@@ -281,6 +235,7 @@ mlm_test_t <- lm(-log(-log(Y)) ~., data = X)
 
 ## selecting only significant values
 sign_vec <- as.vector((summary(mlm_test)$coefficients[,4] < 0.05)[-1])
+
 # stat tests 
 plot(density(mlm_test$residuals))
 shapiro.test(mlm_test$residuals)
@@ -288,8 +243,9 @@ shapiro.test(mlm_test$residuals)
 ## selecting only significant values
 mlm_test_opt <- lm(Y ~., data = X[,sign_vec])
 summary(mlm_test_significant)
+
 # with transformed age
-mlm_test_opt_t <- lm(-log(-log(Y)) ~.,X[sign_vec])
+mlm_test_opt_t <- lm(Y_log ~.,X[sign_vec])
 
 ## using centered and scaled dataset 
 # did not change anything!
@@ -297,20 +253,12 @@ mlm_alt <- lm(Y ~., trainingData)
 predict(mlm_alt, testingData)
 
 ### testing and plotting model
-# color palettes
-colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
-colpal_CB_01 <- colpal_CB[c(TRUE, FALSE)]
-colpal_CB_02 <- colpal_CB[c(FALSE, TRUE)]
-
-colpal_CB_a <- c("#f8cbb1","#006786","#182057","#6b6300","#ff8ab9","#f1aaff","#bb005a","#013aa8","#01ef9a","#fa8200","#ee0028","#26c100")
-colpal_CB_a_01 <- colpal_CB_a[1:6]
-colpal_CB_a_02 <- colpal_CB_a[7:12]
 
 # testing normal mlm
 mlm_eval <-  evaluate.model(mlm_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
                             colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
-mlm_alt_eval <-  evaluate.model(mlm_alt, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
-                                colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+# mlm_alt_eval <-  evaluate.model(mlm_alt, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+
 mlm_eval_t <-  evaluate.model(mlm_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, 
                               colpalOI= colpal_CB, plot_title = "MLM (age -log-log transformed) prediction", CpGs = length(mlm_test_t$coefficients)-1)
 
@@ -331,22 +279,8 @@ mlm_eval_t$plot_train + mlm_eval_t$plot_test  + mlm_eval_opt_t$plot_train + mlm_
   plot_layout(nrow = 2)
 
 #### MLM (caret) ####
-
-## defining data
-# training data
-X <- meth_train %>% 
-  select(-rel_age, -species)
-
-Y <- meth_train[,"rel_age"]
-
-# testing data
-X_test <- meth_test %>% 
-  select(-rel_age, -species)
-
-Y_test <- meth_test[,"rel_age"]
-
 ## pre processing
-# centering means that all the the mean is being substracted from all values and scale divides them by the standard deviation. 
+# centering means that all the the mean is being subtracted from all values and scale divides them by the standard deviation. 
 
 # training data
 preProcValues <- preProcess(X, method = c("center", "scale"))
@@ -378,6 +312,10 @@ MLM_tuned <- train(rel_age ~ ., data = testingData,
 importance <- varImp(MLM_tuned, scale = FALSE)
 plot(importance)
 
+# evaluation 
+MLM_eval <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+
+MLM_eval_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
 #### Testing random forest model ####
 
@@ -387,12 +325,6 @@ plot(importance)
 
 library(randomForest)
 set.seed(123)
-# change age here!
-Y <- meth_train[,"rel_age"]
-Y_test <- meth_test[,"rel_age"]
-#changing value
-Y <- -log(-log(Y))
-Y_test <- -log(-log(Y_test))
 
 ## actual model
 RF_test <- randomForest(Y ~ ., data = X, mtry = 9, ntree = 1500)
@@ -403,6 +335,7 @@ importance(RF_test)
 which.min(RF_test$mse)
 
 ## tuning model
+set.seed(123)
 tuneRF(
   x=X, #define predictor variables
   y=Y, #define response variable
@@ -413,177 +346,29 @@ tuneRF(
   trace=TRUE #don't show real-time progress
 )
 
-### plotting and evaluating
-RF_predictions_test <- predict(RF_test, X_test)
-RF_predictions_cor_test <- cor(RF_predictions_test, Y_test, method = "pearson") %>% 
-  round(4)
-RF_mse_test <- mean((RF_predictions_test - Y_test)^2) %>% 
-  round(4) 
-RF_mae_test <- mean(abs(RF_predictions_test - Y_test)) %>% 
-  round(4)
+# take suggested mtry
+set.seed(123)
+RF_test_tuned <- randomForest(Y ~ ., data = X, mtry = 4, ntree = 1500)
 
-# for normal Y
-RF_result_df <- data.frame(predictions = RF_predictions_test,
-                           rel_age = Y_test,
-                           species = meth_test$species)
-# for transformed Y!
+## evaluation
+RF_eval <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "RF prediction", CpGs = length(mlm_test$coefficients)-1)
 
-RF_result_df <- data.frame(predictions = exp(-exp(-RF_predictions_test)),
-                           rel_age = exp(-exp(-Y_test)),
-                           species = meth_test$species)
-# for transformed Y!
-RF_mse_test <- mean((exp(-exp(-RF_predictions_test)) - exp(-exp(-Y_test)))^2) %>% 
-  round(4) 
-RF_mae_test <- mean(abs(exp(-exp(-RF_predictions_test)) - exp(-exp(-Y_test)))) %>% 
-  round(4)
-
-
-colnames(RF_result_df) <- c("age_predicted", "age", "species")
-
-RF_plot_test <- ggplot(RF_result_df, aes(color = species)) +
-  geom_point(aes(x = age, y = age_predicted), cex = 3) +
-  scale_color_manual(values = colpalOI) +
-  ylim(0,0.30) +
-  xlim(0,0.30) +
-  labs(title = "Multispecies age (relative, -log(-log(x))) prediction RF (test data set)",
-       subtitle = paste0("R=", RF_predictions_cor_test,
-                         " MSE=", RF_mse_test,
-                         " MAE=", RF_mae_test,
-                         " N=", nrow(X_test))) +
-  theme_minimal()
-
-### running model on training data
-RF_predictions_train <- predict(RF_test, newx= X)
-RF_predictions_cor_train <- cor(RF_predictions_train, Y, method = "pearson") %>% 
-  round(4)
-RF_mse_train <- mean((RF_predictions_train - Y)^2) %>% 
-  round(4)
-RF_mae_train <- mean(abs(RF_predictions_train - Y)) %>% 
-  round(4)
-
-# for normal Y
-RF_result_df_train <- data.frame(predictions = RF_predictions_train,
-                                 rel_age = Y,
-                                 species = meth_train$species)
-
-# for transformed Y!
-RF_result_df_train <- data.frame(predictions = exp(-exp(-RF_predictions_train)),
-                                 rel_age = exp(-exp(-Y)),
-                                 species = meth_train$species)
-# for transformed Y!
-RF_mse_train <- mean((exp(-exp(-RF_predictions_train)) - exp(-exp(-Y)))^2) %>% 
-  round(4) 
-RF_mae_train <- mean(abs(exp(-exp(-RF_predictions_train)) - exp(-exp(-Y)))) %>% 
-  round(4)
-
-colnames(RF_result_df_train) <- c("age_predicted", "age", "species")
-
-RF_plot_train <- ggplot(RF_result_df_train, aes(color = species)) +
-  geom_point(aes(x = age, y = age_predicted), cex = 3) +
-  scale_color_manual(values = colpalOI) +
-  ylim(0,0.30) +
-  xlim(0,0.30) +
-  labs(title = "Multispecies age (relative, -log(-log(x))) prediction RF (train data set)",
-       subtitle = paste0("R=", RF_predictions_cor_train, " MSE=", RF_mse_train, " MAE=", RF_mae_train, " N=", nrow(X))) +
-  theme_minimal()
-
-RF_plot_train + RF_plot_test +
-  plot_layout(nrow = 1)
+RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "RF prediction", CpGs = length(mlm_test$coefficients)-1)
 
 #### Testing support vector regression models ####
 library(e1071)
 
-# change age here!
-Y <- meth_train[,"rel_age"]
-Y_test <- meth_test[,"rel_age"]
-#changing value
-Y <- -log(-log(Y))
-Y_test <- -log(-log(Y_test))
-
 set.seed(123)
 SVM_test <- svm(Y ~ ., data = X, type = "eps-regression")
+set.seed(123)
 SVM_test <- svm(Y ~ ., data = X, type = "nu-regression")
+set.seed(123)
 SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "polynomial")
 
 summary(SVM_test)
 
-
-### plotting
-SVM_predictions_test <- predict(SVM_test, X_test)
-SVM_predictions_cor_test <- cor(SVM_predictions_test, Y_test, method = "pearson") %>% 
-  round(4)
-SVM_mse_test <- mean((SVM_predictions_test - Y_test)^2) %>% 
-  round(4) 
-SVM_mae_test <- mean(abs(SVM_predictions_test - Y_test)) %>% 
-  round(4)
-
-# for normal Y
-SVM_result_df <- data.frame(predictions = SVM_predictions_test,
-                            rel_age = Y_test,
-                            species = meth_test$species)
-# for transformed Y!
-
-SVM_result_df <- data.frame(predictions = exp(-exp(-SVM_predictions_test)),
-                            rel_age = exp(-exp(-Y_test)),
-                            species = meth_test$species)
-# for transformed Y!
-SVM_mse_test <- mean((exp(-exp(-SVM_predictions_test)) - exp(-exp(-Y_test)))^2) %>% 
-  round(4) 
-SVM_mae_test <- mean(abs(exp(-exp(-SVM_predictions_test)) - exp(-exp(-Y_test)))) %>% 
-  round(4)
-
-
-colnames(SVM_result_df) <- c("age_predicted", "age", "species")
-
-SVM_plot_test <- ggplot(SVM_result_df, aes(color = species)) +
-  geom_point(aes(x = age, y = age_predicted), cex = 3) +
-  scale_color_manual(values = colpalOI) +
-  ylim(0,0.30) +
-  xlim(0,0.30) +
-  labs(title = "Multispecies age (relative, -log(-log(x))) prediction SVM (test data set)",
-       subtitle = paste0("R=", SVM_predictions_cor_test,
-                         " MSE=", SVM_mse_test,
-                         " MAE=", SVM_mae_test,
-                         " N=", nrow(X_test))) +
-  theme_minimal()
-
-### running model on training data
-SVM_predictions_train <- predict(SVM_test, newx= X)
-SVM_predictions_cor_train <- cor(SVM_predictions_train, Y, method = "pearson") %>% 
-  round(4)
-SVM_mse_train <- mean((SVM_predictions_train - Y)^2) %>% 
-  round(4)
-SVM_mae_train <- mean(abs(SVM_predictions_train - Y)) %>% 
-  round(4)
-
-# for normal Y
-SVM_result_df_train <- data.frame(predictions = SVM_predictions_train,
-                                  rel_age = Y,
-                                  species = meth_train$species)
-
-# for transformed Y!
-SVM_result_df_train <- data.frame(predictions = exp(-exp(-SVM_predictions_train)),
-                                  rel_age = exp(-exp(-Y)),
-                                  species = meth_train$species)
-# for transformed Y!
-SVM_mse_train <- mean((exp(-exp(-SVM_predictions_train)) - exp(-exp(-Y)))^2) %>% 
-  round(4) 
-SVM_mae_train <- mean(abs(exp(-exp(-SVM_predictions_train)) - exp(-exp(-Y)))) %>% 
-  round(4)
-
-colnames(SVM_result_df_train) <- c("age_predicted", "age", "species")
-
-SVM_plot_train <- ggplot(SVM_result_df_train, aes(color = species)) +
-  geom_point(aes(x = age, y = age_predicted), cex = 3) +
-  scale_color_manual(values = colpalOI) +
-  ylim(0,0.30) +
-  xlim(0,0.30) +
-  labs(title = "Multispecies age (relative, -log(-log(x))) prediction SVM (train data set)",
-       subtitle = paste0("R=", SVM_predictions_cor_train, " MSE=", SVM_mse_train, " MAE=", SVM_mae_train, " N=", nrow(X))) +
-  theme_minimal()
-
-SVM_plot_train + SVM_plot_test +
-  plot_layout(nrow = 1)
+## evaluation
+SVM_eval <-  evaluate.model(SVM_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "SVM prediction", CpGs = length(mlm_test$coefficients)-1)
 
 #### Testing Bayesian models ####
 install.packages("brms")
