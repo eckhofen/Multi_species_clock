@@ -2,7 +2,9 @@
 # testing different statistical models 
 
 #### Settings ####
-setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
+# change working directory accordingly
+# setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
+setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -242,15 +244,15 @@ shapiro.test(mlm_test$residuals)
 
 ## selecting only significant values
 mlm_test_opt <- lm(Y ~., data = X[,sign_vec])
-summary(mlm_test_significant)
+summary(mlm_test_opt)
 
 # with transformed age
 mlm_test_opt_t <- lm(Y_log ~.,X[sign_vec])
 
 ## using centered and scaled dataset 
 # did not change anything!
-mlm_alt <- lm(Y ~., trainingData)
-predict(mlm_alt, testingData)
+# mlm_alt <- lm(Y ~., trainingData)
+# predict(mlm_alt, testingData)
 
 ### testing and plotting model
 
@@ -313,9 +315,12 @@ importance <- varImp(MLM_tuned, scale = FALSE)
 plot(importance)
 
 # evaluation 
-MLM_eval <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_eval <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
 
 MLM_eval_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
+
+MLM_eval$plot_train + MLM_eval$plot_test + MLM_eval_tuned$plot_train + MLM_eval_tuned$plot_test +
+  plot_layout(nrow=2)
 
 #### Testing random forest model ####
 
@@ -355,6 +360,8 @@ RF_eval <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, me
 
 RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "RF prediction", CpGs = length(mlm_test$coefficients)-1)
 
+RF_eval$plot_train + RF_eval$plot_test + RF_eval_tuned$plot_train + RF_eval_tuned$plot_test +
+  plot_layout(nrow=2)
 #### Testing support vector regression models ####
 library(e1071)
 
@@ -371,8 +378,8 @@ summary(SVM_test)
 SVM_eval <-  evaluate.model(SVM_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "SVM prediction", CpGs = length(mlm_test$coefficients)-1)
 
 #### Testing Bayesian models ####
-install.packages("brms")
-install.packages("rstan")  # Required for brms
+# install.packages("brms")
+# install.packages("rstan")  # Required for brms
 library(brms)
 library(rstan)
 
