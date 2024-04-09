@@ -206,7 +206,7 @@ glm_alpha <- 0.5
 set.seed(123)
 
 ## model
-GLM_test <- cv.glmnet(as.matrix(X), Y, alpha = glm_alpha)
+GLM_test <- cv.glmnet(as.matrix(X), Y, alpha = glm_alpha, family = "gaussian")
 plot(GLM_test)
 coef(GLM_test, s=GLM_test$lambda.min)
 
@@ -266,11 +266,9 @@ mlm_eval_t <-  evaluate.model(mlm_test_t, X, Y, X_test, Y_test, meth_train$speci
 
 # testing optimized mlm
 mlm_eval_opt <-
-  evaluate.model(mlm_test_opt, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only) prediction", CpGs = length(mlm_test_opt$coefficients) - 1
-  )
+  evaluate.model(mlm_test_opt, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only) prediction", CpGs = length(mlm_test_opt$coefficients) - 1)
 mlm_eval_opt_t <-
-  evaluate.model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only; age -log-log transformed) prediction", CpGs = length(mlm_test_opt$coefficients) - 1
-  )
+  evaluate.model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only; age -log-log transformed) prediction", CpGs = length(mlm_test_opt$coefficients) - 1)
 
 ## plotting 
 # normal age
@@ -280,7 +278,7 @@ mlm_eval$plot_train + mlm_eval$plot_test  + mlm_eval_opt$plot_train + mlm_eval_o
 mlm_eval_t$plot_train + mlm_eval_t$plot_test  + mlm_eval_opt_t$plot_train + mlm_eval_opt_t$plot_test +
   plot_layout(nrow = 2)
 
-#### MLM (caret) ####
+#### GLM (caret) ####
 ## pre processing
 # centering means that all the the mean is being subtracted from all values and scale divides them by the standard deviation. 
 
@@ -389,7 +387,6 @@ BM_model <- brm(formula = BM_formula, data = trainingData, family = gaussian(), 
 summary(BM_model)
 plot(BM_model)
 
-
 sel_cols <- colnames(trainingData[,-ncol(trainingData)])
 plot(conditional_effects(BM_model, effects = sel_cols))
 
@@ -399,14 +396,12 @@ BM_pp <- posterior_predict(BM_model)
 
 BM_predict_test <- predict(BM_model, testingData)
 
-
 ci <- posterior_interval(BM_pp, prob = 0.95)
 
 # Merge means and intervals
 prediction_data <- data.frame(Observed = testingData$rel_age, Predicted = BM_predict_test[,1], Lwr = BM_predict_test[,3], Upr = BM_predict_test[,4])
 
-# Use ggplot2 for plotting
-library(ggplot2)
+
 ggplot(prediction_data, aes(x = Observed, y = Predicted)) +
   geom_point() +
   geom_errorbar(aes(ymin = Lwr, ymax = Upr), width = 0.2, alpha = 0.2) +
