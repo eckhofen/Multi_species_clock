@@ -62,7 +62,7 @@ tail(colnames(EH_meth_data))
 
 EH_meta_data <- read.csv("/workspace/cfngle/raw-data/EH/zzz-methyl_data/hake-samples.txt", sep = "\t")
 
-EH_age <- EH_meth_data$age
+EH_age <- EH_meta_data$age
 EH_sample_names <- rownames(EH_meth_data)
 EH_names <- sprintf("EH_%03d", 1:length(EH_sample_names))
 EH_max_age <- 20 
@@ -130,7 +130,7 @@ ggplot(df_all, aes(y = rel_age, color = species)) +
 
 ggplot(df_all) +
   # geom_point(aes(cex = 4, y = rel_age, x = 0.5)) +
-  geom_sina(aes(x = species, y = rel_age, cex = 1, shape = sex, alpha = 0.5, color = species)) +
+  geom_sina(aes(x = species, y = rel_age, shape = sex, alpha = 0.5, color = species), cex = 1) +
   # geom_histogram(aes(x = rel_age), position = "dodge") +
   # geom_density(aes(x = rel_age, alpha = 0.3)) +
   theme_classic() +
