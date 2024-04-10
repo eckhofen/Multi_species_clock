@@ -1,5 +1,3 @@
-
-
 # leave one out 
 
 fit_results <- c()
@@ -57,13 +55,13 @@ metrics
 
 
 test.loocv.lm <- function(X, Y, transformation = NULL, inv_transformation) {
-  fit_results <- numeric(nrow(X)) # Pre-allocate for better performance
+  fit_results <- numeric(nrow(X)) # pre-allocate for better performance
   
   for(i in 1:nrow(X)){ 
-    # Splitting data into train and test
+    # splitting data into train and test
     X_train <- X[-i,]
     Y_train <- if(!is.null(transformation)) {
-      sapply(Y[-i], transformation) # Apply transformation if not NULL
+      sapply(Y[-i], transformation) # apply transformation if not NULL
     } else {
       Y[-i]
     }
@@ -76,7 +74,7 @@ test.loocv.lm <- function(X, Y, transformation = NULL, inv_transformation) {
   }
   
   if(!is.null(transformation)) {
-    fit_results <- sapply(fit_results, inv_transformation) # Apply inverse transformation if needed
+    fit_results <- sapply(fit_results, inv_transformation) # apply inverse transformation if needed
   }
   
   prediction <- data.frame(age_predicted = fit_results, age = Y)
@@ -86,7 +84,13 @@ test.loocv.lm <- function(X, Y, transformation = NULL, inv_transformation) {
     MSE = round(mean((prediction$age_predicted - prediction$age)^2), 4),
     MAE = round(mean(abs(prediction$age_predicted - prediction$age)), 4))
   
-  return(metrics)
+  plot <- ggplot(prediction, aes(x = age, y = age_predicted)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +
+    ylim(0,0.30) +
+    xlim(0,0.30)
+  
+  return(list(metrics = metrics, plot = plot))
 }
 
 

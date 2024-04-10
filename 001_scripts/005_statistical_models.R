@@ -3,8 +3,8 @@
 
 #### Settings ####
 # change working directory accordingly
-# setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
-setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
+# setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -30,18 +30,21 @@ library(glmnet)
 load("000_data/006_model_creation/all_meth_values_selected.RData")
 
 #### Data splitting ####
+# defining arguments
+ds_breaks <- 3
+ds_prop <- 3/4
 # using a stratified splitting technique
 set.seed(123)
-AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age")
+AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
 
 set.seed(123)
-AS_split <- initial_split(AS_meth_values_selected, strata = "rel_age")
+AS_split <- initial_split(AS_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
 
 set.seed(123)
-EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age")
+EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
 
 set.seed(123)
-ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age")
+ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
 
 # combining data into training and testing sets 
 meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
@@ -95,19 +98,19 @@ abline(0, 1, col = "black")
 # comparing data sets with Kolmogorov-Smirnov test
 ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p-value = 0.966
 
+ks_test_data
 # plotting both graphs 
 plot_age_dist + plot_sample_age_dist +
   plot_layout(nrow=1)
 
-### defining training data
-X <- meth_train %>% 
-  select(-rel_age, -species)
+### defining data
+# training data
+X <- meth_train %>% select(-rel_age, -species)
 
 Y <- meth_train[,"rel_age"]
 
 # testing data
-X_test <- meth_test %>% 
-  select(-rel_age, -species)
+X_test <- meth_test %>% select(-rel_age, -species)
 
 Y_test <- meth_test[,"rel_age"]
 
@@ -117,7 +120,7 @@ Y_test <- meth_test[,"rel_age"]
 evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
                            species_test, transform = FALSE, colpalOI, plot_title = "Model evaluation:", 
                            y_lim = c(0,.3), x_lim = c(0,.3), CpGs = "not defined", s = NA) {
-  # Calculate predictions
+  # calculate predictions
   if (!is.na(s)) {
     predictions_train <- predict(model, X_train, s = s)
     predictions_test <- predict(model, X_test, s = s)
@@ -126,7 +129,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     predictions_test <- predict(model, X_test)
   }
   
-  # Optional transformation
+  # optional transformation
   if (transform) {
     predictions_train <- exp(-exp(-predictions_train))
     predictions_test <- exp(-exp(-predictions_test))
@@ -134,7 +137,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     Y_test
   }
   
-  # Calculate metrics
+  # calculate metrics
   metrics_train <- data.frame(
     R = round(cor(predictions_train, Y_train, method = "pearson"), 4),
     MSE = round(mean((predictions_train - Y_train)^2), 4),
@@ -159,7 +162,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   }
 
   
-  # Create plots
+  # create plots
   plot_train <- ggplot(result_df_train, aes(x = age, y = age_predicted, color = species)) +
     geom_point(size = 3) +
     geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +
@@ -183,7 +186,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
          subtitle = paste0("R=", metrics_test$R, " MSE=", metrics_test$MSE, " MAE=", metrics_test$MAE, " N=", nrow(X_test), " CpGs=", CpGs)) +
     theme_classic()
   
-  # Return list containing metrics and plots
+  # return list containing metrics and plots
   return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test))
 }
 
@@ -210,9 +213,6 @@ GLM_test <- cv.glmnet(as.matrix(X), Y, alpha = glm_alpha, family = "gaussian")
 plot(GLM_test)
 coef(GLM_test, s=GLM_test$lambda.min)
 
-blob <- predict(GLM_test, as.matrix(X_test))
-ccc <- unlist(blob)
-str(ccc)
 ### 2) log transformed
 # setting seed for reproducibility 
 set.seed(123)
@@ -222,7 +222,7 @@ GLM_test_log <- cv.glmnet(as.matrix(X), Y_log, alpha = glm_alpha)
 
 ### running models on testing data
 GLM_eval <-  evaluate.model(GLM_test, s = GLM_test$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = FALSE, 
-                            colpalOI= colpal_CB_01, plot_title = "MLM prediction", CpGs = "unknown")
+                            colpalOI= colpal_CB_01, plot_title = "GLM prediction", CpGs = "unknown")
 
 GLM_eval_t <-  evaluate.model(GLM_test_log, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
                               colpalOI= colpal_CB_02, plot_title = "GLM (age -log-log transformed) prediction", CpGs = "unknown")
@@ -231,7 +231,7 @@ GLM_eval_t <-  evaluate.model(GLM_test_log, as.matrix(X), Y, as.matrix(X_test), 
 ### pre-testing with base R package
 mlm_test <- lm(Y ~., data = X)
 summary(mlm_test)
-
+coef(mlm_test)
 # with transformed age
 mlm_test_t <- lm(-log(-log(Y)) ~., data = X)
 
@@ -294,9 +294,7 @@ testingData$rel_age <- Y_test
 # training model 
 set.seed(123)
 trainControl <- trainControl(method = "cv", number = 10) # 10-fold CV
-MLM_model <- train(rel_age ~ ., data = trainingData, 
-                   method = "glmnet", 
-                   trControl = trainControl)
+MLM_model <- train(rel_age ~ ., data = trainingData, method = "lm", trControl = trainControl) #names(getModelInfo()) for all method variables
 # prediction test
 MLM_predict_test <- predict(MLM_model, newdata = X_test)
 # caret has functions to interpret prediction results
@@ -305,7 +303,7 @@ print(performanceResults)
 
 #tuning model 
 MLM_tuned <- train(rel_age ~ ., data = testingData, 
-                   method = "glmnet",
+                   method = "lm",
                    tuneLength = 10, # Number of tuning parameter values
                    trControl = trainControl)
 
@@ -319,6 +317,24 @@ MLM_eval_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_tes
 
 MLM_eval$plot_train + MLM_eval$plot_test + MLM_eval_tuned$plot_train + MLM_eval_tuned$plot_test +
   plot_layout(nrow=2)
+
+### LOOCV
+
+# preparing data 
+all_data <- all_meth_values_selected[,-length(all_meth_values_selected)]
+all_age <- all_meth_values_selected$rel_age
+
+# setting up training method
+loocv_train_control <- trainControl(method = "LOOCV")
+
+# run model
+set.seed(123)
+MLM_LOOCV_model <- train(rel_age ~ ., data = all_data, method = "lm", trControl = loocv_train_control)
+
+coef(MLM_LOOCV_model)
+
+# evaluate model
+MLM_LOOCV_eval <-  evaluate.model(MLM_LOOCV_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "MLM LOOCV prediction", CpGs = length(mlm_test$coefficients)-1)
 
 #### Testing random forest model ####
 
@@ -363,14 +379,19 @@ RF_eval$plot_train + RF_eval$plot_test + RF_eval_tuned$plot_train + RF_eval_tune
 #### Testing support vector regression models ####
 library(e1071)
 
-set.seed(123)
-SVM_test <- svm(Y ~ ., data = X, type = "eps-regression")
-set.seed(123)
+SVM_test <- svm(Y ~ ., data = X, type = "eps-regression", kernel = "linear")
+
 SVM_test <- svm(Y ~ ., data = X, type = "nu-regression")
-set.seed(123)
-SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "polynomial")
+
+SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "linear")
+
+SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "polynomial", degree = 3)
+
+SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "polynomial", degree = 1)
+SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "polynomial", degree = 1, cross)
 
 summary(SVM_test)
+plot(abs(coef(SVM_test)))
 
 ## evaluation
 SVM_eval <-  evaluate.model(SVM_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "SVM prediction", CpGs = length(mlm_test$coefficients)-1)
