@@ -99,8 +99,8 @@ test.loocv.lm(all_values, all_age, function(x) -log(x), function(x) exp(-x))
 test.loocv.lm(all_values, all_age, function(x) -log(-log(x)), function(x) exp(-exp(-x)))
 
 test.loocv.lm(log(all_values), all_age)
-test.loocv.lm(log(all_values), all_age, function(x) -log(x), function(x) -exp(x))
-test.loocv.lm(log(all_values), all_age, function(x) -log(-log(x)), function(x) -exp(-exp(x)))
+test.loocv.lm(log(all_values), all_age, function(x) -log(x), function(x) exp(-x))
+test.loocv.lm(log(all_values), all_age, function(x) -log(-log(x)), function(x) exp(-exp(-x)))
 
 test.loocv.lm(poly(all_values, degree = 2), all_age)
 
@@ -111,3 +111,45 @@ ggplot(prediction, aes(x = age, y = age_predicted)) +
   ylim(0,0.30) +
   xlim(0,0.30)
 
+
+test.loocv.rf <- function(X, Y, transformation = NULL, inv_transformation) {
+  fit_results <- numeric(nrow(X)) # pre-allocate for better performance
+  
+  for(i in 1:nrow(X)){ 
+    # splitting data into train and test
+    X_train <- X[-i,]
+    Y_train <- if(!is.null(transformation)) {
+      sapply(Y[-i], transformation) # apply transformation if not NULL
+    } else {
+      Y[-i]
+    }
+    
+    X_test <- data.frame(X[i,, drop = FALSE])
+    
+    # model
+    fit <- randomForest(Y_train ~ ., data = X_train, mtry = 4, ntree = 1500)
+    Y_fitted <- predict(fit, newdata = X_test)
+    fit_results[i] <- Y_fitted
+  }
+  # apply inverse transformation if needed
+  if(!is.null(transformation)) {
+    fit_results <- sapply(fit_results, inv_transformation) 
+  }
+  
+  prediction <- data.frame(age_predicted = fit_results, age = Y)
+  
+  metrics <- data.frame(
+    R = round(cor(prediction$age_predicted, prediction$age, method = "pearson"), 4),
+    MSE = round(mean((prediction$age_predicted - prediction$age)^2), 4),
+    MAE = round(mean(abs(prediction$age_predicted - prediction$age)), 4))
+  
+  plot <- ggplot(prediction, aes(x = age, y = age_predicted)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray") +
+    ylim(0,0.30) +
+    xlim(0,0.30)
+  
+  return(list(metrics = metrics, plot = plot))
+}
+
+# test.loocv.rf(all_values, all_age)

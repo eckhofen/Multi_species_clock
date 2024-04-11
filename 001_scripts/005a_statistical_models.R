@@ -1,5 +1,5 @@
 #### Overview ####
-# testing different statistical models 
+# testing different statistical models
 
 #### Settings ####
 # change working directory accordingly
@@ -30,10 +30,16 @@ library(glmnet)
 load("000_data/006_model_creation/all_meth_values_selected.RData")
 
 #### modifying age (optional) ####
-AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.4
-AS_meth_values_selected$rel_age
-EH_meth_values_selected$rel_age
-ZF_meth_values_selected$rel_age
+# AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.4
+# AS_meth_values_selected$rel_age
+# EH_meth_values_selected$rel_age <- EH_meth_values_selected$rel_age / 1
+# ZF_meth_values_selected$rel_age
+
+AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age * 25
+AS_meth_values_selected$rel_age <- AS_meth_values_selected$rel_age * 54
+EH_meth_values_selected$rel_age <- EH_meth_values_selected$rel_age * 20
+ZF_meth_values_selected$rel_age <- ZF_meth_values_selected$rel_age * 5
+
 #### Data splitting ####
 # defining arguments
 ds_breaks <- 3
@@ -51,17 +57,19 @@ EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age", breaks = 
 set.seed(123)
 ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
 
-# combining data into training and testing sets 
+# combining data into training and testing sets
 meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
+meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split))
 
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
+meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), ZF_meth_values_selected)
 
 # checking how many CpGs are present per data set
 nrow(meth_train) #272
 nrow(meth_test) #99
 
 ## plotting age distribution
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
+colpalOI <- palette.colors(palette = "Okabe-Ito") %>%
   as.vector() %>%
   .[c(-1,-9)]
 
@@ -73,7 +81,7 @@ plot_age_dist <- ggplot(all_meth_values_selected) +
   theme_minimal() +
   labs(title = "Relative age distribution for all samples")
 
-# >> the plot shows that our dependent variable is not normally distributed (as expected from age) 
+# >> the plot shows that our dependent variable is not normally distributed (as expected from age)
 
 # visually comparing training and testing sets (BOXPLOTS)
 plot_sample_age_dist <- ggplot() +
@@ -104,7 +112,8 @@ abline(0, 1, col = "black")
 ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p-value = 0.966
 
 ks_test_data
-# plotting both graphs 
+
+# plotting both graphs
 plot_age_dist + plot_sample_age_dist +
   plot_layout(nrow=1)
 
@@ -124,7 +133,7 @@ Y_test <- meth_test[,"rel_age"]
 ## function for model testing plus calculating metrics (MSE, MAE, R)
 evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
                            species_test, transform = FALSE, colpalOI, plot_title = "Model evaluation:", 
-                           y_lim = c(0,.3), x_lim = c(0,.3), CpGs = "not defined", s = NA) {
+                           y_lim = c(0,12), x_lim = c(0,12), CpGs = "not defined", s = NA) {
   # calculate predictions
   if (!is.na(s)) {
     predictions_train <- predict(model, X_train, s = s)
@@ -136,8 +145,8 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   
   # optional transformation
   if (transform) {
-    predictions_train <- exp(-exp(-predictions_train))
-    predictions_test <- exp(-exp(-predictions_test))
+    predictions_train <- exp(predictions_train)
+    predictions_test <- exp(predictions_test)
     Y_train
     Y_test
   }
@@ -176,7 +185,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age (relative)", x = "Chronological age",
+    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Chronological age",
          subtitle = paste0("R=", metrics_train$R, " MSE=", metrics_train$MSE, " MAE=", metrics_train$MAE, " N=", nrow(X_train), " CpGs=", CpGs)) +
     theme_classic()
   
@@ -187,7 +196,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age (relative)", x = "Chronological age",
+    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Chronological age",
          subtitle = paste0("R=", metrics_test$R, " MSE=", metrics_test$MSE, " MAE=", metrics_test$MAE, " N=", nrow(X_test), " CpGs=", CpGs)) +
     theme_classic()
   
@@ -203,8 +212,8 @@ Y <- meth_train[,"rel_age"]
 Y_test <- meth_test[,"rel_age"]
 
 # age transformation
-Y_log <- -log(-log(Y))
-Y_log_test <- -log(-log(Y_test))
+Y_log <- log(Y)
+Y_log_test <- log(Y_test)
 
 # define alpha for either lasso, rigid or elastic net regression
 glm_alpha <- 0.5
@@ -230,7 +239,7 @@ GLM_eval <-  evaluate.model(GLM_test, s = GLM_test$lambda.min, as.matrix(X), Y, 
                             colpalOI= colpal_CB_01, plot_title = "GLM prediction", CpGs = "unknown")
 
 GLM_eval_t <-  evaluate.model(GLM_test_log, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
-                              colpalOI= colpal_CB_02, plot_title = "GLM (age -log-log transformed) prediction", CpGs = "unknown")
+                              colpalOI= colpal_CB_02, plot_title = "GLM (age log transformed) prediction", CpGs = "unknown")
 
 #### Testing multivariate linear regression models ####
 ### pre-testing with base R package
@@ -238,7 +247,7 @@ mlm_test <- lm(Y ~., data = X)
 summary(mlm_test)
 coef(mlm_test)
 # with transformed age
-mlm_test_t <- lm(-log(-log(Y)) ~., data = X)
+mlm_test_t <- lm(log(Y) ~., data = X)
 
 ## selecting only significant values
 sign_vec <- as.vector((summary(mlm_test)$coefficients[,4] < 0.05)[-1])
@@ -300,8 +309,8 @@ testingData$rel_age <- Y_test
 testingData_t <- testingData
 trainingData_t <- trainingData
 # -log-log transformation
-trainingData_t$rel_age <- -log(-log(trainingData_t$rel_age))
-testingData_t$rel_age <- -log(-log(testingData_t$rel_age))
+trainingData_t$rel_age <- log(trainingData_t$rel_age)
+testingData_t$rel_age <- log(testingData_t$rel_age)
 
 ### training model 
 set.seed(123)
@@ -343,20 +352,33 @@ all_data <- all_meth_values_selected[,-length(all_meth_values_selected)]
 # all_data$rel_age <- -log(-log(all_data$rel_age))
 # all_age <- all_meth_values_selected$rel_age %>% -log(-log(.))
 all_data <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected) %>% 
-  .[,-length(all_data)]
+  .[,-length(AC_meth_values_selected)]
+
+all_data_t <- all_data
+
+all_data_t$rel_age <- log(all_data_t$rel_age)
 # setting up training method
 loocv_train_control <- trainControl(method = "LOOCV")
 
 # run model
 set.seed(123)
 MLM_LOOCV_model <- train(rel_age ~ ., data = all_data, method = "lm", trControl = loocv_train_control)
+MLM_LOOCV_model_t <- train(rel_age ~ ., data = all_data_t, method = "lm", trControl = loocv_train_control)
+
 MLM_LOOCV_model$results
+MLM_LOOCV_model_t$results
 
 # evaluation
 metrics_LOOCV <- data.frame(
   R = round(cor(MLM_LOOCV_model$pred$pred, MLM_LOOCV_model$pred$obs, method = "pearson"), 4),
   MSE = round(mean((MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs)^2), 4),
   MAE = round(mean(abs(MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs)), 4),
+  N = nrow(all_data))
+
+metrics_LOOCV_t <- data.frame(
+  R = round(cor(MLM_LOOCV_model_t$pred$pred, MLM_LOOCV_model_t$pred$obs, method = "pearson"), 4),
+  MSE = round(mean((MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs)^2), 4),
+  MAE = round(mean(abs(MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs)), 4),
   N = nrow(all_data))
 
 # evaluate model
@@ -414,7 +436,7 @@ SVM_nu_test_t <- svm(Y_log ~ ., data = X, type = "nu-regression", kernel = "line
 # SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "polynomial", degree = 3)
 # SVM_test <- svm(Y ~ ., data = X, type = "nu-regression", kernel = "polynomial", degree = 1)
 
-summary(SVM_test)
+# summary(SVM_test)
 # plot(abs(coef(SVM_test)))
 
 ## evaluation
@@ -530,12 +552,12 @@ metrics_BM_test_t <- data.frame(
 
 #### Summarizing all models ####
 # training data 
-df_all_training <- rbind(GLM_eval$metrics_train, mlm_eval$metrics_train, MLM_eval$metrics_train, metrics_BM_train, SVM_eps_eval$metrics_train, SVM_nu_eval$metrics_train, RF_eval$metrics_train, RF_eval_tuned$metrics_train, GLM_eval_t$metrics_train, mlm_eval_t$metrics_train, MLM_t_eval$metrics_train, metrics_BM_train_t, metrics_LOOCV)
-rownames(df_all_training) <- c("GLM", "mlm", "MLM (caret)", "BM", "SVM_eps", "SVM_nu", "RF", "RF_tuned", "GLM_t", "mlm_t", "MLM_t", "BM_t", "MLM_LOOCV")
+df_all_training <- rbind(GLM_eval$metrics_train, mlm_eval$metrics_train, MLM_eval$metrics_train, metrics_BM_train, SVM_eps_eval$metrics_train, SVM_nu_eval$metrics_train, RF_eval$metrics_train, RF_eval_tuned$metrics_train, GLM_eval_t$metrics_train, mlm_eval_t$metrics_train, MLM_t_eval$metrics_train, metrics_BM_train_t, metrics_LOOCV, metrics_LOOCV_t)
+rownames(df_all_training) <- c("GLM", "mlm", "MLM (caret)", "BM", "SVM_eps", "SVM_nu", "RF", "RF_tuned", "GLM_t", "mlm_t", "MLM_t", "BM_t", "MLM_LOOCV", "MLM_LOOCV_t")
 df_all_training
 
-df_all_testing <- rbind(GLM_eval$metrics_test, mlm_eval$metrics_test, MLM_eval$metrics_test, metrics_BM_test, SVM_eps_eval$metrics_test, SVM_nu_eval$metrics_test, RF_eval$metrics_test, RF_eval_tuned$metrics_test, GLM_eval_t$metrics_test, mlm_eval_t$metrics_test, MLM_t_eval$metrics_test, metrics_BM_test_t, metrics_LOOCV)
-rownames(df_all_testing) <- c("GLM", "mlm", "MLM (caret)", "BM", "SVM_eps", "SVM_nu", "RF", "RF_tuned", "GLM_t", "mlm_t", "MLM_t", "BM_t", "MLM_LOOCV")
+df_all_testing <- rbind(GLM_eval$metrics_test, mlm_eval$metrics_test, MLM_eval$metrics_test, metrics_BM_test, SVM_eps_eval$metrics_test, SVM_nu_eval$metrics_test, RF_eval$metrics_test, RF_eval_tuned$metrics_test, GLM_eval_t$metrics_test, mlm_eval_t$metrics_test, MLM_t_eval$metrics_test, metrics_BM_test_t, metrics_LOOCV, metrics_LOOCV_t)
+rownames(df_all_testing) <- c("GLM", "mlm", "MLM (caret)", "BM", "SVM_eps", "SVM_nu", "RF", "RF_tuned", "GLM_t", "mlm_t", "MLM_t", "BM_t", "MLM_LOOCV", "MLM_LOOCV_t")
 df_all_testing
 
 df_eval <- cbind(df_all_training, df_all_testing)
