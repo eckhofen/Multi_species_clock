@@ -59,11 +59,11 @@ ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = 
 
 # combining data into training and testing sets
 meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
-meth_train <- rbind(training(AC_split), training(AS_split), training(ZF_split))
+meth_train <- rbind(training(ZF_split))
 
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), ZF_meth_values_selected)
-meth_test <- rbind(training(EH_split))
+meth_test <- rbind(training(AC_split), training(AS_split), training(EH_split))
 
 # checking how many CpGs are present per data set
 nrow(meth_train) #272
@@ -250,7 +250,7 @@ GLM_test_log <- cv.glmnet(as.matrix(X), Y_log, alpha = glm_alpha)
 GLM_eval <-  evaluate.model(GLM_test, s = GLM_test$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = FALSE, 
                             colpalOI= colpal_CB_01, plot_title = "GLM prediction", CpGs = "unknown")
 
-GLM_eval_t <-  evaluate.model(GLM_test_log, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
+GLM_eval_t <-  evaluate.model(GLM_test_log, s = GLM_test_log$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
                               colpalOI= colpal_CB_02, plot_title = "GLM (age log transformed) prediction", CpGs = "unknown")
 
 #### Testing multivariate linear regression models ####
