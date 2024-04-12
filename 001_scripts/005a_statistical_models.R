@@ -3,8 +3,8 @@
 
 #### Settings ####
 # change working directory accordingly
-# setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
-setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
+# setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -74,8 +74,8 @@ colpalOI <- palette.colors(palette = "Okabe-Ito") %>%
   .[c(-1,-9)]
 
 plot_age_dist <- ggplot(all_meth_values_selected) +
-  geom_density(aes(x = rel_age, color = species), linewidth = 2) +
-  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.2, linewidth = 0) +
+  geom_density(aes(x = rel_age, color = species), linewidth = 1) +
+  geom_density(aes(x = rel_age, fill = "all", alpha = 0.2), linewidth = NA) +
   scale_color_manual(values = colpalOI) +
   scale_fill_manual(values = colpalOI[5]) +
   theme_minimal() +
@@ -83,22 +83,34 @@ plot_age_dist <- ggplot(all_meth_values_selected) +
 
 # >> the plot shows that our dependent variable is not normally distributed (as expected from age)
 
+# comparing data sets with Kolmogorov-Smirnov test
+ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p-value = 0.966
+
+ks_test_data$statistic
+
 # visually comparing training and testing sets (BOXPLOTS)
-plot_sample_age_dist <- ggplot() +
-  geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -1)) +
-  geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = 1)) +
+plot_sample_age_dist_box <- ggplot() +
+  geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -.5)) +
+  geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = .5)) +
   scale_fill_manual(values = colpalOI) +
   labs(fill = "Dataset") +
-  theme_minimal() +
-  ggtitle("Age Distribution in Training and Testing Sets")
+  xlab("Datasets") +
+  ylab("Age") +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", ks_test_data$p.value))
 
 # visually comparing training and testing sets
 plot_sample_age_dist <- ggplot() +
-  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, size = 0) +
-  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, size = 0) +
+  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, linewidth = 0.2) +
+  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = 0.2) +
   scale_fill_manual(values = colpalOI) +
   labs(fill = "Dataset") +
   theme_minimal() +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
   ggtitle("Age Distribution in Training and Testing Sets")
 
 # visually comparing sets (Q-Q plot)
@@ -108,12 +120,11 @@ qqplot(meth_train$rel_age, meth_test$rel_age,
        main = "Age Distribution in Training and Testing Sets")
 abline(0, 1, col = "black")
 
-# comparing data sets with Kolmogorov-Smirnov test
-ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p-value = 0.966
-
-ks_test_data
 
 # plotting both graphs
+ggsave(filename = "002_plots/005_age_distribution.pdf", plot_age_dist)
+ggsave(filename = "002_plots/005_sample_age_distribution_box.pdf", plot_sample_age_dist_box)
+
 plot_age_dist + plot_sample_age_dist +
   plot_layout(nrow=1)
 
