@@ -3,8 +3,8 @@
 
 #### Settings ####
 # change working directory accordingly
-setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
-# setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+# setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
+setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -14,6 +14,13 @@ colpal_CB_02 <- colpal_CB[c(FALSE, TRUE)]
 colpal_CB_a <- c("#f8cbb1","#006786","#182057","#6b6300","#ff8ab9","#f1aaff","#bb005a","#013aa8","#01ef9a","#fa8200","#ee0028","#26c100")
 colpal_CB_a_01 <- colpal_CB_a[1:6]
 colpal_CB_a_02 <- colpal_CB_a[7:12]
+
+colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
+
+color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
+color_species <- setNames(color_species_df$color, color_species_df$species)
+
+color_compare <- c("#005AB5", "#DC3220")
 
 #### Preparation ####
 library(tidyverse)
@@ -59,11 +66,12 @@ ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = 
 
 # combining data into training and testing sets
 meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
-meth_train <- rbind(training(ZF_split))
+meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split))
+# meth_train <- rbind(training(ZF_split))
 
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
-meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), ZF_meth_values_selected)
-meth_test <- rbind(training(AC_split), training(AS_split), training(EH_split))
+# meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), ZF_meth_values_selected)
+# meth_test <- rbind(training(AC_split), training(AS_split), training(EH_split))
 
 # checking how many CpGs are present per data set
 nrow(meth_train) #272
@@ -76,9 +84,9 @@ colpalOI <- palette.colors(palette = "Okabe-Ito") %>%
 
 plot_age_dist <- ggplot(all_meth_values_selected) +
   geom_density(aes(x = rel_age, color = species), linewidth = 1) +
-  geom_density(aes(x = rel_age, fill = "all", alpha = 0.2), linewidth = NA) +
-  scale_color_manual(values = colpalOI) +
-  scale_fill_manual(values = colpalOI[5]) +
+  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.5, linewidth = 1) +
+  scale_color_manual(values = color_species) +
+  scale_fill_manual(values = "grey") +
   theme_minimal() +
   labs(title = "Relative age distribution for all samples")
 
@@ -93,7 +101,7 @@ ks_test_data$statistic
 plot_sample_age_dist_box <- ggplot() +
   geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -.5)) +
   geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = .5)) +
-  scale_fill_manual(values = colpalOI) +
+  scale_fill_manual(values = color_compare) +
   labs(fill = "Dataset") +
   xlab("Datasets") +
   ylab("Age") +
@@ -432,7 +440,7 @@ RF_test_tuned <- randomForest(Y ~ ., data = X, mtry = 4, ntree = 1500)
 ## evaluation
 RF_eval <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "RF prediction", CpGs = length(mlm_test$coefficients)-1)
 
-RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "RF prediction", CpGs = length(mlm_test$coefficients)-1)
+RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "RF prediction (tuned)", CpGs = length(mlm_test$coefficients)-1)
 
 RF_eval$plot_train + RF_eval$plot_test + RF_eval_tuned$plot_train + RF_eval_tuned$plot_test +
   plot_layout(nrow=2)
