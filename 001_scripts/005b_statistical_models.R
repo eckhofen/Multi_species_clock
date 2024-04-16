@@ -66,7 +66,7 @@ ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = 
 
 # combining data into training and testing sets
 meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
-meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split))
+meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
 # meth_train <- rbind(training(ZF_split))
 
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
@@ -97,11 +97,12 @@ ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p
 
 ks_test_data$statistic
 
+color_compare_tt <- setNames(color_compare, c("Training", "Testing"))
 # visually comparing training and testing sets (BOXPLOTS)
 plot_sample_age_dist_box <- ggplot() +
   geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -.5)) +
   geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = .5)) +
-  scale_fill_manual(values = color_compare) +
+  scale_fill_manual(values = color_compare_tt) +
   labs(fill = "Dataset") +
   xlab("Datasets") +
   ylab("Age") +
@@ -111,9 +112,9 @@ plot_sample_age_dist_box <- ggplot() +
 
 # visually comparing training and testing sets
 plot_sample_age_dist <- ggplot() +
-  geom_density(data = meth_train, aes(x = rel_age), fill = "Training", alpha = 0.5, linewidth = NA) +
-  geom_density(data = meth_test, aes(x = rel_age), fill = "Testing", alpha = 0.5, linewidth = NA) +
-  scale_fill_manual(values = color_compare, name = "Dataset") +
+  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, linewidth = NA) +
+  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = NA) +
+  scale_fill_manual(values = color_compare_tt, name = "Dataset") +
   theme_minimal() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   ggtitle("Age Distribution in Training and Testing Sets")
@@ -257,11 +258,11 @@ GLM_eval_t <-  evaluate.model(GLM_test_log, s = GLM_test_log$lambda.min, as.matr
                               colpalOI= color_species, plot_title = "GLM (log(age))", CpGs = "40")
 
 # saving plots
-ggsave(filename = "002_plots/005_m_GLM_age_wo_ZF_TR.pdf", GLM_eval$plot_train, width = 8, height = 7)
-ggsave(filename = "002_plots/005_m_GLM_age_wo_ZF_TE.pdf", GLM_eval$plot_test, width = 8, height = 7)
+ggsave(filename = "002_plots/005_m_GLM_age_TR.pdf", GLM_eval$plot_train, width = 8, height = 7)
+ggsave(filename = "002_plots/005_m_GLM_age_TE.pdf", GLM_eval$plot_test, width = 8, height = 7)
 
-ggsave(filename = "002_plots/005_m_GLM_log-age_wo_ZF_TE.pdf", GLM_eval_t$plot_test, width = 8, height = 7)
-ggsave(filename = "002_plots/005_m_GLM_log-age_wo_ZF_TR.pdf", GLM_eval_t$plot_train, width = 8, height = 7)
+ggsave(filename = "002_plots/005_m_GLM_log-age_TE.pdf", GLM_eval_t$plot_test, width = 8, height = 7)
+ggsave(filename = "002_plots/005_m_GLM_log-age_TR.pdf", GLM_eval_t$plot_train, width = 8, height = 7)
 
 #### Testing multivariate linear regression models ####
 ### pre-testing with base R package
@@ -314,8 +315,8 @@ mlm_eval_plot <- mlm_eval$plot_train + mlm_eval$plot_test  + mlm_eval_opt$plot_t
 mlm_eval_plot_t <- mlm_eval_t$plot_train + mlm_eval_t$plot_test  + mlm_eval_opt_t$plot_train + mlm_eval_opt_t$plot_test +
   plot_layout(nrow = 2)
 
-ggsave(filename = "002_plots/005_m_MLM_age_wo_ZF_all.pdf", mlm_eval_plot, width = 10, height = 7)
-ggsave(filename = "002_plots/005_m_MLM_log-age_wo_ZF_all.pdf", mlm_eval_plot_t, width = 10, height = 7)
+ggsave(filename = "002_plots/005_m_MLM_age_all.pdf", mlm_eval_plot, width = 10, height = 7)
+ggsave(filename = "002_plots/005_m_MLM_log-age_all.pdf", mlm_eval_plot_t, width = 10, height = 7)
 
 
 #### GLM (caret) ####
@@ -359,17 +360,17 @@ MLM_tuned_t <- train(rel_age ~ ., data = testingData_t,  method = "lm", tuneLeng
 
 ## evaluation 
 # normal models
-MLM_eval <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_eval <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
 
-MLM_eval_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_eval_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
 MLM_eval$plot_train + MLM_eval$plot_test + MLM_eval_tuned$plot_train + MLM_eval_tuned$plot_test +
   plot_layout(nrow=2)
 
 # transformed models
-MLM_t_eval <-  evaluate.model(MLM_model_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= colpal_CB_a_01, plot_title = "MLM (-log-log(age)) prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_t_eval <-  evaluate.model(MLM_model_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "MLM (-log-log(age)) prediction", CpGs = length(mlm_test$coefficients)-1)
 
-MLM_t_eval_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= colpal_CB_a_02, plot_title = "MLM (-log-log(age)) tuned prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_t_eval_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "MLM (-log-log(age)) tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
 ### LOOCV
 
@@ -451,7 +452,7 @@ RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train
 RF_eval_plot <- RF_eval$plot_train + RF_eval$plot_test + RF_eval_tuned$plot_train + RF_eval_tuned$plot_test +
   plot_layout(nrow=2)
 
-ggsave(filename = "002_plots/005_m_RF_age_wo_ZF_all.pdf", RF_eval_plot, width = 10, height = 7)
+ggsave(filename = "002_plots/005_m_RF_age_all.pdf", RF_eval_plot, width = 10, height = 7)
 
 #### Testing support vector regression models ####
 library(e1071)
@@ -484,8 +485,8 @@ SVM_nu_eval_t <-  evaluate.model(SVM_nu_test_t, X, Y, X_test, Y_test, meth_train
 SVM_eval_t_plot <- SVM_eps_eval_t$plot_train + SVM_eps_eval_t$plot_test + SVM_nu_eval_t$plot_train + SVM_nu_eval_t$plot_test +
   plot_layout(nrow = 2)
 
-ggsave(filename = "002_plots/005_m_SVM_age_wo_ZF_all.pdf", SVM_eval_plot, width = 10, height = 7)
-ggsave(filename = "002_plots/005_m_SVM_log-age_wo_ZF_all.pdf", SVM_eval_t_plot, width = 10, height = 7)
+ggsave(filename = "002_plots/005_m_SVM_age_all.pdf", SVM_eval_plot, width = 10, height = 7)
+ggsave(filename = "002_plots/005_m_SVM_log-age_all.pdf", SVM_eval_t_plot, width = 10, height = 7)
 
 #### Testing Bayesian models ####
 # install.packages("brms")
