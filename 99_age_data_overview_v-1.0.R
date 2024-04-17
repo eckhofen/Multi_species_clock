@@ -118,6 +118,14 @@ ZF_df <- data.frame(sample_name = ZF_sample_names,
 
 df_all <- rbind(AC_df, AS_df, EH_df, JM_df, ZF_df)
 
+# save files
+save(AC_df, AS_df, EH_df, JM_df, ZF_df, file = "000_data/000_metadata/metadata_age.RData")
+
+write.csv(AC_df, file = "000_data/000_metadata/AC_age.csv")
+write.csv(AS_df, file = "000_data/000_metadata/AS_age.csv")
+write.csv(EH_df, file = "000_data/000_metadata/EH_age.csv")
+write.csv(JM_df, file = "000_data/000_metadata/JM_age.csv")
+write.csv(ZF_df, file = "000_data/000_metadata/ZF_age.csv")
 
 #### Plotting ####
 
