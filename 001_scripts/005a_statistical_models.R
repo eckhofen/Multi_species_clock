@@ -5,6 +5,7 @@
 # change working directory accordingly
 # setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+extension <- ".pdf"
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -97,11 +98,12 @@ ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p
 
 ks_test_data$statistic
 
+color_compare_tt <- setNames(color_compare, c("Training", "Testing"))
 # visually comparing training and testing sets (BOXPLOTS)
 plot_sample_age_dist_box <- ggplot() +
   geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -.5)) +
   geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = .5)) +
-  scale_fill_manual(values = color_compare) +
+  scale_fill_manual(values = color_compare_tt) +
   labs(fill = "Dataset") +
   xlab("Datasets") +
   ylab("Age") +
@@ -110,13 +112,17 @@ plot_sample_age_dist_box <- ggplot() +
   ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", ks_test_data$p.value))
 
 # visually comparing training and testing sets
+color_compare_tt <- setNames(color_compare, c("Training", "Testing"))
+
 plot_sample_age_dist <- ggplot() +
-  geom_density(data = meth_train, aes(x = rel_age), fill = "Training", alpha = 0.5, linewidth = NA) +
-  geom_density(data = meth_test, aes(x = rel_age), fill = "Testing", alpha = 0.5, linewidth = NA) +
-  scale_fill_manual(values = color_compare, name = "Dataset") +
-  theme_minimal() +
+  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, linewidth = 1) +
+  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = 1) +
+  scale_fill_manual(values = color_compare_tt, name = "Dataset") +
+  xlab("Relative age") +
+  ylab("Density") +
+  theme_classic() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets")
+  ggtitle("Relative age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", round(ks_test_data$p.value, 4)))
 
 # visually comparing sets (Q-Q plot)
 qqplot(meth_train$rel_age, meth_test$rel_age,
@@ -125,11 +131,11 @@ qqplot(meth_train$rel_age, meth_test$rel_age,
        main = "Age Distribution in Training and Testing Sets")
 abline(0, 1, col = "black")
 
+# saving graphs
+ggsave(filename = paste0("002_plots/005_age_distribution", extension), plot_age_dist, width = 7, height = 7)
+ggsave(filename = paste0("002_plots/005_sample_age_distribution_box", extension), plot_sample_age_dist_box, width = 7, height = 7)
 
 # plotting both graphs
-ggsave(filename = "002_plots/005_age_distribution.pdf", plot_age_dist)
-ggsave(filename = "002_plots/005_sample_age_distribution_box.pdf", plot_sample_age_dist_box)
-
 plot_age_dist + plot_sample_age_dist +
   plot_layout(nrow=1)
 

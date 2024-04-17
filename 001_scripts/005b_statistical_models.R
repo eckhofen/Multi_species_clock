@@ -2,9 +2,10 @@
 # testing different statistical models
 
 #### Settings ####
-# change working directory accordingly
+# change working directory accordingly extension
 # setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+extension <- ".pdf"
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -31,6 +32,7 @@ library(ggplot2)
 library(patchwork)
 library(caret)
 library(glmnet)
+library(svglite)
 
 #### Loading data ####
 
@@ -78,10 +80,6 @@ nrow(meth_train) #272
 nrow(meth_test) #99
 
 ## plotting age distribution
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>%
-  as.vector() %>%
-  .[c(-1,-9)]
-
 plot_age_dist <- ggplot(all_meth_values_selected) +
   geom_density(aes(x = rel_age, color = species), linewidth = 1) +
   geom_density(aes(x = rel_age, fill = "all"), alpha = 0.5, linewidth = 1) +
@@ -128,8 +126,8 @@ abline(0, 1, col = "black")
 
 
 # plotting both graphs
-ggsave(filename = "002_plots/005_age_distribution.pdf", plot_age_dist)
-ggsave(filename = "002_plots/005_sample_age_distribution_box.pdf", plot_sample_age_dist_box)
+ggsave(filename = paste0("002_plots/005_age_distribution", extension), plot_age_dist, width = 7, height = 7)
+ggsave(filename = paste0("002_plots/005_sample_age_distribution_box", extension), plot_sample_age_dist_box, width = 7, height = 7)
 
 plot_age_dist + plot_sample_age_dist +
   plot_layout(nrow=1)
@@ -258,11 +256,11 @@ GLM_eval_t <-  evaluate.model(GLM_test_log, s = GLM_test_log$lambda.min, as.matr
                               colpalOI= color_species, plot_title = "GLM (log(age))", CpGs = "40")
 
 # saving plots
-ggsave(filename = "002_plots/005_m_GLM_age_TR.pdf", GLM_eval$plot_train, width = 8, height = 7)
-ggsave(filename = "002_plots/005_m_GLM_age_TE.pdf", GLM_eval$plot_test, width = 8, height = 7)
+ggsave(filename = paste0("002_plots/005_m_GLM_age_TE", extension), GLM_eval$plot_test, width = 8, height = 7)
+ggsave(filename = paste0("002_plots/005_m_GLM_age_TR", extension), GLM_eval$plot_train, width = 8, height = 7)
 
-ggsave(filename = "002_plots/005_m_GLM_log-age_TE.pdf", GLM_eval_t$plot_test, width = 8, height = 7)
-ggsave(filename = "002_plots/005_m_GLM_log-age_TR.pdf", GLM_eval_t$plot_train, width = 8, height = 7)
+ggsave(filename = paste0("002_plots/005_m_GLM_log-age_TE", extension), GLM_eval_t$plot_test, width = 8, height = 7)
+ggsave(filename = paste0("002_plots/005_m_GLM_log-age_TR", extension), GLM_eval_t$plot_train, width = 8, height = 7)
 
 #### Testing multivariate linear regression models ####
 ### pre-testing with base R package
@@ -315,8 +313,8 @@ mlm_eval_plot <- mlm_eval$plot_train + mlm_eval$plot_test  + mlm_eval_opt$plot_t
 mlm_eval_plot_t <- mlm_eval_t$plot_train + mlm_eval_t$plot_test  + mlm_eval_opt_t$plot_train + mlm_eval_opt_t$plot_test +
   plot_layout(nrow = 2)
 
-ggsave(filename = "002_plots/005_m_MLM_age_all.pdf", mlm_eval_plot, width = 10, height = 7)
-ggsave(filename = "002_plots/005_m_MLM_log-age_all.pdf", mlm_eval_plot_t, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_MLM_age_all", extenstion), mlm_eval_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_MLM_log-age_all", extenstion), mlm_eval_plot_t, width = 10, height = 7)
 
 
 #### GLM (caret) ####
@@ -452,7 +450,7 @@ RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train
 RF_eval_plot <- RF_eval$plot_train + RF_eval$plot_test + RF_eval_tuned$plot_train + RF_eval_tuned$plot_test +
   plot_layout(nrow=2)
 
-ggsave(filename = "002_plots/005_m_RF_age_all.pdf", RF_eval_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_RF_age_all", extension), RF_eval_plot, width = 10, height = 7)
 
 #### Testing support vector regression models ####
 library(e1071)
@@ -485,8 +483,8 @@ SVM_nu_eval_t <-  evaluate.model(SVM_nu_test_t, X, Y, X_test, Y_test, meth_train
 SVM_eval_t_plot <- SVM_eps_eval_t$plot_train + SVM_eps_eval_t$plot_test + SVM_nu_eval_t$plot_train + SVM_nu_eval_t$plot_test +
   plot_layout(nrow = 2)
 
-ggsave(filename = "002_plots/005_m_SVM_age_all.pdf", SVM_eval_plot, width = 10, height = 7)
-ggsave(filename = "002_plots/005_m_SVM_log-age_all.pdf", SVM_eval_t_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_SVM_age_all", extension), SVM_eval_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_SVM_log-age_all", extension), SVM_eval_t_plot, width = 10, height = 7)
 
 #### Testing Bayesian models ####
 # install.packages("brms")

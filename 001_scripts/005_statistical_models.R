@@ -5,6 +5,7 @@
 # change working directory accordingly
 # setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+extension <- ".pdf"
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -15,6 +16,11 @@ colpal_CB_a <- c("#f8cbb1","#006786","#182057","#6b6300","#ff8ab9","#f1aaff","#b
 colpal_CB_a_01 <- colpal_CB_a[1:6]
 colpal_CB_a_02 <- colpal_CB_a[7:12]
 
+color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
+color_species <- setNames(color_species_df$color, color_species_df$species)
+
+color_compare <- c("#005AB5", "#DC3220")
+
 #### Preparation ####
 library(tidyverse)
 library(tidymodels)
@@ -24,13 +30,14 @@ library(ggplot2)
 library(patchwork)
 library(caret)
 library(glmnet)
+library(svglite)
 
 #### Loading data ####
 
 load("000_data/006_model_creation/all_meth_values_selected.RData")
 
 #### modifying age (optional) ####
-AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.4
+# AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.4
 AS_meth_values_selected$rel_age
 EH_meth_values_selected$rel_age
 ZF_meth_values_selected$rel_age
@@ -57,47 +64,56 @@ meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), 
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
 
 # checking how many CpGs are present per data set
-nrow(meth_train) #272
-nrow(meth_test) #99
+nrow(meth_train) #305
+nrow(meth_test) #66
 
 ## plotting age distribution
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
-  as.vector() %>%
-  .[c(-1,-9)]
-
 plot_age_dist <- ggplot(all_meth_values_selected) +
-  geom_density(aes(x = rel_age, color = species), linewidth = 2) +
-  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.2, linewidth = 0) +
-  scale_color_manual(values = colpalOI) +
-  scale_fill_manual(values = colpalOI[5]) +
+  geom_density(aes(x = rel_age, color = species), linewidth = 1) +
+  geom_density(aes(x = rel_age, fill = "all"), alpha = 0.5, linewidth = 1) +
+  scale_color_manual(values = color_species) +
+  scale_fill_manual(values = "grey") +
   theme_minimal() +
   labs(title = "Relative age distribution for all samples")
 
 # >> the plot shows that our dependent variable is not normally distributed (as expected from age) 
 
+# comparing data sets with Kolmogorov-Smirnov test
+ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p-value = 0.966
+
+ks_test_data$statistic
+
+color_compare_tt <- setNames(color_compare, as.factor(c("Training", "Testing")))
 # visually comparing training and testing sets (BOXPLOTS)
-plot_sample_age_dist <- ggplot() +
-  geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -1)) +
-  geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = 1)) +
-  scale_fill_manual(values = colpalOI) +
+plot_sample_age_dist_box <- ggplot() +
+  geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -.5)) +
+  geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = .5)) +
+  scale_fill_manual(values = color_compare_tt) +
   labs(fill = "Dataset") +
-  theme_minimal() +
-  ggtitle("Age Distribution in Training and Testing Sets")
+  xlab("Datasets") +
+  ylab("Age") +
+  theme_classic() +
+  theme(axis.text.x = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  ggtitle("Relative age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", ks_test_data$p.value))
 
 # visually comparing training and testing sets
+color_compare_tt <- setNames(color_compare, c("Training", "Testing"))
+
 plot_sample_age_dist <- ggplot() +
-  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, size = 0) +
-  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, size = 0) +
-  scale_fill_manual(values = colpalOI) +
-  labs(fill = "Dataset") +
-  theme_minimal() +
-  ggtitle("Age Distribution in Training and Testing Sets")
+  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5) +
+  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5) +
+  scale_fill_manual(values = color_compare_tt, name = "Dataset") +
+  xlab("Relative age") +
+  ylab("Density") +
+  theme_classic() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  ggtitle("Relative age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", round(ks_test_data$p.value, 4)))
 
 # visually comparing sets (Q-Q plot)
 qqplot(meth_train$rel_age, meth_test$rel_age,
        xlab = "Training data",
        ylab = "Testing data",
-       main = "Age Distribution in Training and Testing Sets")
+       main = "Relative age Distribution in Training and Testing Sets")
 abline(0, 1, col = "black")
 
 # comparing data sets with Kolmogorov-Smirnov test
@@ -123,7 +139,7 @@ Y_test <- meth_test[,"rel_age"]
 
 ## function for model testing plus calculating metrics (MSE, MAE, R)
 evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
-                           species_test, transform = FALSE, colpalOI, plot_title = "Model evaluation:", 
+                           species_test, transform = FALSE, colpalOI = color_species, plot_title = "Model evaluation:", 
                            y_lim = c(0,.3), x_lim = c(0,.3), CpGs = "not defined", s = NA) {
   # calculate predictions
   if (!is.na(s)) {
@@ -226,11 +242,9 @@ set.seed(123)
 GLM_test_log <- cv.glmnet(as.matrix(X), Y_log, alpha = glm_alpha)
 
 ### running models on testing data
-GLM_eval <-  evaluate.model(GLM_test, s = GLM_test$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = FALSE, 
-                            colpalOI= colpal_CB_01, plot_title = "GLM prediction", CpGs = "unknown")
+GLM_eval <-  evaluate.model(GLM_test, s = GLM_test$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = FALSE,  plot_title = "GLM", CpGs = "40")
 
-GLM_eval_t <-  evaluate.model(GLM_test_log, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
-                              colpalOI= colpal_CB_02, plot_title = "GLM (age -log-log transformed) prediction", CpGs = "unknown")
+GLM_eval_t <-  evaluate.model(GLM_test_log, s = GLM_test_log$lambda.min,as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, plot_title = "GLM (-log(-log(age)))", CpGs = "40")
 
 #### Testing multivariate linear regression models ####
 ### pre-testing with base R package
@@ -262,27 +276,27 @@ mlm_test_opt_t <- lm(Y_log ~.,X[sign_vec])
 ### testing and plotting model
 
 # testing normal mlm
-mlm_eval <-  evaluate.model(mlm_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
-                            colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+mlm_eval <-  evaluate.model(mlm_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, plot_title = "MLM", CpGs = length(mlm_test$coefficients)-1)
 # mlm_alt_eval <-  evaluate.model(mlm_alt, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
 
-mlm_eval_t <-  evaluate.model(mlm_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, 
-                              colpalOI= colpal_CB, plot_title = "MLM (age -log-log transformed) prediction", CpGs = length(mlm_test_t$coefficients)-1)
+mlm_eval_t <-  evaluate.model(mlm_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, plot_title = "MLM (-log(-log(age)))", CpGs = length(mlm_test_t$coefficients)-1)
 
 # testing optimized mlm
 mlm_eval_opt <-
-  evaluate.model(mlm_test_opt, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only) prediction", CpGs = length(mlm_test_opt$coefficients) - 1)
+  evaluate.model(mlm_test_opt, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, plot_title = "MLM (sig. CpGs)", CpGs = length(mlm_test_opt$coefficients) - 1)
 mlm_eval_opt_t <-
-  evaluate.model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI = colpal_CB_02, plot_title = "MLM (sign. CpGs only; age -log-log transformed) prediction", CpGs = length(mlm_test_opt$coefficients) - 1)
+  evaluate.model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, plot_title = "MLM (sig. CpGs; -log(-log(age)))", CpGs = length(mlm_test_opt$coefficients) - 1)
 
 ## plotting 
 # normal age
-mlm_eval$plot_train + mlm_eval$plot_test  + mlm_eval_opt$plot_train + mlm_eval_opt$plot_test +
+mlm_eval_plot <- mlm_eval$plot_train + mlm_eval$plot_test  + mlm_eval_opt$plot_train + mlm_eval_opt$plot_test +
   plot_layout(nrow = 2)
 # transformed age
-mlm_eval_t$plot_train + mlm_eval_t$plot_test  + mlm_eval_opt_t$plot_train + mlm_eval_opt_t$plot_test +
+mlm_eval_plot_t <- mlm_eval_t$plot_train + mlm_eval_t$plot_test  + mlm_eval_opt_t$plot_train + mlm_eval_opt_t$plot_test +
   plot_layout(nrow = 2)
 
+ggsave(filename = paste0("002_plots/005_m_MLM_rel_age_all", extension), mlm_eval_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_MLM_rel_log-age_all", extension), mlm_eval_plot_t, width = 10, height = 7)
 #### GLM (caret) ####
 ## pre processing
 # centering means that all the the mean is being subtracted from all values and scale divides them by the standard deviation. 
@@ -324,17 +338,17 @@ MLM_tuned_t <- train(rel_age ~ ., data = testingData_t,  method = "lm", tuneLeng
 
 ## evaluation 
 # normal models
-MLM_eval <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_eval <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
 
-MLM_eval_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_eval_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
 MLM_eval$plot_train + MLM_eval$plot_test + MLM_eval_tuned$plot_train + MLM_eval_tuned$plot_test +
   plot_layout(nrow=2)
 
 # transformed models
-MLM_t_eval <-  evaluate.model(MLM_model_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= colpal_CB_a_01, plot_title = "MLM (-log-log(age)) prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_t_eval <-  evaluate.model(MLM_model_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, plot_title = "MLM (-log-log(age)) prediction", CpGs = length(mlm_test$coefficients)-1)
 
-MLM_t_eval_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= colpal_CB_a_02, plot_title = "MLM (-log-log(age)) tuned prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_t_eval_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, plot_title = "MLM (-log-log(age)) tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
 ### LOOCV
 
@@ -342,8 +356,8 @@ MLM_t_eval_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y
 all_data <- all_meth_values_selected[,-length(all_meth_values_selected)]
 # all_data$rel_age <- -log(-log(all_data$rel_age))
 # all_age <- all_meth_values_selected$rel_age %>% -log(-log(.))
-all_data <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected) %>% 
-  .[,-length(all_data)]
+all_data <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected) %>%
+  .[,-length(.)]
 # setting up training method
 loocv_train_control <- trainControl(method = "LOOCV")
 
@@ -396,9 +410,9 @@ set.seed(123)
 RF_test_tuned <- randomForest(Y ~ ., data = X, mtry = 4, ntree = 1500)
 
 ## evaluation
-RF_eval <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "RF prediction", CpGs = length(mlm_test$coefficients)-1)
+RF_eval <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, plot_title = "RF", CpGs = length(mlm_test$coefficients)-1)
 
-RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_02, plot_title = "RF prediction", CpGs = length(mlm_test$coefficients)-1)
+RF_eval_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, plot_title = "RF (tuned)", CpGs = length(mlm_test$coefficients)-1)
 
 RF_eval$plot_train + RF_eval$plot_test + RF_eval_tuned$plot_train + RF_eval_tuned$plot_test +
   plot_layout(nrow=2)
@@ -543,11 +557,6 @@ df_eval <- cbind(df_all_training, df_all_testing)
 df_eval
 
 #### plotting ####
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
-  as.vector() %>%
-  .[c(-1,-9)]
-colpal <- hcl.colors(7, "SunsetDark") 
-cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 ## all
 # ggplot(cor_all, aes()) +
