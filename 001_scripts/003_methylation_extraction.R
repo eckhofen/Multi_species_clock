@@ -10,6 +10,7 @@ save_folder <- paste0(data_folder, "003_SMR/") # folder where extracted sequence
 #### Preparation ####
 library(GenomicRanges) # https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html
 library(Biostrings) # https://bioconductor.org/packages/release/bioc/html/Biostrings.html
+library(GenomicAlignments) # BiocManager::install("GenomicAlignments")
 library(tidyverse)
 library(ggplot2)
 library(ggforce)
@@ -17,7 +18,7 @@ library(ggforce)
 ## loading data 
 # loading overlapping alignment reads (rgenome: human) (see script "002....R")
 load("000_data/002_conserved_seq/HS_AC_AS_EH_ZF_overlaps.Rdata")
-
+HS_overlap_seqs <- HS_overlap_seqs_bt2
 # assign overlapping sequences for each species
 overlap_HS_AC <- HS_overlap_seqs[[1]]
 overlap_HS_AS <- HS_overlap_seqs[[2]]
@@ -30,7 +31,7 @@ HS_gr_overlap_seqs <- lapply(HS_overlap_seqs, function(x) granges(x))
 # using the overlap of the sequences to get the shared methylation regions (SMRs)
 HS_group_gr_overlap <- do.call(c, HS_gr_overlap_seqs)
 HS_SMR_b <- GenomicRanges::reduce(HS_group_gr_overlap)
-names(HS_SMR_b) <- sprintf("HS_SMR_b_bt2_%03d", 1:length(HS_SMR_b_bt2))
+names(HS_SMR_b) <- sprintf("HS_SMR_b_bt2_%03d", 1:length(HS_SMR_b))
 
 # Saving file
 save(HS_SMR_b, file = paste0(save_folder, "HS_SMR.RData"))
@@ -187,15 +188,6 @@ meth_columns_tmp <- sapply(meth_sites_names_tmp, function(x) grep(x, colnames(EH
 
 # EH_meth_values <- EH_meth_data[,meth_columns_tmp]
 EH_meth_values <- EH_meth_data[meth_sites_names_tmp]
-
-# # if males ONLY
-# EH_meth_values <- EH_meth_values[EH_sex == "M",]
-# EH_age <- EH_age[EH_sex == "M"]
-
-# # if only fish younger than 0.25 relative age
-# EH_meth_values <- EH_meth_values[EH_age <= 5,]
-# EH_sex <- EH_metadata_samples$sex[EH_age <= 5]
-# EH_age <- EH_age[EH_age <= 5]
 
 ##ZF
 meth_sites_names_tmp <- paste0(gsub("ZF_", "",ZF_methyl_sites$Chr), ":", ZF_methyl_sites$pos_rgenome)
