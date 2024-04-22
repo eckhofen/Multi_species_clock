@@ -235,7 +235,7 @@ write.csv(ZF_methyl_sites, file = paste0(save_folder, "HS_ZF_methyl_sites.csv") 
 save(ZF_methyl_sites, file = paste0(save_folder, "HS_ZF_methyl_sites.Rdata"))
 
 ### saving age metadata
-save(AC_age, AS_age, EH_age, ZF_age, file = paste0(save_folder, "HS_all_age.Rdata"))
+save(AC_age, AS_age, EH_age, EH_sex, ZF_age, meth_sites_names_tmp_AC, file = paste0(save_folder, "HS_all_age.Rdata"))
 
 #### Imputation ####
 library(zoo)
