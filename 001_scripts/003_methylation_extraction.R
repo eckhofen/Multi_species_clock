@@ -376,9 +376,11 @@ ZF_meth_values_long$Site_f <- gsub(".*\\:", "", ZF_meth_values_long$Site) %>% as
 ZF_meth_values_long$species <- "ZF"
 
 all_meth_values_long <- rbind(AC_meth_values_long, AS_meth_values_long, EH_meth_values_long, ZF_meth_values_long)
-save(all_meth_values_long, file = paste0(save_folder, "all_meth_values_long.RData"))
+save(all_meth_values_long, AC_meth_values_long, AS_meth_values_long, EH_meth_values_long, ZF_meth_values_long,  file = paste0(save_folder, "all_meth_values_long.RData"))
+
 
 ### plotting
+load(paste0(save_folder,"all_meth_values_long.RData"))
 
 ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
