@@ -380,6 +380,7 @@ save(all_meth_values_long, AC_meth_values_long, AS_meth_values_long, EH_meth_val
 
 
 ### plotting
+save_folder <- paste0(data_folder, "004_methyl_values/")
 load(paste0(save_folder,"all_meth_values_long.RData"))
 
 ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +
