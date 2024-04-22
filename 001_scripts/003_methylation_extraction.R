@@ -3,7 +3,8 @@
 
 #### Settings ####
 setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
-data_folder <- "/powerplant/workspace/cfngle/script_GH/Multi_species_clock/000_data/"
+setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+data_folder <- "/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/000_data/"
 save_folder <- paste0(data_folder, "003_SMR/") # folder where extracted sequences will be saved
 
 #### Preparation ####
@@ -254,6 +255,15 @@ ZF_meth_values_imputed <- na.aggregate(ZF_meth_values)
 write.csv(ZF_meth_values_imputed, file = paste0(save_folder, "HS_ZF_meth_values_imputed.csv"))
 save(ZF_meth_values_imputed, file = paste0(save_folder, "HS_ZF_meth_values_imputed.Rdata"))
 
+#### Loading data ####
+
+load("000_data/004_methyl_values/HS_AC_meth_values.Rdata")
+load("000_data/004_methyl_values/HS_AS_meth_values.Rdata")
+load("000_data/004_methyl_values/HS_EH_meth_values.Rdata")
+load("000_data/004_methyl_values/HS_ZF_meth_values_imputed.Rdata")
+load("000_data/004_methyl_values/HS_all_age.Rdata")
+load("000_data/004_methyl_values/")
+
 #### PCA ####
 
 ##AC
@@ -276,22 +286,21 @@ PCA_values_EH$sex <- EH_sex
 PCA_ZF <- prcomp(ZF_meth_values_imputed,scale = TRUE)
 PCA_values_ZF <- as.data.frame(PCA_ZF$x)
 PCA_values_ZF$species <- "ZF"
-PCA_values_ZF$species <- "ZF"
+
 
 ### plotting PCA
 library(patchwork)
 # color palettes
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
-  as.vector() %>% 
-  .[c(-1,-9)]
-colpal <- hcl.colors(7, "SunsetDark") 
-cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
+
+color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
+color_species <- setNames(color_species_df$color, color_species_df$species)
 
 ##AC
 AC_pca_plot <- ggplot(PCA_values_AC, aes(x = PC1, y = PC2, color = AC_age)) +
   geom_point(cex = 3) +
   facet_wrap(~species) +
-  scale_color_gradient(low = colpalOI[1], high = colpalOI[2]) +
+  scale_color_gradient(low = colpal_CB_c[1], high = colpal_CB_c[5]) +
   # geom_text(aes(label = 1:nrow(AC_meth_data)), nudge_x = 0.4, nudge_y = 0) +
   theme_classic()
 
@@ -299,15 +308,15 @@ AC_pca_plot <- ggplot(PCA_values_AC, aes(x = PC1, y = PC2, color = AC_age)) +
 AS_pca_plot <- ggplot(PCA_values_AS, aes(x = PC1, y = PC2, color = AS_age)) +
   geom_point(cex = 3) +
   facet_wrap(~species) +
-  scale_color_gradient(low = colpalOI[3], high = colpalOI[4]) +
+  scale_color_gradient(low = colpal_CB_c[2], high = colpal_CB_c[6]) +
   # geom_text(aes(label = AS_meth_data$id), nudge_x = 0, nudge_y = 0.5) +
   theme_classic()
 
 ##EH
 EH_pca_plot <- ggplot(PCA_values_EH, aes(x = PC2, y = PC1, color = EH_age)) +
-  geom_point(cex = 3, aes(shape = sex)) +
+  geom_point(cex = 3) +
   facet_wrap(~species) +
-  scale_color_gradient(low = colpalOI[5], high = colpalOI[6]) +
+  scale_color_gradient(low = colpal_CB_c[3], high = colpal_CB_c[7]) +
   # geom_text(aes(label = EH_meth_data$id), nudge_x = 0.4, nudge_y = 0) +
   theme_classic()
 
@@ -315,13 +324,15 @@ EH_pca_plot <- ggplot(PCA_values_EH, aes(x = PC2, y = PC1, color = EH_age)) +
 ZF_pca_plot <- ggplot(PCA_values_ZF, aes(x = PC1, y = PC2, color = ZF_age)) +
   geom_point(cex = 3) +
   facet_wrap(~species) +
-  scale_color_gradient(low = colpalOI[1], high = colpalOI[5]) +
+  scale_color_gradient(low = colpal_CB_c[4], high = colpal_CB_c[8]) +
   # geom_text(aes(label = rownames(ZF_meth_data)), nudge_x = 0.4, nudge_y = 0) +
   theme_classic()
 
 ## plot all 
-(AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot) +
+PCA_plot_all <- (AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot) +
   plot_layout(nrow=2)
+
+ggsave(filename = "002_plots/003_PCA_all.pdf", plot = PCA_plot_all, width = 8, height = 7)
 
 #### Plotting Methylation values ####
 ## max age span modifier
@@ -342,6 +353,7 @@ AC_meth_values_long$age <- rep(AC_age, each = ncol(AC_meth_values))
 AC_meth_values_long$max_age <- 25
 AC_meth_values_long$rel_age <- AC_meth_values_long$age / AC_meth_values_long$max_age
 AC_meth_values_long$SMR <- as.factor(rep(AC_methyl_sites$SMR[meth_sites_names_tmp_AC %in% AC_meth_data_test], times = length(AC_age))) # indexing is necessary because not all CpGs were able to be extracted from the shared sites due o batch correction
+AC_meth_values_long$SMR <- as.factor(rep(AC_methyl_sites$SMR, times = length(AC_age))) # indexing is necessary because not all CpGs were able to be extracted from the shared sites due o batch correction
 AC_meth_values_long$Site_i <- gsub(".*\\.", "", AC_meth_values_long$Site) %>% as.integer()
 AC_meth_values_long$Site_f <- gsub(".*\\.", "", AC_meth_values_long$Site) %>% as.factor()
 AC_meth_values_long$species <- "AC"

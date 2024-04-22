@@ -27,7 +27,7 @@ HS_EH_1000_bt2 <- readGAlignments("results-data/bowtie2/human_EH_CpG_1000bp_bt2.
 HS_JM_1000_bt2 <- readGAlignments("results-data/bowtie2/human_JM_243285_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 HS_ZF_1000_bt2 <- readGAlignments("results-data/bowtie2/human_ZF_757883_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 
-# addng metadata
+# adding metadata
 AC_metadata <- read.csv("script_GH/Multi_species_clock/000_data/001_sequences/AC_metadata_1000bp.csv")
 AC_metadata_matched <- AC_metadata[match(names(HS_AC_1000_bt2), AC_metadata$seq),]
 mcols(HS_AC_1000_bt2) <- data.frame(mcols(HS_AC_1000_bt2), AC_metadata_matched$methyl_pos,AC_metadata_matched$methyl_n)

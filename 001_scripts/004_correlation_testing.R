@@ -3,7 +3,8 @@
 
 #### Settings ####
 setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
-data_folder <- "/powerplant/workspace/cfngle/script_GH/Multi_species_clock/000_data/"
+setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
+data_folder <- "/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/000_data/"
 save_folder <- paste0(data_folder, "005_correlation_data/") # folder where extracted sequences will be saved
 
 #### Preparation ####
@@ -205,17 +206,23 @@ save_folder <- paste0(data_folder, "006_model_creation/")
 save_path <- paste0(save_folder, "all_meth_values_selected.RData")
 save(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected, all_meth_values_selected, file = save_path)
 
+#### plotting ####
+# color palette
+colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
+
+color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
+color_species <- setNames(color_species_df$color, color_species_df$species)
 ## all
 ggplot(cor_all, aes()) +
   geom_point(aes(y = Correlation, x = Site, color = species, alpha = significant)) +
-  scale_color_manual(values = colpalOI[c(-1,-9)]) +
+  scale_color_manual(values = color_species) +
   # facet_row(~SMR) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ggplot(cor_all, aes()) +
   geom_point(aes(x = Site, y = Correlation, color = species, alpha = significant)) +
   # geom_line(aes(x = c(-1,1), y = log2(0.05), color = "#CC79A7")) +
-  scale_color_manual(values = colpalOI[c(-1,-9)]) +
+  scale_color_manual(values = color_species) +
   facet_wrap(~SMR) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
@@ -223,22 +230,22 @@ ggplot(cor_all, aes()) +
 ggplot(subset(cor_all, significant == TRUE), aes()) +
   geom_point(aes(y = Correlation, x = Site, color = species)) +
   # facet_wrap(~SMR) +
-  scale_color_manual(values = colpalOI[c(-1,-9)]) +
+  scale_color_manual(values = color_species) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ## only selected
 ggplot(all_sig_CpGs_common, aes()) +
   geom_point(aes(y = Correlation, x = Site, color = species)) +
   facet_row(~SMR) +
-  scale_color_manual(values = colpalOI[c(-1,-9)]) +
+  scale_color_manual(values = color_species) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ## only cor positive
 ggplot(all_pos_cor_CpG, aes()) +
   geom_point(aes(y = Correlation, x = Site, color = species, alpha = significant)) +
-  facet_row(~SMR) +
-  scale_color_manual(values = colpalOI[c(-1,-9)]) +
-  theme(axis.ticks.x = element_blank())
+  facet_wrap(~SMR) +
+  scale_color_manual(values = color_species) +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ## plotting SMR groups 24 and 28
 selected_methyl_values <- subset(all_meth_values_long, Site %in% subset(all_sig_CpGs_common, SMR == "SMR_024" | SMR == "SMR_026")$Site)
@@ -247,8 +254,8 @@ selected_methyl_values <- subset(all_meth_values_long, Site %in% all_mix_cor_CpG
 ggplot(selected_methyl_values, aes(x = Site, y = Methylation_Value)) +
   geom_boxplot(aes(group = Site_f, fill = species, color = species), alpha = 0.9, outlier.size = 0.1) +
   facet_wrap(~SMR, scale = "free_x") +
-  scale_fill_manual(values = colpalOI) +
-  scale_color_manual(values = colpalOI) +
+  scale_fill_manual(values = color_species) +
+  scale_color_manual(values = color_species) +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
   labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)",

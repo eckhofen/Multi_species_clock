@@ -8,14 +8,6 @@ setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multisp
 extension <- ".pdf"
 
 # setting up color palette 
-colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
-colpal_CB_01 <- colpal_CB[c(TRUE, FALSE)]
-colpal_CB_02 <- colpal_CB[c(FALSE, TRUE)]
-
-colpal_CB_a <- c("#f8cbb1","#006786","#182057","#6b6300","#ff8ab9","#f1aaff","#bb005a","#013aa8","#01ef9a","#fa8200","#ee0028","#26c100")
-colpal_CB_a_01 <- colpal_CB_a[1:6]
-colpal_CB_a_02 <- colpal_CB_a[7:12]
-
 colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
 
 color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
