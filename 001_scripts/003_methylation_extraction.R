@@ -4,7 +4,7 @@
 #### Settings ####
 setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
-data_folder <- "/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/000_data/"
+data_folder <- paste0(getwd(), "/000_data/")
 save_folder <- paste0(data_folder, "003_SMR/") # folder where extracted sequences will be saved
 
 #### Preparation ####
@@ -33,7 +33,7 @@ HS_SMR_b <- GenomicRanges::reduce(HS_group_gr_overlap)
 names(HS_SMR_b) <- sprintf("HS_SMR_b_bt2_%03d", 1:length(HS_SMR_b_bt2))
 
 # Saving file
-save(HS_SMR_b, file = "/workspace/cfngle/results-data/04_SMRs/HS_SMR_b.Rdata")
+save(HS_SMR_b, file = paste0(save_folder, "HS_SMR.RData"))
 
 #### Methylation extraction ####
 
@@ -107,25 +107,24 @@ EH_methyl_sites <- get.methyl.sites(overlap_HS_EH, species = "EH", SMRs = HS_SMR
 ZF_methyl_sites <- get.methyl.sites(overlap_HS_ZF, species = "ZF", SMRs = HS_SMR_b)
 
 methyl_sites_combined <- bind_rows(AC_methyl_sites, AS_methyl_sites, EH_methyl_sites, ZF_methyl_sites)
-
+methyl_sites_combined$species <- as.factor(methyl_sites_combined$species)
 HS_chr_names <- sort(unique(methyl_sites_combined$chr_align))
 
 #### plotting data ####
 # adding color palette
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
-  as.vector() %>%
-  .[c(-1,-9)]
+colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
+
+color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
+color_species <- setNames(color_species_df$color, color_species_df$species)
 
 # visualising the genomic locations and the frequency of CpGs per species
-ggplot(methyl_sites_combined, aes(x = pos_align, fill = species)) +
-  geom_histogram(position = "dodge") +  
+ggplot(methyl_sites_combined) +
+  geom_histogram(position = "dodge", aes(x = pos_align, fill = species)) +  
   facet_wrap(~ chr_align, scales = "free_x") +
-  labs(x = "Position", y = "CpGs", title = "All CpGs") +
-  scale_color_manual(values = colpalOI) + 
-  labs(title = "Number of CpGs and their genomic position") +
+  labs(x = "Position", y = "CpGs", title = "Number of CpGs and their genomic position") +
+  scale_color_manual(values = color_species) + 
   theme_minimal() +
   theme(strip.text.y = element_text(angle = 0), )  
-
 
 #### Methylation metadata ####
 ##AC
@@ -336,7 +335,7 @@ ggsave(filename = "002_plots/003_PCA_all.pdf", plot = PCA_plot_all, width = 8, h
 
 #### Plotting Methylation values ####
 ## max age span modifier
-AC_max_age_mod <- 1.3 #30% more
+# AC_max_age_mod <- 1.3 #30% more
 
 # transforming all the values into a plot-frindly dataframe for ggplot2
 AS_meth_values_long <- pivot_longer(AS_meth_values, cols = everything(), names_to = "Site", values_to = "Methylation_Value")
@@ -352,7 +351,7 @@ AC_meth_values_long <- pivot_longer(AC_meth_values, cols = everything(), names_t
 AC_meth_values_long$age <- rep(AC_age, each = ncol(AC_meth_values))
 AC_meth_values_long$max_age <- 25
 AC_meth_values_long$rel_age <- AC_meth_values_long$age / AC_meth_values_long$max_age
-AC_meth_values_long$SMR <- as.factor(rep(AC_methyl_sites$SMR[meth_sites_names_tmp_AC %in% AC_meth_data_test], times = length(AC_age))) # indexing is necessary because not all CpGs were able to be extracted from the shared sites due o batch correction
+# AC_meth_values_long$SMR <- as.factor(rep(AC_methyl_sites$SMR[meth_sites_names_tmp_AC %in% AC_meth_data_test], times = length(AC_age))) # indexing is necessary because not all CpGs were able to be extracted from the shared sites due o batch correction
 AC_meth_values_long$SMR <- as.factor(rep(AC_methyl_sites$SMR, times = length(AC_age))) # indexing is necessary because not all CpGs were able to be extracted from the shared sites due o batch correction
 AC_meth_values_long$Site_i <- gsub(".*\\.", "", AC_meth_values_long$Site) %>% as.integer()
 AC_meth_values_long$Site_f <- gsub(".*\\.", "", AC_meth_values_long$Site) %>% as.factor()
@@ -377,6 +376,7 @@ ZF_meth_values_long$Site_f <- gsub(".*\\:", "", ZF_meth_values_long$Site) %>% as
 ZF_meth_values_long$species <- "ZF"
 
 all_meth_values_long <- rbind(AC_meth_values_long, AS_meth_values_long, EH_meth_values_long, ZF_meth_values_long)
+save(all_meth_values_long, file = paste0(save_folder, "all_meth_values_long.RData"))
 
 ### plotting
 
@@ -384,7 +384,7 @@ ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
   geom_boxplot(aes(group = Site_f), alpha = 0.5) +
   facet_wrap(~SMR, scale = "free_x") +
-  scale_color_gradient(low = colpal[1], high = colpal[7], guide = "legend") +
+  scale_color_gradient(low = colpal_CB_c[1], high = colpal_CB_c[5], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
   labs(title = "Methylation values AS (human rgenome)")
@@ -393,7 +393,7 @@ ggplot(AC_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
   geom_boxplot(aes(group = Site_f), alpha = 0.5) +
   facet_wrap(~SMR, scale = "free_x") +
-  scale_color_gradient(low = cbbPalette[2], high = cbbPalette[6], guide = "legend") +
+  scale_color_gradient(low = colpal_CB_c[2], high = colpal_CB_c[6], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
   labs(title = "Methylation values AC (human rgenome)")
@@ -402,7 +402,7 @@ ggplot(EH_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
   geom_boxplot(aes(group = Site_f), alpha = 0.5) +
   facet_wrap(~SMR, scale = "free_x") +
-  scale_color_gradient(low = cbbPalette[2], high = cbbPalette[6], guide = "legend") +
+  scale_color_gradient(low = colpal_CB_c[3], high = colpal_CB_c[7], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
   labs(title = "Methylation values EH (human rgenome)")
@@ -411,7 +411,7 @@ ggplot(ZF_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
   geom_boxplot(aes(group = Site_f), alpha = 0.5) +
   facet_wrap(~SMR, scale = "free_x") +
-  scale_color_gradient(low = "#E69F00", high = "#0072B2", guide = "legend") +
+  scale_color_gradient(low = colpal_CB_c[4], high = colpal_CB_c[8], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
   labs(title = "Methylation values ZF (human rgenome)")
@@ -423,4 +423,5 @@ ggplot(all_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   scale_fill_manual(values = colpalOI) +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
-  labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)")
+  labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (AS), European Hake (EH), Zebrafish (ZF) (human rgenome)")
+

@@ -1,7 +1,7 @@
 #### Overview ####
 # Conserved sequences will be extracted from the aligned sequences
 
-#### settings ####
+#### Settings ####
 data_folder <- "/powerplant/workspace/cfngle/script_GH/Multi_species_clock/000_data/"
 save_folder <- paste0(data_folder, "002_conserved_seq/") # folder where extracted sequences will be saved
 suffix <- ".fasta"
