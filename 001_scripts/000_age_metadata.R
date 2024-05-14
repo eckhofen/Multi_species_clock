@@ -9,6 +9,7 @@ extension <- ".pdf"
 library(ggplot2)
 library(ggforce)
 library(dplyr)
+library(patchwork)
 
 #### Loading data ####
 load("000_data/000_metadata/metadata_age.RData")
@@ -41,6 +42,12 @@ plot_direct_age <- ggplot(df_all, aes(y = age, color = species)) +
   geom_boxplot(aes(x = species), fill = NA) +
   scale_color_manual(values = color_species) +
   theme_classic() +
-  labs(title = "Age distribution", x = "Species", y = "Relative age")
+  geom_text(data = species_counts, aes(x = species, y = -.03, label = count, color = species), size = 3.5) +
+  labs(title = "Age distribution", x = "Species", y = "Chronological age")
 
 ggsave(filename = paste0("002_plots/000_age_distribution", extension), plot_direct_age, width = 7, height = 7)
+
+plot_relative_direct_age <- plot_age + plot_direct_age +
+  plot_layout(nrow = 1)
+
+ggsave(filename = paste0("002_plots/000_age_distribution_both", extension), plot_relative_direct_age, width = 14, height = 7)

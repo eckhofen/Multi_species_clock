@@ -106,15 +106,15 @@ plot_sample_age_dist_box <- ggplot() +
   ylab("Age") +
   theme_classic() +
   theme(axis.text.x = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", ks_test_data$p.value))
+  ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", round(ks_test_data$p.value, 8)))
 
 # visually comparing training and testing sets
 plot_sample_age_dist <- ggplot() +
-  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, linewidth = NA) +
-  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = NA) +
+  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, linewidth = 1) +
+  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = 1) +
   scale_fill_manual(values = color_compare_tt, name = "Dataset") +
   theme_minimal() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  # theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   ggtitle("Age Distribution in Training and Testing Sets")
 
 # visually comparing sets (Q-Q plot)
@@ -123,7 +123,6 @@ qqplot(meth_train$rel_age, meth_test$rel_age,
        ylab = "Testing data",
        main = "Age Distribution in Training and Testing Sets")
 abline(0, 1, col = "black")
-
 
 # plotting both graphs
 ggsave(filename = paste0("002_plots/005_age_distribution", extension), plot_age_dist, width = 7, height = 7)
@@ -419,7 +418,7 @@ library(randomForest)
 set.seed(123)
 
 ## actual model
-RF_test <- randomForest(Y ~ ., data = X, mtry = 9, ntree = 1500)
+RF_test <- randomForest(Y ~ ., data = X, mtry = 4, ntree = 1500)
 plot(RF_test)
 varImpPlot(RF_test)
 importance(RF_test)
@@ -431,16 +430,16 @@ set.seed(123)
 tuneRF(
   x=X, #define predictor variables
   y=Y, #define response variable
-  ntreeTry=500,
+  ntreeTry=1500,
   mtryStart=4, 
   stepFactor=1.5,
   improve=0.01,
-  trace=TRUE #don't show real-time progress
+  trace=TRUE
 )
 
 # take suggested mtry
 set.seed(123)
-RF_test_tuned <- randomForest(Y ~ ., data = X, mtry = 4, ntree = 1500)
+RF_test_tuned <- randomForest(Y ~ ., data = X, mtry = 9, ntree = 1500)
 
 ## evaluation
 RF_eval <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "RF", CpGs = length(mlm_test$coefficients)-1)

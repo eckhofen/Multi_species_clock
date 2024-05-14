@@ -253,7 +253,12 @@ load("000_data/004_methyl_values/HS_AS_meth_values.Rdata")
 load("000_data/004_methyl_values/HS_EH_meth_values.Rdata")
 load("000_data/004_methyl_values/HS_ZF_meth_values_imputed.Rdata")
 load("000_data/004_methyl_values/HS_all_age.Rdata")
-load("000_data/004_methyl_values/")
+
+# check how many CpGs were captured in the SMRs for each species
+length(AC_meth_values) #518
+length(AS_meth_values) #281
+length(EH_meth_values) #1268
+length(ZF_meth_values_imputed) #1127
 
 #### PCA ####
 
