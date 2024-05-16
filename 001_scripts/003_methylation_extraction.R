@@ -14,6 +14,7 @@ library(GenomicAlignments) # BiocManager::install("GenomicAlignments")
 library(tidyverse)
 library(ggplot2)
 library(ggforce)
+library(ggfortify)
 
 ## loading data 
 # loading overlapping alignment reads (rgenome: human) (see script "002....R")
@@ -266,22 +267,26 @@ length(ZF_meth_values_imputed) #1127
 PCA_AC <- prcomp(AC_meth_values,scale = TRUE)
 PCA_values_AC <- as.data.frame(PCA_AC$x)
 PCA_values_AC$species <- "AC"
+PCA_AC_sum <- summary(PCA_AC)
 
 ##AS
 PCA_AS <- prcomp(AS_meth_values,scale = TRUE)
 PCA_values_AS <- as.data.frame(PCA_AS$x)
 PCA_values_AS$species <- "AS"
+PCA_AS_sum <- summary(PCA_AS)
 
 ##EH
 PCA_EH <- prcomp(EH_meth_values, scale = TRUE)
 PCA_values_EH <- as.data.frame(PCA_EH$x)
 PCA_values_EH$species <- "EH"
 PCA_values_EH$sex <- EH_sex
+PCA_EH_sum <- summary(PCA_EH)
 
 ##ZF
 PCA_ZF <- prcomp(ZF_meth_values_imputed,scale = TRUE)
 PCA_values_ZF <- as.data.frame(PCA_ZF$x)
 PCA_values_ZF$species <- "ZF"
+PCA_ZF_sum <- summary(PCA_ZF)
 
 
 ### plotting PCA
@@ -297,6 +302,7 @@ AC_pca_plot <- ggplot(PCA_values_AC, aes(x = PC1, y = PC2, color = AC_age)) +
   geom_point(cex = 3) +
   facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[1], high = colpal_CB_c[5]) +
+  labs(color = "Age", y = paste0("PC2 (", round(PCA_AC_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_AC_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = 1:nrow(AC_meth_data)), nudge_x = 0.4, nudge_y = 0) +
   theme_classic()
 
@@ -305,14 +311,16 @@ AS_pca_plot <- ggplot(PCA_values_AS, aes(x = PC1, y = PC2, color = AS_age)) +
   geom_point(cex = 3) +
   facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[2], high = colpal_CB_c[6]) +
+  labs(color = "Age", y = paste0("PC2 (", round(PCA_AS_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_AS_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = AS_meth_data$id), nudge_x = 0, nudge_y = 0.5) +
   theme_classic()
 
 ##EH
-EH_pca_plot <- ggplot(PCA_values_EH, aes(x = PC2, y = PC1, color = EH_age)) +
+EH_pca_plot <- ggplot(PCA_values_EH, aes(y = PC2, x = PC1, color = EH_age)) +
   geom_point(cex = 3) +
   facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[3], high = colpal_CB_c[7]) +
+  labs(color = "Age", y = paste0("PC2 (", round(PCA_EH_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_EH_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = EH_meth_data$id), nudge_x = 0.4, nudge_y = 0) +
   theme_classic()
 
@@ -321,8 +329,9 @@ ZF_pca_plot <- ggplot(PCA_values_ZF, aes(x = PC1, y = PC2, color = ZF_age)) +
   geom_point(cex = 3) +
   facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[4], high = colpal_CB_c[8]) +
+  labs(color = "Age", y = paste0("PC2 (", round(PCA_ZF_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_ZF_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = rownames(ZF_meth_data)), nudge_x = 0.4, nudge_y = 0) +
-  theme_classic()
+  theme_classic() 
 
 ## plot all 
 PCA_plot_all <- (AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot) +
