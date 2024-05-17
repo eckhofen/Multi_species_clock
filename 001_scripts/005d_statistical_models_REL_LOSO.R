@@ -5,7 +5,7 @@
 # change working directory accordingly extension
 # setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
-extension <- ".pdf"
+extension <- "_no_ZF.pdf"
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -70,11 +70,11 @@ ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = 
 
 # combining data into training and testing sets
 meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
-# meth_train <- rbind(training(ZF_split))
+meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, AC_meth_values_selected)
 
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
-# meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), ZF_meth_values_selected)
-# meth_test <- rbind(training(AC_split), training(AS_split), training(EH_split))
+meth_test <- rbind(ZF_meth_values_selected)
+
 
 # checking how many CpGs are present per data set
 nrow(meth_train) #305

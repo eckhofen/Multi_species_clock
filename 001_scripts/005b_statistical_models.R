@@ -208,7 +208,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Chronological age",
+    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age (years)", x = "Chronological age (years)",
          subtitle = paste0("R=", metrics_train$R, " MSE=", metrics_train$MSE, " MAE=", metrics_train$MAE, " N=", nrow(X_train), " CpGs=", CpGs)) +
     theme_classic()
   
@@ -219,7 +219,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Chronological age",
+    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age (years)", x = "Chronological age (years)",
          subtitle = paste0("R=", metrics_test$R, " MSE=", metrics_test$MSE, " MAE=", metrics_test$MAE, " N=", nrow(X_test), " CpGs=", CpGs)) +
     theme_classic()
   
@@ -441,8 +441,10 @@ importance(RF_test)
 
 which.min(RF_test$mse)
 
+# age transformed model 
 set.seed(123)
 RF_test_t <- randomForest(Y_log ~ ., data = X, mtry = 4, ntree = 1500)
+
 ## tuning model
 set.seed(123)
 tuneRF(
@@ -508,72 +510,72 @@ ggsave(filename = paste0("002_plots/005_m_SVM_log-age_all", extension), SVM_eval
 #### Testing Bayesian models ####
 # install.packages("brms")
 # install.packages("rstan")  # Required for brms
-library(brms)
-library(rstan)
-
-# setting up formula for model
-BM_formula <- bf(rel_age ~.)
-BM_model <- brm(formula = BM_formula, data = trainingData, family = gaussian(), chains = 4, cores = min(10, parallel::detectCores()), iter = 2000)
-# summary(BM_model)
-# plot(BM_model)
-
-BM_model_t <- brm(formula = BM_formula, data = trainingData_t, family = gaussian(), chains = 4, cores = min(10, parallel::detectCores()), iter = 2000)
-
-sel_cols <- colnames(trainingData[,-ncol(trainingData)])
-# plot(conditional_effects(BM_model, effects = sel_cols))
-
-pp_check(BM_model)
-
-BM_pp <- posterior_predict(BM_model) 
-
-ci <- posterior_interval(BM_pp, prob = 0.95)
-
-# predictions
-# normal
-BM_predict_train <- predict(BM_model, trainingData[-length(trainingData)])
-BM_predict_test <- predict(BM_model, testingData[-length(testingData)])
-
-#transformed
-BM_predict_train_t <- predict(BM_model_t, trainingData[-length(trainingData)])
-BM_predict_test_t <- predict(BM_model_t, testingData[-length(testingData)])
-
-# prediction data frame
-# normal
-prediction_data_train <- data.frame(Observed = trainingData$rel_age, Predicted = BM_predict_train[,1], Lwr = BM_predict_train[,3], Upr = BM_predict_train[,4])
-prediction_data_test <- data.frame(Observed = testingData$rel_age, Predicted = BM_predict_test[,1], Lwr = BM_predict_test[,3], Upr = BM_predict_test[,4])
-# transformed
-prediction_data_train_t <- data.frame(Observed = trainingData$rel_age, Predicted = BM_predict_train_t[,1], Lwr = BM_predict_train[,3], Upr = BM_predict_train[,4])
-prediction_data_test_t <- data.frame(Observed = testingData$rel_age, Predicted = BM_predict_test_t[,1], Lwr = BM_predict_test[,3], Upr = BM_predict_test[,4])
-
-prediction_data_train_t$Predicted <- exp(-exp(-prediction_data_train_t$Predicted))
-prediction_data_test_t$Predicted <- exp(-exp(-prediction_data_test_t$Predicted))
-
-# metrics
-# normal
-metrics_BM_train <- data.frame(
-  R = round(cor(prediction_data_train$Predicted, prediction_data_train$Observed, method = "pearson"), 4),
-  MSE = round(mean((prediction_data_train$Predicted - prediction_data_train$Observed)^2), 4),
-  MAE = round(mean(abs(prediction_data_train$Predicted - prediction_data_train$Observed)), 4),
-  N = nrow(prediction_data_train))
-
-metrics_BM_test <- data.frame(
-  R = round(cor(prediction_data_test$Predicted, prediction_data_test$Observed, method = "pearson"), 4),
-  MSE = round(mean((prediction_data_test$Predicted - prediction_data_test$Observed)^2), 4),
-  MAE = round(mean(abs(prediction_data_test$Predicted - prediction_data_test$Observed)), 4),
-  N = nrow(prediction_data_test))
-
-# transformed
-metrics_BM_train_t <- data.frame(
-  R = round(cor(prediction_data_train_t$Predicted, prediction_data_train_t$Observed, method = "pearson"), 4),
-  MSE = round(mean((prediction_data_train_t$Predicted - prediction_data_train_t$Observed)^2), 4),
-  MAE = round(mean(abs(prediction_data_train_t$Predicted - prediction_data_train_t$Observed)), 4),
-  N = nrow(prediction_data_train_t))
-
-metrics_BM_test_t <- data.frame(
-  R = round(cor(prediction_data_test_t$Predicted, prediction_data_test_t$Observed, method = "pearson"), 4),
-  MSE = round(mean((prediction_data_test_t$Predicted - prediction_data_test_t$Observed)^2), 4),
-  MAE = round(mean(abs(prediction_data_test_t$Predicted - prediction_data_test_t$Observed)), 4),
-  N = nrow(prediction_data_test_t))
+# library(brms)
+# library(rstan)
+# 
+# # setting up formula for model
+# BM_formula <- bf(rel_age ~.)
+# BM_model <- brm(formula = BM_formula, data = trainingData, family = gaussian(), chains = 4, cores = min(10, parallel::detectCores()), iter = 2000)
+# # summary(BM_model)
+# # plot(BM_model)
+# 
+# BM_model_t <- brm(formula = BM_formula, data = trainingData_t, family = gaussian(), chains = 4, cores = min(10, parallel::detectCores()), iter = 2000)
+# 
+# sel_cols <- colnames(trainingData[,-ncol(trainingData)])
+# # plot(conditional_effects(BM_model, effects = sel_cols))
+# 
+# pp_check(BM_model)
+# 
+# BM_pp <- posterior_predict(BM_model) 
+# 
+# ci <- posterior_interval(BM_pp, prob = 0.95)
+# 
+# # predictions
+# # normal
+# BM_predict_train <- predict(BM_model, trainingData[-length(trainingData)])
+# BM_predict_test <- predict(BM_model, testingData[-length(testingData)])
+# 
+# #transformed
+# BM_predict_train_t <- predict(BM_model_t, trainingData[-length(trainingData)])
+# BM_predict_test_t <- predict(BM_model_t, testingData[-length(testingData)])
+# 
+# # prediction data frame
+# # normal
+# prediction_data_train <- data.frame(Observed = trainingData$rel_age, Predicted = BM_predict_train[,1], Lwr = BM_predict_train[,3], Upr = BM_predict_train[,4])
+# prediction_data_test <- data.frame(Observed = testingData$rel_age, Predicted = BM_predict_test[,1], Lwr = BM_predict_test[,3], Upr = BM_predict_test[,4])
+# # transformed
+# prediction_data_train_t <- data.frame(Observed = trainingData$rel_age, Predicted = BM_predict_train_t[,1], Lwr = BM_predict_train[,3], Upr = BM_predict_train[,4])
+# prediction_data_test_t <- data.frame(Observed = testingData$rel_age, Predicted = BM_predict_test_t[,1], Lwr = BM_predict_test[,3], Upr = BM_predict_test[,4])
+# 
+# prediction_data_train_t$Predicted <- exp(-exp(-prediction_data_train_t$Predicted))
+# prediction_data_test_t$Predicted <- exp(-exp(-prediction_data_test_t$Predicted))
+# 
+# # metrics
+# # normal
+# metrics_BM_train <- data.frame(
+#   R = round(cor(prediction_data_train$Predicted, prediction_data_train$Observed, method = "pearson"), 4),
+#   MSE = round(mean((prediction_data_train$Predicted - prediction_data_train$Observed)^2), 4),
+#   MAE = round(mean(abs(prediction_data_train$Predicted - prediction_data_train$Observed)), 4),
+#   N = nrow(prediction_data_train))
+# 
+# metrics_BM_test <- data.frame(
+#   R = round(cor(prediction_data_test$Predicted, prediction_data_test$Observed, method = "pearson"), 4),
+#   MSE = round(mean((prediction_data_test$Predicted - prediction_data_test$Observed)^2), 4),
+#   MAE = round(mean(abs(prediction_data_test$Predicted - prediction_data_test$Observed)), 4),
+#   N = nrow(prediction_data_test))
+# 
+# # transformed
+# metrics_BM_train_t <- data.frame(
+#   R = round(cor(prediction_data_train_t$Predicted, prediction_data_train_t$Observed, method = "pearson"), 4),
+#   MSE = round(mean((prediction_data_train_t$Predicted - prediction_data_train_t$Observed)^2), 4),
+#   MAE = round(mean(abs(prediction_data_train_t$Predicted - prediction_data_train_t$Observed)), 4),
+#   N = nrow(prediction_data_train_t))
+# 
+# metrics_BM_test_t <- data.frame(
+#   R = round(cor(prediction_data_test_t$Predicted, prediction_data_test_t$Observed, method = "pearson"), 4),
+#   MSE = round(mean((prediction_data_test_t$Predicted - prediction_data_test_t$Observed)^2), 4),
+#   MAE = round(mean(abs(prediction_data_test_t$Predicted - prediction_data_test_t$Observed)), 4),
+#   N = nrow(prediction_data_test_t))
 
 # ggplot(prediction_data, aes(x = Observed, y = Predicted)) +
 #   geom_point() +
@@ -708,10 +710,37 @@ plot_AE_comparison_both
 
 ggsave(filename = paste0("002_plots/005_comparison_AE_age_both", extension), plot_AE_comparison_both, width = 8, height = 3)
 
-#### plotting ####
-colpalOI <- palette.colors(palette = "Okabe-Ito") %>% 
-  as.vector() %>%
-  .[c(-1,-9)]
-colpal <- hcl.colors(7, "SunsetDark") 
-cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+## no outliers
+plot_AE_comparison_no_out <- ggplot(df_AE_long, aes(x = model, y = AE, fill = model, pattern = type)) +
+  geom_boxplot_pattern(
+    position = position_dodge(width = .9),
+    outlier.shape = NA,
+    pattern_fill = "transparent",
+    pattern_color = "gray10") + 
+  scale_fill_manual(values = colpal) +
+  scale_pattern_manual(values = c("stripe", "circle")) + 
+  labs(y = "Absolute error (years)", x = "Models", fill = "Model", pattern = "Data") +
+  theme_bw() + 
+  ylim(c(0,3.5)) +
+  theme(axis.text.x = element_text(color = "black"))
+
+plot_AE_comparison_no_out
+
+plot_AE_comparison_no_out_t <- ggplot(df_AE_long_t, aes(x = model, y = AE, fill = model, pattern = type)) +
+  geom_boxplot_pattern(
+    position = position_dodge(width = .9),
+    outlier.shape = NA,
+    pattern_fill = "transparent",
+    pattern_color = "gray10") + 
+  scale_fill_manual(values = colpal) +
+  scale_pattern_manual(values = c("stripe", "circle")) + 
+  labs(y = "Absolute error (years)", x = "Models", fill = "Model", pattern = "Data") +
+  theme_bw() + 
+  ylim(c(0,3.5)) +
+  theme(axis.text.x = element_text(color = "black"))
+
+plot_AE_comparison_no_out_t
+
+ggsave(filename = paste0("002_plots/005_comparison_AE_age_no_out", extension), plot_AE_comparison_no_out, width = 7, height = 5)
+ggsave(filename = paste0("002_plots/005_comparison_AE_log_age_no_out", extension), plot_AE_comparison_no_out_t, width = 7, height = 5)
 

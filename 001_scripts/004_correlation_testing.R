@@ -149,6 +149,13 @@ all_mix_cor_CpG_common  <- rbind(all_neg_cor_CpG_common, all_pos_cor_CpG_common[
 save_path <- paste0(save_folder, "all_mix_cor_CpG_common.RData")
 save(all_mix_cor_CpG_common, file = save_path)
 
+# overview of significant values 
+overview_CpGs <- rbind(summary(all_pos_cor_CpG_common$P_value), summary(all_neg_cor_CpG_common$P_value), summary(all_pos_cor_CpG_common$Correlation), summary(abs(all_neg_cor_CpG_common$Correlation)))
+row.names(overview_CpGs) <- c("pos_cor p-value", "neg_cor p-value", "pos_cor correlation", "neg_cor correlation")
+overview_CpGs
+
+
+boxplot(summary(all_neg_cor_CpG_common$P_value), )
 ## selecting significant ones
 # AC_sig_CpGs <- select.max.cor(AC_cor_age_filtered_pearson, TRUE)
 # AS_sig_CpGs <- select.max.cor(AS_cor_age_filtered_pearson, TRUE)
