@@ -273,8 +273,12 @@ ggsave(filename = paste0("002_plots/005_m_GLM_log-age_TR", extension), GLM_eval_
 #### Testing multivariate linear regression models ####
 ### pre-testing with base R package
 mlm_test <- lm(Y ~., data = X)
-summary(mlm_test)
+mlm_age_summary <- summary(mlm_test)
+
+save(file = "000_data/007_data_comparison/mlm_age_summary.Rdata", mlm_age_summary)
 coef(mlm_test)
+
+
 # with transformed age
 mlm_test_t <- lm(log(Y) ~., data = X)
 

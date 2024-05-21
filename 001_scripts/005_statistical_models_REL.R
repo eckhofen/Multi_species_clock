@@ -207,9 +207,11 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Relative age",
-         subtitle = paste0("R=", metrics_train$R, " MSE=", metrics_train$MSE, " MAE=", metrics_train$MAE, " N=", nrow(X_train), " CpGs=", CpGs)) +
-    theme_classic()
+    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Relative age") +
+    # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
+    theme_classic() +
+    annotate("text", x = 0, y = 0.25, label = paste0("R=", metrics_train$R, "\nMSE=", metrics_train$MSE, "\nMAE=", metrics_train$MAE), size = 3.5, hjust = 0, vjust = .1) +
+    theme(plot.title = element_text(hjust = .5, face = "bold"))
   
   plot_test <- ggplot(result_df_test, aes(x = age, y = age_predicted, color = species)) +
     geom_point(size = 3) +
@@ -218,9 +220,11 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Relative age",
-         subtitle = paste0("R=", metrics_test$R, " MSE=", metrics_test$MSE, " MAE=", metrics_test$MAE, " N=", nrow(X_test), " CpGs=", CpGs)) +
-    theme_classic()
+    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Relative age") +
+    # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
+    theme_classic() +
+    annotate("text", x = 0, y = 0.25, label = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE), size = 3.5, hjust = 0, vjust = .1) +
+    theme(plot.title = element_text(hjust = .5, face = "bold"))
   
   # return list containing metrics and plots
   return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test))
@@ -274,6 +278,10 @@ ggsave(filename = paste0("002_plots/005_m_GLM_rel_log-age_TR", extension), GLM_e
 mlm_test <- lm(Y ~., data = X)
 summary(mlm_test)
 coef(mlm_test)
+
+mlm_rel_age_summary <- summary(mlm_test)
+
+save(file = "000_data/007_data_comparison/mlm_rel_age_summary.Rdata", mlm_rel_age_summary)
 # with transformed age
 mlm_test_t <- lm(Y_log ~., data = X)
 
