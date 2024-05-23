@@ -106,7 +106,7 @@ plot_sample_age_dist_box <- ggplot() +
   labs(fill = "Dataset", y = "Density", x = "Relative age") +
   xlab("Datasets") +
   ylab("Age") +
-  theme_classic() +
+  theme_bw() +
   theme(axis.text.x = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
   ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", round(ks_test_data$p.value, 8)))
 
@@ -209,7 +209,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     xlim(x_lim) +
     labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Relative age",
          subtitle = paste0("R=", metrics_train$R, " MSE=", metrics_train$MSE, " MAE=", metrics_train$MAE, " N=", nrow(X_train), " CpGs=", CpGs)) +
-    theme_classic()
+    theme_bw()
   
   plot_test <- ggplot(result_df_test, aes(x = age, y = age_predicted, color = species)) +
     geom_point(size = 3) +
@@ -220,7 +220,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     xlim(x_lim) +
     labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Relative age",
          subtitle = paste0("R=", metrics_test$R, " MSE=", metrics_test$MSE, " MAE=", metrics_test$MAE, " N=", nrow(X_test), " CpGs=", CpGs)) +
-    theme_classic()
+    theme_bw()
   
   # return list containing metrics and plots
   return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test))
@@ -315,10 +315,10 @@ mlm_eval_opt_t <-
 ## plotting 
 # normal age
 mlm_eval_plot <- mlm_eval$plot_train + mlm_eval$plot_test  + mlm_eval_opt$plot_train + mlm_eval_opt$plot_test +
-  plot_layout(nrow = 2)
+  plot_layout(nrow = 2, guides = "collect")
 # transformed age
 mlm_eval_plot_t <- mlm_eval_t$plot_train + mlm_eval_t$plot_test  + mlm_eval_opt_t$plot_train + mlm_eval_opt_t$plot_test +
-  plot_layout(nrow = 2)
+  plot_layout(nrow = 2, guides = "collect")
 
 ggsave(filename = paste0("002_plots/005_m_MLM_rel_age_all", extension), mlm_eval_plot, width = 10, height = 7)
 ggsave(filename = paste0("002_plots/005_m_MLM_rel_log-age_all", extension), mlm_eval_plot_t, width = 10, height = 7)
@@ -494,14 +494,14 @@ SVM_eps_eval <-  evaluate.model(SVM_eps_test, X, Y, X_test, Y_test, meth_train$s
 SVM_nu_eval <-  evaluate.model(SVM_nu_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (nu, linear) prediction", CpGs = length(mlm_test$coefficients)-1)
 
 SVM_eval_plot <- SVM_eps_eval$plot_train + SVM_eps_eval$plot_test + SVM_nu_eval$plot_train + SVM_nu_eval$plot_test +
-  plot_layout(nrow = 2)
+  plot_layout(nrow = 2, guides = "collect")
 # transformed
 SVM_eps_eval_t <-  evaluate.model(SVM_eps_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (eps, linear) prediction", CpGs = length(mlm_test$coefficients)-1)
 
 SVM_nu_eval_t <-  evaluate.model(SVM_nu_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (nu, linear) prediction", CpGs = length(mlm_test$coefficients)-1)
 
 SVM_eval_t_plot <- SVM_eps_eval_t$plot_train + SVM_eps_eval_t$plot_test + SVM_nu_eval_t$plot_train + SVM_nu_eval_t$plot_test +
-  plot_layout(nrow = 2)
+  plot_layout(nrow = 2, guides = "collect")
 
 ggsave(filename = paste0("002_plots/005_m_SVM_rel_age_all", extension), SVM_eval_plot, width = 10, height = 7)
 ggsave(filename = paste0("002_plots/005_m_SVM_rel_log-age_all", extension), SVM_eval_t_plot, width = 10, height = 7)
