@@ -2,7 +2,7 @@
 # Extraction of methylation data based on overlapping sequences
 
 #### Settings ####
-setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
+# setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
 data_folder <- paste0(getwd(), "/000_data/")
 save_folder <- paste0(data_folder, "003_SMR/") # folder where extracted sequences will be saved
@@ -119,18 +119,63 @@ colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677
 color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
 color_species <- setNames(color_species_df$color, color_species_df$species)
 
-# visualising the genomic locations and the frequency of CpGs per species
-ggplot(methyl_sites_combined) +
-  geom_histogram(position = "dodge", aes(x = pos_align, fill = species)) +  
-  facet_wrap(~ chr_align, scales = "free_x") +
+### visualizing the genomic locations and the frequency of CpGs per species
+## all
+# normalize position
+methyl_sites_combined_nor <- methyl_sites_combined %>% 
+  group_by(SMR) %>% 
+  mutate(pos_nor = pos_align - min(pos_align)) %>% 
+  mutate(pos_nor_kb = (pos_align - min(pos_align))/1000) %>% 
+  ungroup()
+
+save(file = "000_data/007_data_comparison/methyl_sites_combined_nor.Rdata", methyl_sites_combined_nor)
+
+# add factor and levels to species column
+methyl_sites_combined_nor$species <- factor(methyl_sites_combined_nor$species, levels = c("AC", "AS", "EH", "ZF"))
+# histogram
+plot_SMR_position_hist_all <- ggplot(methyl_sites_combined_nor) +
+  geom_histogram(position = "dodge", aes(x = pos_nor, fill = species)) +  
+  facet_wrap(~ SMR, scales = "free") +
   labs(x = "Position", y = "CpGs", title = "Number of CpGs and their genomic position") +
+  scale_fill_manual(values = color_species) + 
+  theme_bw() +
+  # scale_y_discrete(limits = rev(levels(methyl_sites_combined_nor$species))) +
+  theme(axis.text.x = element_blank())  
+plot_SMR_position_hist_all
+ggsave(filename = "002_plots/003_SMR_position_hist_all.pdf", plot = plot_SMR_position_hist_all, width = 10, height = 8)
+# lines
+plot_SMR_position_lines_all<- ggplot(methyl_sites_combined_nor) +
+  geom_linerange(aes(x = pos_nor_kb, y = species, color = species, ymin = as.numeric(species) - 0.2, ymax = as.numeric(species) + 0.2), linewidth = 1) +  
+  facet_wrap(~ SMR, scales = "free_x") +
+  labs(x = "Genomic position (kb)", y = "Species", title = "Number of CpGs and their genomic position", color = "Species") +
+  scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) + 
+  # scale_y_discrete(limits = rev(levels(methyl_sites_combined_nor$species))) +
   scale_color_manual(values = color_species) + 
-  theme_minimal() +
-  theme(strip.text.y = element_text(angle = 0), )  
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = -45, hjust = -.05))
+plot_SMR_position_lines_all
+ggsave(filename = "002_plots/003_SMR_position_lines_all.pdf", plot = plot_SMR_position_lines_all, width = 10, height = 8)
+
+## subsetting for only showing a certain number of SMRs
+ss_methyl_sites <- subset(methyl_sites_combined_nor, SMR %in% c("SMR_001", "SMR_005", "SMR_021", "SMR_050"))
+
+plot_SMR_position_selected <- ggplot(ss_methyl_sites) +
+  geom_linerange(aes(x = pos_nor_kb, y = species, color = species, ymin = as.numeric(species) - 0.2, ymax = as.numeric(species) + 0.2), linewidth = 1) +  
+  facet_wrap(~ SMR, scales = "free_x") +
+  labs(x = "Genomic position (kb)", y = "Species", title = "Number of CpGs and their genomic position", color = "Species") +
+  scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  # scale_y_discrete(limits = rev(levels(methyl_sites_combined_nor$species))) +
+  scale_color_manual(values = color_species) + 
+  theme_bw()
+  # theme(axis.text.x = element_text(angle = -20, hjust = -.05))
+
+plot_SMR_position_selected
+
+ggsave(filename = "002_plots/003_SMR_position.pdf", plot = plot_SMR_position_selected, width = 6, height = 5)
 
 #### Methylation metadata ####
 ##AC
-xx <- load("/workspace/cfngle/raw-data/AC/zzz_methyl_data/meth-corrected-batchcorrected-cod.Rdata")
+xx <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/AC/meth-corrected-batchcorrected-cod.Rdata")
 # xx <- load("/workspace/cfngle/raw-data/AC/zzz_methyl_data/Meth-complete-nobatchcorrection-cod.RData")
 assign("AC_meth_data", get(xx))
 AC_meth_data <- as.data.frame(AC_meth_data)
@@ -139,22 +184,22 @@ AC_age <- AC_meth_data$age
 AC_age[AC_age == 0] <- 0.01
 
 ##AS
-xx <- load("/workspace/cfngle/raw-data/AS/zzz_methyl_data/Meth-complete-snapper.RData")
+xx <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/AS/Meth-complete-snapper.RData")
 assign("AS_meth_data", get(xx))
 # tail(colnames(AS_meth_data))
 AS_age <- AS_meth_data$age
 
 ##EH
-xx <- load("/workspace/cfngle/raw-data/EH/zzz-methyl_data/Meth-complete-hake.RData")
+xx <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/EH/Meth-complete-hake.RData")
 assign("EH_meth_data", get(xx))
 # tail(colnames(EH_meth_data))
 EH_age <- EH_meth_data$age # this is the average age and was calculated
-EH_metadata_samples <- read.csv("/workspace/cfngle/raw-data/EH/zzz-methyl_data/hake-samples.txt", sep = "\t")
+EH_metadata_samples <- read.csv("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/EH/hake-samples.txt", sep = "\t")
 EH_sex <- EH_metadata_samples$sex
 EH_age <- EH_metadata_samples$age
 
 ##ZF
-ZF_meth_data <- load("/workspace/cfngle/raw-data/ZF/zzz_methyldata/ZF_methyldata_88.RData")
+ZF_meth_data <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/ZF/ZF_methyldata_88.RData")
 ZF_meth_data <- ZF_methyl_data
 
 ZF_age <- ZF_meth_data$age/52
@@ -300,38 +345,38 @@ color_species <- setNames(color_species_df$color, color_species_df$species)
 ##AC
 AC_pca_plot <- ggplot(PCA_values_AC, aes(x = PC1, y = PC2, color = AC_age)) +
   geom_point(cex = 3) +
-  facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[1], high = colpal_CB_c[5]) +
-  labs(color = "Age", y = paste0("PC2 (", round(PCA_AC_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_AC_sum$importance[2,1],4)*100, "%)")) +
+  labs(title = "AC", color = "Age", y = paste0("PC2 (", round(PCA_AC_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_AC_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = 1:nrow(AC_meth_data)), nudge_x = 0.4, nudge_y = 0) +
-  theme_classic()
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
 
 ##AS
 AS_pca_plot <- ggplot(PCA_values_AS, aes(x = PC1, y = PC2, color = AS_age)) +
   geom_point(cex = 3) +
-  facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[2], high = colpal_CB_c[6]) +
-  labs(color = "Age", y = paste0("PC2 (", round(PCA_AS_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_AS_sum$importance[2,1],4)*100, "%)")) +
+  labs(title = "AS", color = "Age", y = paste0("PC2 (", round(PCA_AS_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_AS_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = AS_meth_data$id), nudge_x = 0, nudge_y = 0.5) +
-  theme_classic()
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
 
 ##EH
 EH_pca_plot <- ggplot(PCA_values_EH, aes(y = PC2, x = PC1, color = EH_age)) +
   geom_point(cex = 3) +
-  facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[3], high = colpal_CB_c[7]) +
-  labs(color = "Age", y = paste0("PC2 (", round(PCA_EH_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_EH_sum$importance[2,1],4)*100, "%)")) +
+  labs(title = "EH", color = "Age", y = paste0("PC2 (", round(PCA_EH_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_EH_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = EH_meth_data$id), nudge_x = 0.4, nudge_y = 0) +
-  theme_classic()
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
 
 ##ZF
 ZF_pca_plot <- ggplot(PCA_values_ZF, aes(x = PC1, y = PC2, color = ZF_age)) +
   geom_point(cex = 3) +
-  facet_wrap(~species) +
   scale_color_gradient(low = colpal_CB_c[4], high = colpal_CB_c[8]) +
-  labs(color = "Age", y = paste0("PC2 (", round(PCA_ZF_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_ZF_sum$importance[2,1],4)*100, "%)")) +
+  labs(title = "ZF", color = "Age", y = paste0("PC2 (", round(PCA_ZF_sum$importance[2,2],4)*100, "%)"), x = paste0("PC1 (", round(PCA_ZF_sum$importance[2,1],4)*100, "%)")) +
   # geom_text(aes(label = rownames(ZF_meth_data)), nudge_x = 0.4, nudge_y = 0) +
-  theme_classic() 
+  theme_bw() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
 
 ## plot all 
 PCA_plot_all <- (AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot) +
@@ -343,7 +388,7 @@ ggsave(filename = "002_plots/003_PCA_all.pdf", plot = PCA_plot_all, width = 8, h
 ## max age span modifier
 # AC_max_age_mod <- 1.3 #30% more
 
-# transforming all the values into a plot-frindly dataframe for ggplot2
+# transforming all the values into a plot-friendly dataframe for ggplot2
 AS_meth_values_long <- pivot_longer(AS_meth_values, cols = everything(), names_to = "Site", values_to = "Methylation_Value")
 AS_meth_values_long$age <- rep(AS_age, each = ncol(AS_meth_values))
 AS_meth_values_long$max_age <- 54

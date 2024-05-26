@@ -480,7 +480,7 @@ RF_test_tuned <- randomForest(Y ~ ., data = X, mtry = 9, ntree = 1500)
 ## evaluation
 RF_eval_rel <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "RF", CpGs = length(mlm_test$coefficients)-1)
 
-RF_eval_rel_t <-  evaluate.model(RF_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "RF", CpGs = length(mlm_test$coefficients)-1)
+RF_eval_rel_t <-  evaluate.model(RF_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "RF (-log-log(age))", CpGs = length(mlm_test$coefficients)-1)
 
 RF_eval_rel_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "RF (tuned)", CpGs = length(mlm_test$coefficients)-1)
 
@@ -667,9 +667,21 @@ colnames(df_AE_long_t_REL) <- c("type", "model", "AE")
 # MLM only
 df_AE_MLM_REL <- df_AE[,c("MLM","type")]
 df_AE_MLM_t_REL <- df_AE_t[,c("MLM","type")]
+# ENR only
+df_AE_ENR_REL <- df_AE[,c("ENR","type")]
+df_AE_ENR_t_REL <- df_AE_t[,c("ENR","type")]
+# RF only
+df_AE_RF_REL <- df_AE[,c("RF","type")]
+df_AE_RF_t_REL <- df_AE_t[,c("RF","type")]
+# SVM eps only
+df_AE_SVM_eps_REL <- df_AE[,c("SVM_eps","type")]
+df_AE_SVM_eps_t_REL <- df_AE_t[,c("SVM_eps","type")]
+# SVM nu only
+df_AE_SVM_nu_REL <- df_AE[,c("SVM_nu","type")]
+df_AE_SVM_nu_t_REL <- df_AE_t[,c("SVM_nu","type")]
 
 
-df_AE_LOOCV <- cbind(values_LOOCV_AE$AE, values_LOOCV_t_AE$AE)
+df_AE_LOOCV_REL <- cbind(values_LOOCV_AE$AE, values_LOOCV_t_AE$AE)
 
 cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 colpal <- hcl.colors(7, "SunsetDark") 
@@ -723,7 +735,7 @@ plot_AE_comparison_RE_no_out <- ggplot(df_AE_long_REL, aes(x = model, y = AE, fi
 
 plot_AE_comparison_RE_no_out
 
-plot_AE_comparison_RE_no_out_t_REL <- ggplot(df_AE_long_t_REL, aes(x = model, y = AE, fill = model, pattern = type)) +
+plot_AE_comparison_RE_no_out_t <- ggplot(df_AE_long_t_REL, aes(x = model, y = AE, fill = model, pattern = type)) +
   geom_boxplot_pattern(
     position = position_dodge(width = .9),
     outlier.shape = NA,
@@ -740,3 +752,18 @@ plot_AE_comparison_RE_no_out_t
 
 ggsave(filename = paste0("002_plots/005_comparison_AE_reL_age_no_out", extension), plot_AE_comparison_RE_no_out, width = 7, height = 5)
 ggsave(filename = paste0("002_plots/005_comparison_AE_reL_log_age_no_out", extension), plot_AE_comparison_RE_no_out_t, width = 7, height = 5)
+
+### all models comparison
+
+all_models_plot <- ENR_eval_rel$plot_train + ENR_eval_rel$plot_test + ENR_eval_rel_t$plot_train + ENR_eval_rel_t$plot_test + 
+  mlm_eval_rel$plot_train + mlm_eval_rel$plot_test + mlm_eval_rel_t$plot_train + mlm_eval_rel_t$plot_test +
+  RF_eval_rel$plot_train + RF_eval_rel$plot_test + RF_eval_rel_t$plot_train + RF_eval_rel_t$plot_test +
+  SVM_eps_eval_rel$plot_train + SVM_eps_eval_rel$plot_test +
+  SVM_eps_eval_rel_t$plot_train + SVM_eps_eval_rel_t$plot_test +
+  SVM_nu_eval_rel$plot_train + SVM_nu_eval_rel$plot_test +
+  SVM_nu_eval_rel_t$plot_train + SVM_nu_eval_rel_t$plot_test +
+  plot_layout(ncol = 4, guides = "collect", axes = "collect") + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+ggsave(filename = paste0("002_plots/005_all_models_plot_REL", extension), all_models_plot, width = 15, height = 18)

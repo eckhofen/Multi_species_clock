@@ -5,7 +5,7 @@
 # change working directory accordingly extension
 # setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
-extension <- ".pdf"
+extension <- "_no_AC.pdf"
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -53,87 +53,67 @@ ZF_meth_values_selected$rel_age <- ZF_meth_values_selected$rel_age * 5
 
 all_meth_values_selected <- rbind(AC_meth_values_selected,AS_meth_values_selected,EH_meth_values_selected,ZF_meth_values_selected)
 #### Data splitting ####
-# defining arguments
-ds_breaks <- 3
-ds_prop <- 5/6
-# using a stratified splitting technique
-set.seed(123)
-AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+# # defining arguments
+# ds_breaks <- 3
+# ds_prop <- 5/6
+# # using a stratified splitting technique
+# set.seed(123)
+# AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+# 
+# set.seed(123)
+# AS_split <- initial_split(AS_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+# 
+# set.seed(123)
+# EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+# 
+# set.seed(123)
+# ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
 
-set.seed(123)
-AS_split <- initial_split(AS_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+# # combining data into training and testing sets
+# meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
+# meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
 
-set.seed(123)
-EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+### modified for LOSO
 
-set.seed(123)
-ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+## NO AC
+extension <- "_no_AC.pdf"
 
-# combining data into training and testing sets
-meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
-meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
+meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
+meth_test <- AC_meth_values_selected
 
 # checking how many CpGs are present per data set
-nrow(meth_train) #305
-nrow(meth_test) #66
+nrow(meth_train) #261
+nrow(meth_test) #110
 
-## plotting age distribution
-plot_age_dist <- ggplot(all_meth_values_selected) +
-  geom_density(aes(x = rel_age, color = species), linewidth = 1) +
-  geom_density(aes(x = rel_age), fill = "grey", alpha = 0.5, linewidth = 1) +
-  scale_color_manual(values = color_species) +
-  scale_fill_manual(values = "grey") +
-  labs(color = "Species", fill = "Species", y = "Density", x = "Chronological age (years)") +
-  theme_bw() +
-  labs(title = "Chronological age distribution for all samples")
+## NO ZF
+extension <- "_no_ZF.pdf"
 
-plot_age_dist
-# >> the plot shows that our dependent variable is not normally distributed (as expected from age)
+meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, AC_meth_values_selected)
+meth_test <- ZF_meth_values_selected
 
-# comparing data sets with Kolmogorov-Smirnov test
-ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.058304, p-value = 0.966
+# checking how many CpGs are present per data set
+nrow(meth_train) #275
+nrow(meth_test) #96
 
-ks_test_data$statistic
+## NO AS
+extension <- "_no_AS.pdf"
 
-color_compare_tt <- setNames(color_compare, c("Training", "Testing"))
+meth_train <- rbind(ZF_meth_values_selected, EH_meth_values_selected, AC_meth_values_selected)
+meth_test <- AS_meth_values_selected
 
-# visually comparing training and testing sets
-plot_sample_age_dist_box <- ggplot() +
-  geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -.5)) +
-  geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = .5)) +
-  scale_fill_manual(values = color_compare_tt) +
-  labs(fill = "Dataset", y = "Density", x = "Chronological age (years)") +
-  xlab("Datasets") +
-  ylab("Chronological age") +
-  theme_bw() +
-  theme(axis.text.x = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", round(ks_test_data$p.value, 8)))
-plot_sample_age_dist_box
+# checking how many CpGs are present per data set
+nrow(meth_train) #300
+nrow(meth_test) #71
 
-# visually comparing training and testing sets
-plot_sample_age_dist <- ggplot() +
-  geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, linewidth = 1) +
-  geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = 1) +
-  scale_fill_manual(values = color_compare_tt, name = "Dataset") +
-  labs(y = "Density", x = "Chronological age (years)") +
-  theme_bw() +
-  # theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets")
+## NO EH
+extension <- "_no_EH.pdf"
 
-# visually comparing sets (Q-Q plot)
-qqplot(meth_train$rel_age, meth_test$rel_age,
-       xlab = "Training data",
-       ylab = "Testing data",
-       main = "Age Distribution in Training and Testing Sets")
-abline(0, 1, col = "black")
+meth_train <- rbind(ZF_meth_values_selected, AS_meth_values_selected, AC_meth_values_selected)
+meth_test <- EH_meth_values_selected
 
-# plotting both graphs
-ggsave(filename = paste0("002_plots/005_age_distribution", extension), plot_age_dist, width = 5, height = 5)
-ggsave(filename = paste0("002_plots/005_sample_age_distribution_box", extension), plot_sample_age_dist_box, width = 5, height = 5)
-ggsave(filename = paste0("002_plots/005_sample_age_distribution", extension), plot_sample_age_dist, width = 5, height = 5)
-
-plot_age_dist + plot_sample_age_dist +
-  plot_layout(nrow=2, guides = "collect")
+# checking how many CpGs are present per data set
+nrow(meth_train) #277
+nrow(meth_test) #94
 
 ### defining data
 # training data
@@ -270,12 +250,14 @@ ENR_eval_chron_t <-  evaluate.model(ENR_test_log, s = ENR_test_log$lambda.min, a
 ENR_eval_chron_plot <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test  + ENR_eval_chron_t$plot_train + ENR_eval_chron_t$plot_test +
   plot_layout(nrow = 2, guides = "collect")
 
-# saving plots
-ggsave(filename = paste0("002_plots/005_m_ENR_age_TE", extension), ENR_eval_chron$plot_test, width = 8, height = 7)
-ggsave(filename = paste0("002_plots/005_m_ENR_age_TR", extension), ENR_eval_chron$plot_train, width = 8, height = 7)
+ENR_eval_chron_plot
 
-ggsave(filename = paste0("002_plots/005_m_ENR_log-age_TE", extension), ENR_eval_chron_t$plot_test, width = 8, height = 7)
-ggsave(filename = paste0("002_plots/005_m_ENR_log-age_TR", extension), ENR_eval_chron_t$plot_train, width = 8, height = 7)
+# saving plots
+# ggsave(filename = paste0("002_plots/005_m_ENR_age_TE", extension), ENR_eval_chron$plot_test, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_age_TR", extension), ENR_eval_chron$plot_train, width = 8, height = 7)
+# 
+# ggsave(filename = paste0("002_plots/005_m_ENR_log-age_TE", extension), ENR_eval_chron_t$plot_test, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_log-age_TR", extension), ENR_eval_chron_t$plot_train, width = 8, height = 7)
 
 ggsave(filename = paste0("002_plots/005_m_ENR_age_all", extension), ENR_eval_chron_plot, width = 10, height = 7)
 
@@ -284,8 +266,8 @@ ggsave(filename = paste0("002_plots/005_m_ENR_age_all", extension), ENR_eval_chr
 mlm_test <- lm(Y ~., data = X)
 mlm_age_summary <- summary(mlm_test)
 
-save(file = "000_data/007_data_comparison/mlm_age_summary.Rdata", mlm_age_summary)
-coef(mlm_test)
+# save(file = "000_data/007_data_comparison/mlm_age_summary.Rdata", mlm_age_summary)
+# coef(mlm_test)
 
 
 # with transformed age
@@ -338,7 +320,7 @@ ggsave(filename = paste0("002_plots/005_m_MLM_age_all", extension), mlm_eval_chr
 ggsave(filename = paste0("002_plots/005_m_MLM_log-age_all", extension), mlm_eval_chron_plot_t, width = 10, height = 7)
 
 
-#### ENR (caret) ####
+#### MLM (caret) ####
 ## pre processing
 # centering means that all the the mean is being subtracted from all values and scale divides them by the standard deviation. 
 
@@ -391,58 +373,7 @@ MLM_t_eval_chron <-  evaluate.model(MLM_model_t, trainingData, Y, testingData, Y
 
 MLM_t_eval_chron_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "MLM (-log-log(age)) tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
-### LOOCV
-
-# preparing data 
-all_data <- all_meth_values_selected[,-length(all_meth_values_selected)]
-# all_data$rel_age <- -log(-log(all_data$rel_age))
-# all_age <- all_meth_values_selected$rel_age %>% -log(-log(.))
-all_data <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected) %>% 
-  .[,-length(AC_meth_values_selected)]
-
-all_data_t <- all_data
-
-all_data_t$rel_age <- log(all_data_t$rel_age)
-# setting up training method
-loocv_train_control <- trainControl(method = "LOOCV")
-
-# run model
-set.seed(123)
-MLM_LOOCV_model <- train(rel_age ~ ., data = all_data, method = "lm", trControl = loocv_train_control)
-MLM_LOOCV_model_t <- train(rel_age ~ ., data = all_data_t, method = "lm", trControl = loocv_train_control)
-
-MLM_LOOCV_model$results
-MLM_LOOCV_model_t$results
-
-# evaluation
-metrics_LOOCV <- data.frame(
-  R = round(cor(MLM_LOOCV_model$pred$pred, MLM_LOOCV_model$pred$obs, method = "pearson"), 4),
-  MSE = round(mean((MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs)^2), 4),
-  MAE = round(mean(abs(MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs)), 4),
-  N = nrow(all_data))
-
-values_LOOCV_AE <- data.frame(
-  AE = round(abs(MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs), 4)
-)
-
-metrics_LOOCV_t <- data.frame(
-  R = round(cor(MLM_LOOCV_model_t$pred$pred, MLM_LOOCV_model_t$pred$obs, method = "pearson"), 4),
-  MSE = round(mean((MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs)^2), 4),
-  MAE = round(mean(abs(MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs)), 4),
-  N = nrow(all_data))
-
-values_LOOCV_t_AE <- data.frame(
-  AE = round(abs(MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs), 4)
-)
-# evaluate model
-# MLM_LOOCV_eval_chron <-  evaluate.model(MLM_LOOCV_model, all_data, all_age, testingData, Y_test, all_meth_values_selected$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "MLM LOOCV prediction", CpGs = length(mlm_test$coefficients)-1)
-
-#### Testing random forest model ####
-
-### Shortcoming of random forest
-# Random Forests aren't good at generalizing cases with completely new data. For example, if I tell you that one ice-cream costs $1, 2 ice-creams cost $2, and 3 ice-creams cost $3, how much do 10 ice-creams cost? A linear regression can easily figure this out, while a Random Forest has no way of finding the answer.
-# Random forests are biased towards the categorical variable having multiple levels (categories). It is because feature selection based on impurity reduction is biased towards preferring variables with more categories so variable selection (importance) is not accurate for this type of data.
-
+#### RF ####
 library(randomForest)
 set.seed(123)
 
@@ -503,16 +434,16 @@ SVM_nu_test_t <- svm(Y_log ~ ., data = X, type = "nu-regression", kernel = "line
 
 ## evaluation
 # normal
-SVM_eps_eval_chron <-  evaluate.model(SVM_eps_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (eps, linear)", CpGs = length(mlm_test$coefficients)-1)
+SVM_eps_eval_chron <-  evaluate.model(SVM_eps_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (eps)", CpGs = length(mlm_test$coefficients)-1)
 
-SVM_nu_eval_chron <-  evaluate.model(SVM_nu_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (nu, linear)", CpGs = length(mlm_test$coefficients)-1)
+SVM_nu_eval_chron <-  evaluate.model(SVM_nu_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (nu)", CpGs = length(mlm_test$coefficients)-1)
 
 SVM_eval_chron_plot <- SVM_eps_eval_chron$plot_train + SVM_eps_eval_chron$plot_test + SVM_nu_eval_chron$plot_train + SVM_nu_eval_chron$plot_test +
   plot_layout(nrow = 2, guides = "collect")
 # transformed
-SVM_eps_eval_chron_t <-  evaluate.model(SVM_eps_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (eps, linear) log", CpGs = length(mlm_test$coefficients)-1)
+SVM_eps_eval_chron_t <-  evaluate.model(SVM_eps_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (eps) log", CpGs = length(mlm_test$coefficients)-1)
 
-SVM_nu_eval_chron_t <-  evaluate.model(SVM_nu_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (nu, linear) log", CpGs = length(mlm_test$coefficients)-1)
+SVM_nu_eval_chron_t <-  evaluate.model(SVM_nu_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (nu) log", CpGs = length(mlm_test$coefficients)-1)
 
 SVM_eval_chron_t_plot <- SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$plot_test + SVM_nu_eval_chron_t$plot_train + SVM_nu_eval_chron_t$plot_test +
   plot_layout(nrow = 2, guides = "collect")
@@ -520,116 +451,6 @@ SVM_eval_chron_t_plot <- SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$
 ggsave(filename = paste0("002_plots/005_m_SVM_age_all", extension), SVM_eval_chron_plot, width = 10, height = 7)
 ggsave(filename = paste0("002_plots/005_m_SVM_log-age_all", extension), SVM_eval_chron_t_plot, width = 10, height = 7)
 
-#### Testing Bayesian models ####
-# install.packages("brms")
-# install.packages("rstan")  # Required for brms
-# library(brms)
-# library(rstan)
-# 
-# # setting up formula for model
-# BM_formula <- bf(rel_age ~.)
-# BM_model <- brm(formula = BM_formula, data = trainingData, family = gaussian(), chains = 4, cores = min(10, parallel::detectCores()), iter = 2000)
-# # summary(BM_model)
-# # plot(BM_model)
-# 
-# BM_model_t <- brm(formula = BM_formula, data = trainingData_t, family = gaussian(), chains = 4, cores = min(10, parallel::detectCores()), iter = 2000)
-# 
-# sel_cols <- colnames(trainingData[,-ncol(trainingData)])
-# # plot(conditional_effects(BM_model, effects = sel_cols))
-# 
-# pp_check(BM_model)
-# 
-# BM_pp <- posterior_predict(BM_model) 
-# 
-# ci <- posterior_interval(BM_pp, prob = 0.95)
-# 
-# # predictions
-# # normal
-# BM_predict_train <- predict(BM_model, trainingData[-length(trainingData)])
-# BM_predict_test <- predict(BM_model, testingData[-length(testingData)])
-# 
-# #transformed
-# BM_predict_train_t <- predict(BM_model_t, trainingData[-length(trainingData)])
-# BM_predict_test_t <- predict(BM_model_t, testingData[-length(testingData)])
-# 
-# # prediction data frame
-# # normal
-# prediction_data_train <- data.frame(Observed = trainingData$rel_age, Predicted = BM_predict_train[,1], Lwr = BM_predict_train[,3], Upr = BM_predict_train[,4])
-# prediction_data_test <- data.frame(Observed = testingData$rel_age, Predicted = BM_predict_test[,1], Lwr = BM_predict_test[,3], Upr = BM_predict_test[,4])
-# # transformed
-# prediction_data_train_t <- data.frame(Observed = trainingData$rel_age, Predicted = BM_predict_train_t[,1], Lwr = BM_predict_train[,3], Upr = BM_predict_train[,4])
-# prediction_data_test_t <- data.frame(Observed = testingData$rel_age, Predicted = BM_predict_test_t[,1], Lwr = BM_predict_test[,3], Upr = BM_predict_test[,4])
-# 
-# prediction_data_train_t$Predicted <- exp(-exp(-prediction_data_train_t$Predicted))
-# prediction_data_test_t$Predicted <- exp(-exp(-prediction_data_test_t$Predicted))
-# 
-# # metrics
-# # normal
-# metrics_BM_train <- data.frame(
-#   R = round(cor(prediction_data_train$Predicted, prediction_data_train$Observed, method = "pearson"), 4),
-#   MSE = round(mean((prediction_data_train$Predicted - prediction_data_train$Observed)^2), 4),
-#   MAE = round(mean(abs(prediction_data_train$Predicted - prediction_data_train$Observed)), 4),
-#   N = nrow(prediction_data_train))
-# 
-# metrics_BM_test <- data.frame(
-#   R = round(cor(prediction_data_test$Predicted, prediction_data_test$Observed, method = "pearson"), 4),
-#   MSE = round(mean((prediction_data_test$Predicted - prediction_data_test$Observed)^2), 4),
-#   MAE = round(mean(abs(prediction_data_test$Predicted - prediction_data_test$Observed)), 4),
-#   N = nrow(prediction_data_test))
-# 
-# # transformed
-# metrics_BM_train_t <- data.frame(
-#   R = round(cor(prediction_data_train_t$Predicted, prediction_data_train_t$Observed, method = "pearson"), 4),
-#   MSE = round(mean((prediction_data_train_t$Predicted - prediction_data_train_t$Observed)^2), 4),
-#   MAE = round(mean(abs(prediction_data_train_t$Predicted - prediction_data_train_t$Observed)), 4),
-#   N = nrow(prediction_data_train_t))
-# 
-# metrics_BM_test_t <- data.frame(
-#   R = round(cor(prediction_data_test_t$Predicted, prediction_data_test_t$Observed, method = "pearson"), 4),
-#   MSE = round(mean((prediction_data_test_t$Predicted - prediction_data_test_t$Observed)^2), 4),
-#   MAE = round(mean(abs(prediction_data_test_t$Predicted - prediction_data_test_t$Observed)), 4),
-#   N = nrow(prediction_data_test_t))
-
-# ggplot(prediction_data, aes(x = Observed, y = Predicted)) +
-#   geom_point() +
-#   geom_errorbar(aes(ymin = Lwr, ymax = Upr), width = 0.2, alpha = 0.2) +
-#   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
-#   theme_minimal() +
-#   ylim(0,0.25) +
-#   xlim(0,0.25) +
-#   labs(x = "Observed Age", y = "Predicted Age", title = "Bayesian Model Predictions with Uncertainty Intervals")
-# 
-# BM_eval_chron <- evaluate.model(BM_model, trainingData[-length(trainingData)], trainingData$rel_age, testingData[-length(testingData)], testingData$rel_age, meth_train$species, meth_test$species,  CpGs = ncol(training_data)-1)
-# 
-# BM_eval_chron_t <- evaluate.model(BM_model_t, trainingData[-length(trainingData)], trainingData$rel_age, testingData[-length(testingData)], testingData$rel_age, meth_train$species, meth_test$species,  CpGs = ncol(training_data)-1, transform = TRUE)
-
-#### Testing deep learning models ####
-# install.packages("keras")
-# # library(reticulate)
-# library(keras)
-# DL_test <- keras_model_sequential() %>%
-#   layer_dense(units = 64, activation = 'relu', input_shape = c(num_features)) %>%
-#   layer_dense(units = 1)
-# DL_test %>% compile(
-#   optimizer = 'rmsprop',
-#   loss = 'mse',
-#   metrics = 'mae'
-# )
-# DL_test %>% fit(X, Y, epochs = 100, batch_size = 10, validation_split = 0.2)
-
-#### Summarizing all models ####
-# # training data 
-# df_all_training <- rbind(ENR_eval_chron$metrics_train, mlm_eval_chron$metrics_train, MLM_eval_chron$metrics_train, metrics_BM_train, SVM_eps_eval_chron$metrics_train, SVM_nu_eval_chron$metrics_train, RF_eval_chron$metrics_train, RF_eval_chron_tuned$metrics_train, ENR_eval_chron_t$metrics_train, mlm_eval_chron_t$metrics_train, MLM_t_eval_chron$metrics_train, metrics_BM_train_t, metrics_LOOCV, metrics_LOOCV_t)
-# rownames(df_all_training) <- c("ENR", "mlm", "MLM (caret)", "BM", "SVM_eps", "SVM_nu", "RF", "RF_tuned", "ENR_t", "mlm_t", "MLM_t", "BM_t", "MLM_LOOCV", "MLM_LOOCV_t")
-# df_all_training
-# 
-# df_all_testing <- rbind(ENR_eval_chron$metrics_test, mlm_eval_chron$metrics_test, MLM_eval_chron$metrics_test, metrics_BM_test, SVM_eps_eval_chron$metrics_test, SVM_nu_eval_chron$metrics_test, RF_eval_chron$metrics_test, RF_eval_chron_tuned$metrics_test, ENR_eval_chron_t$metrics_test, mlm_eval_chron_t$metrics_test, MLM_t_eval_chron$metrics_test, metrics_BM_test_t, metrics_LOOCV, metrics_LOOCV_t)
-# rownames(df_all_testing) <- c("ENR", "mlm", "MLM (caret)", "BM", "SVM_eps", "SVM_nu", "RF", "RF_tuned", "ENR_t", "mlm_t", "MLM_t", "BM_t", "MLM_LOOCV", "MLM_LOOCV_t")
-# df_all_testing
-# 
-# df_eval_chron <- cbind(df_all_training, df_all_testing)
-# 
-# df_eval_chron
 
 #### AE comparison plot ####
 
@@ -664,20 +485,16 @@ colnames(df_AE_long_t) <- c("type", "model", "AE")
 # MLM only
 df_AE_MLM <- df_AE[,c("MLM","type")]
 df_AE_MLM_t <- df_AE_t[,c("MLM","type")]
-# ENR only
-df_AE_ENR <- df_AE[,c("ENR","type")]
-df_AE_ENR_t <- df_AE_t[,c("ENR","type")]
-# RF only
-df_AE_RF <- df_AE[,c("RF","type")]
-df_AE_RF_t <- df_AE_t[,c("RF","type")]
-# SVM eps only
-df_AE_SVM_eps <- df_AE[,c("SVM_eps","type")]
-df_AE_SVM_eps_t <- df_AE_t[,c("SVM_eps","type")]
-# SVM nu only
-df_AE_SVM_nu <- df_AE[,c("SVM_nu","type")]
-df_AE_SVM_nu_t <- df_AE_t[,c("SVM_nu","type")]
 
-# LOOCV
+# SVM eps only 
+df_AE_SVM_t <- df_AE_t[,c("SVM_eps","type")]
+
+# combining two dfs
+df_AE_long_t$log <- "yes"
+df_AE_long$log <- "no"
+
+df_AE_long_both <- rbind(df_AE_long, df_AE_long_t)
+
 df_AE_LOOCV <- cbind(values_LOOCV_AE$AE, values_LOOCV_t_AE$AE)
 
 cbbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -750,22 +567,9 @@ plot_AE_comparison_no_out_t
 ggsave(filename = paste0("002_plots/005_comparison_AE_age_no_out", extension), plot_AE_comparison_no_out, width = 7, height = 5)
 ggsave(filename = paste0("002_plots/005_comparison_AE_log_age_no_out", extension), plot_AE_comparison_no_out_t, width = 7, height = 5)
 
-## AE only for MLM
-plot_AE_MLM_REL <- ggplot(df_AE_MLM_REL, aes(x = type, y = MLM, pattern = type)) +
-  geom_boxplot_pattern(
-    position = position_dodge(width = .9),
-    outlier.shape = NA,
-    pattern_fill = "transparent",
-    pattern_color = "gray10") + 
-  scale_fill_manual(values = colpal) +
-  scale_pattern_manual(values = c("stripe", "circle")) + 
-  labs(y = "Absolute error", x = "Data", pattern = "Data") +
-  theme_bw() + 
-  theme(legend.position = "") +
-  ylim(c(0,.125))
-  # theme(axis.text.x = element_blank())
+## AE only for SVM
 
-plot_AE_MLM <- ggplot(df_AE_MLM, aes(x = type, y = MLM, pattern = type)) +
+plot_AE_SVM_t <- ggplot(df_AE_SVM_t, aes(x = type, y = SVM_eps, pattern = type)) +
   geom_boxplot_pattern(
     position = position_dodge(width = .9),
     outlier.shape = NA,
@@ -776,31 +580,49 @@ plot_AE_MLM <- ggplot(df_AE_MLM, aes(x = type, y = MLM, pattern = type)) +
   labs(y = "Absolute error (years)", x = "Data", pattern = "Data") +
   theme_bw() + 
   theme(legend.position = "") +
-  ylim(c(0,3.5)) 
+  ylim(c(0,3)) 
   # theme(axis.text.x = element_blank())
-
+plot_AE_SVM_t
 #### Final plots ####
 # This only works when both "005_stati...R" script have been run and the environments of both are still loaded
 
-## MLM comparison
-mlm_comparison_plot <- mlm_eval_chron$plot_train + mlm_eval_chron$plot_test + plot_AE_MLM +
-  mlm_eval_rel$plot_train + mlm_eval_rel$plot_test + plot_AE_MLM_REL +
-  plot_layout(nrow = 2, guides = "collect", width = c(3,3,1)) + 
+## SVM comparison
+SVM_comparison_plot <- SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$plot_test + plot_AE_SVM_t +
+  plot_layout(nrow = 1, guides = "collect", width = c(3,3,1)) + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-mlm_comparison_plot
-ggsave(filename = paste0("002_plots/005_comparison_MLM", extension), mlm_comparison_plot, width = 10, height = 7)
+SVM_comparison_plot
+ggsave(filename = paste0("002_plots/005_comparison_SVM_eps_t", extension), SVM_comparison_plot, width = 10, height = 4)
 
 ## AE comparison
 AE_comparison_plot <- plot_AE_comparison_no_out + plot_AE_comparison_no_out_t +
-  plot_AE_comparison_RE_no_out + plot_AE_comparison_RE_no_out_t + 
   plot_layout(nrow = 2, guides = "collect") + 
   plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag = element_text(size = 18, face = "bold"))
+  theme(plot.tag = element_text(size = 18, face = "bold"), legend.position = "")
 
 AE_comparison_plot
 ggsave(filename = paste0("002_plots/005_comparison_AE", extension), AE_comparison_plot, width = 10, height = 7)
+
+
+### LOSO comparison plot all in one
+# creating the first row layout with specified widths
+first_row <- SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$plot_test + plot_AE_SVM_t +
+  plot_layout(widths = c(3, 3, 1))
+
+# creating the second row layout with specified widths
+second_row <- plot_AE_comparison_no_out + plot_AE_comparison_no_out_t +
+  plot_layout(widths = c(1, 1))
+
+# combining the rows and adding annotations and themes
+SVM_comparison_plot_all <- first_row / second_row +
+  plot_layout(guides = "collect") + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+SVM_comparison_plot_all
+
+ggsave(filename = paste0("002_plots/005_comparison_SVM_eps_t_all", extension), SVM_comparison_plot_all, width = 11, height = 7.5)
 
 ### all models comparison
 
@@ -816,17 +638,3 @@ all_models_plot <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test + ENR_ev
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
 ggsave(filename = paste0("002_plots/005_all_models_plot", extension), all_models_plot, width = 15, height = 18)
-
-## all comparison between REl and CHRON. Requires to have run 005_...REL and everything loaded in the environment
-all_models_plot_REL_CHRON <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test + ENR_eval_rel$plot_train + ENR_eval_rel$plot_test + 
-  mlm_eval_chron$plot_train + mlm_eval_chron$plot_test + mlm_eval_rel$plot_train + mlm_eval_rel$plot_test +
-  RF_eval_chron$plot_train + RF_eval_chron$plot_test + RF_eval_rel$plot_train + RF_eval_rel$plot_test +
-  SVM_eps_eval_chron$plot_train + SVM_eps_eval_chron$plot_test +
-  SVM_eps_eval_rel$plot_train + SVM_eps_eval_rel$plot_test +
-  SVM_nu_eval_chron$plot_train + SVM_nu_eval_chron$plot_test +
-  SVM_nu_eval_rel$plot_train + SVM_nu_eval_rel$plot_test +
-  plot_layout(ncol = 4, guides = "collect", axes = "collect") + 
-  plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag = element_text(size = 18, face = "bold"))
-
-ggsave(filename = paste0("002_plots/005_all_models_plot_REL_chron", extension), all_models_plot_REL_CHRON, width = 15, height = 18)

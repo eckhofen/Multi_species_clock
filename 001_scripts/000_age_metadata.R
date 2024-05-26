@@ -33,7 +33,7 @@ plot_age <- ggplot(df_all, aes(y = rel_age, color = species)) +
   scale_color_manual(values = color_species) +
   theme_classic() +
   geom_text(data = species_counts, aes(x = species, y = -.015, label = count, color = species), size = 3.5) +
-  labs(x = "Species", y = "Relative age", color = "Species")
+  labs(x = "Species", y = "Relative age", color = "Species", shape = "Sex")
 
 ggsave(filename = paste0("002_plots/000_rel_age_distribution", extension), plot_age, width = 7, height = 7)
 
@@ -43,11 +43,11 @@ plot_direct_age <- ggplot(df_all, aes(y = age, color = species)) +
   scale_color_manual(values = color_species) +
   theme_classic() +
   geom_text(data = species_counts, aes(x = species, y = -.5, label = count, color = species), size = 3.5) +
-  labs(x = "Species", y = "Chronological age (years)", color = "Species")
+  labs(x = "Species", y = "Chronological age (years)", color = "Species", shape = "Sex")
 
 ggsave(filename = paste0("002_plots/000_age_distribution", extension), plot_direct_age, width = 7, height = 7)
 
-plot_relative_direct_age <- plot_age + plot_direct_age +
+plot_relative_direct_age <- plot_direct_age + plot_age +
   plot_layout(nrow = 1, guides = "collect") + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))

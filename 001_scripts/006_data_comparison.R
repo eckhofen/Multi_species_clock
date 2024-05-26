@@ -30,6 +30,8 @@ library(svglite)
 #### load data ####
 load("000_data/007_data_comparison/mlm_age_summary.Rdata")
 load("000_data/007_data_comparison/mlm_rel_age_summary.Rdata")
+load("000_data/007_data_comparison/methyl_sites_combined_nor.Rdata")
+load("000_data/005_correlation_data/all_mix_cor_CpG_common.RData")
 
 
 #### data manipulation ####
@@ -91,17 +93,18 @@ df_SMR_comparison_all <- df_SMR_comparison_all %>%
     TRUE ~ ""
   ))
 
+#### Plots ####
 
+### SMR comparison
 ## only significant
 plot_SMR_comparison <- ggplot(df_SMR_comparison, aes(x = reg_coef_scaled, y = SMR, fill = model)) +
   geom_point(aes(color = model), position = position_dodge(width = 0.9)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model), position = position_dodge(width = 0.9)) +
-  labs(x = "Normalized regression coefficient", y = "Shared methylation regions", fill = "Model", color = "Model") +
+  labs(x = "Normalized regression coefficient", y = "Shared methylation region", fill = "Model", color = "Model") +
   geom_text(aes(label = significance, x = reg_coef_scaled * 1.15, , color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.8) +
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare) +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  theme_bw()
 plot_SMR_comparison
 
 ggsave(file = paste0("002_plots/006_SMR_comparison",extension), plot_SMR_comparison, width = 5, height = 5)
@@ -110,7 +113,7 @@ ggsave(file = paste0("002_plots/006_SMR_comparison",extension), plot_SMR_compari
 plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled, y = SMR, fill = model)) +
   geom_point(aes(color = model), position = position_dodge(width = 0.9)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model), position = position_dodge(width = 0.9)) +
-  labs(x = "Normalized regression coefficient", y = "Shared methylation regions", fill = "Model", color = "Model") +
+  labs(x = "Normalized regression coefficient", y = "Shared methylation region", fill = "Model", color = "Model") +
   geom_text(aes(label = significance, x = reg_coef_scaled * 1.1, , color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.8) +
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare) +
@@ -119,3 +122,29 @@ plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled
 plot_SMR_comparison_all
 
 ggsave(file = paste0("002_plots/006_SMR_comparison_all",extension), plot_SMR_comparison_all, width = 5, height = 5)
+
+### CpG location for SMRs
+# subsetting for significant SMRs only
+methyl_sites_significant <- subset(methyl_sites_combined_nor, SMR %in% df_SMR_comparison$SMR)
+
+
+plot_SMR_position_significant <- ggplot(methyl_sites_significant) +
+  geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.03, y = SMR, color = species), linewidth = 5) +
+  labs(x = "CpG position (kb)", y = "Shared methylation region", color = "Species") +
+  scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  # scale_y_discrete(limits = rev(levels(methyl_sites_combined_nor$species))) +
+  scale_color_manual(values = color_species) + 
+  theme_bw()
+# theme(axis.text.x = element_text(angle = -20, hjust = -.05))
+plot_SMR_position_significant
+
+ggsave(filename = "002_plots/006_SMR_position_significant.pdf", plot = plot_SMR_position_significant, width = 6, height = 5)
+
+## both together
+
+plot_SMR_combined <- plot_SMR_comparison + plot_SMR_position_significant +
+  plot_layout(guides = "collect", axes = "collect") + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+ggsave(filename = "002_plots/006_SMR_combined.pdf", plot = plot_SMR_combined, width = 10, height = 6)
