@@ -146,15 +146,15 @@ ggsave(filename = "002_plots/003_SMR_position_hist_all.pdf", plot = plot_SMR_pos
 # lines
 plot_SMR_position_lines_all<- ggplot(methyl_sites_combined_nor) +
   geom_linerange(aes(x = pos_nor_kb, y = species, color = species, ymin = as.numeric(species) - 0.2, ymax = as.numeric(species) + 0.2), linewidth = 1) +  
-  facet_wrap(~ SMR, scales = "free_x") +
+  facet_wrap(~ SMR, scales = "free_x", ncol = 5) +
   labs(x = "Genomic position (kb)", y = "Species", title = "Number of CpGs and their genomic position", color = "Species") +
   scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) + 
   # scale_y_discrete(limits = rev(levels(methyl_sites_combined_nor$species))) +
   scale_color_manual(values = color_species) + 
   theme_bw() +
-  theme(axis.text.x = element_text(angle = -45, hjust = -.05))
+  theme(axis.text.x = element_text(angle = -45, hjust = -.05), plot.title = element_blank())
 plot_SMR_position_lines_all
-ggsave(filename = "002_plots/003_SMR_position_lines_all.pdf", plot = plot_SMR_position_lines_all, width = 10, height = 8)
+ggsave(filename = "002_plots/003_SMR_position_lines_all.pdf", plot = plot_SMR_position_lines_all, width = 10, height = 14)
 
 ## subsetting for only showing a certain number of SMRs
 ss_methyl_sites <- subset(methyl_sites_combined_nor, SMR %in% c("SMR_001", "SMR_005", "SMR_021", "SMR_050"))

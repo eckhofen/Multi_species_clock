@@ -818,7 +818,8 @@ all_models_plot <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test + ENR_ev
 ggsave(filename = paste0("002_plots/005_all_models_plot", extension), all_models_plot, width = 15, height = 18)
 
 ## all comparison between REl and CHRON. Requires to have run 005_...REL and everything loaded in the environment
-all_models_plot_REL_CHRON <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test + ENR_eval_rel$plot_train + ENR_eval_rel$plot_test + 
+all_models_plot_REL_CHRON <- 
+  ENR_eval_chron$plot_train + ENR_eval_chron$plot_test + ENR_eval_rel$plot_train + ENR_eval_rel$plot_test + 
   mlm_eval_chron$plot_train + mlm_eval_chron$plot_test + mlm_eval_rel$plot_train + mlm_eval_rel$plot_test +
   RF_eval_chron$plot_train + RF_eval_chron$plot_test + RF_eval_rel$plot_train + RF_eval_rel$plot_test +
   SVM_eps_eval_chron$plot_train + SVM_eps_eval_chron$plot_test +
@@ -829,4 +830,19 @@ all_models_plot_REL_CHRON <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_tes
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(filename = paste0("002_plots/005_all_models_plot_REL_chron", extension), all_models_plot_REL_CHRON, width = 15, height = 18)
+ggsave(filename = paste0("002_plots/005_all_models_plot_REL_chron", extension), all_models_plot_REL_CHRON, width = 15, height = 18)#
+
+## all comparison between REl and CHRON transformed. Requires to have run 005_...REL and everything loaded in the environment
+all_models_plot_rel_t_chron_t <- 
+  ENR_eval_chron_t$plot_train + ENR_eval_chron_t$plot_test + ENR_eval_rel_t$plot_train + ENR_eval_rel_t$plot_test + 
+  mlm_eval_chron_t$plot_train + mlm_eval_chron_t$plot_test + mlm_eval_rel_t$plot_train + mlm_eval_rel_t$plot_test +
+  RF_eval_chron_t$plot_train + RF_eval_chron_t$plot_test + RF_eval_rel_t$plot_train + RF_eval_rel_t$plot_test +
+  SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$plot_test +
+  SVM_eps_eval_rel_t$plot_train + SVM_eps_eval_rel_t$plot_test +
+  SVM_nu_eval_chron_t$plot_train + SVM_nu_eval_chron_t$plot_test +
+  SVM_nu_eval_rel_t$plot_train + SVM_nu_eval_rel_t$plot_test +
+  plot_layout(ncol = 4, guides = "collect", axes = "collect") + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+ggsave(filename = paste0("002_plots/005_all_models_plot_REL_chron_t", extension), all_models_plot_rel_t_chron_t, width = 15, height = 18)

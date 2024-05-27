@@ -117,13 +117,26 @@ plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled
   geom_text(aes(label = significance, x = reg_coef_scaled * 1.1, , color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.8) +
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare) +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  theme_bw()
 plot_SMR_comparison_all
 
 ggsave(file = paste0("002_plots/006_SMR_comparison_all",extension), plot_SMR_comparison_all, width = 5, height = 5)
 
 ### CpG location for SMRs
+## CpG position for all 
+plot_SMR_position_all <- ggplot(methyl_sites_combined_nor) +
+  geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.02, y = SMR, color = species), linewidth = 2) +
+  labs(x = "CpG position (kb)", y = "Shared methylation region", color = "Species") +
+  scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  # scale_y_discrete(limits = rev(levels(methyl_sites_combined_nor$species))) +
+  scale_color_manual(values = color_species) + 
+  theme_bw()
+# theme(axis.text.x = element_text(angle = -20, hjust = -.05))
+plot_SMR_position_all
+
+ggsave(filename = "002_plots/006_SMR_position_all.pdf", plot = plot_SMR_position_all, width = 10, height = 7)
+
+## only significant
 # subsetting for significant SMRs only
 methyl_sites_significant <- subset(methyl_sites_combined_nor, SMR %in% df_SMR_comparison$SMR)
 
@@ -148,3 +161,93 @@ plot_SMR_combined <- plot_SMR_comparison + plot_SMR_position_significant +
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
 ggsave(filename = "002_plots/006_SMR_combined.pdf", plot = plot_SMR_combined, width = 10, height = 6)
+
+## both all together
+
+plot_SMR_combined_all <- plot_SMR_comparison_all + plot_SMR_position_all +
+  plot_layout(guides = "collect", axes = "collect") + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+ggsave(filename = "002_plots/006_SMR_combined_all.pdf", plot = plot_SMR_combined_all, width = 10, height = 6)
+
+#### Plot LOSO results ####
+
+#### log-transformed
+## load and rename data
+factor_train <- factor("Training", levels = c("Training", "Testing"))
+factor_test <- factor("Testing", levels = c("Training", "Testing"))
+# AC
+load("000_data/007_data_comparison/no_AC_SVM_eps_val.Rdata")
+AC_LOSO_plot_train_t <- SVM_eps_eval_chron_t$plot_train + theme(plot.title = element_blank())
+AC_LOSO_plot_test_t <- SVM_eps_eval_chron_t$plot_test + theme(plot.title = element_blank())
+AC_LOSO_AE <- rbind(data.frame(AE = SVM_eps_eval_chron_t$values_AE_test, type = factor_test),
+                    data.frame(AE = SVM_eps_eval_chron_t$values_AE_train, type = factor_train))
+# AS
+load("000_data/007_data_comparison/no_AS_SVM_eps_val.Rdata")
+AS_LOSO_plot_train_t <- SVM_eps_eval_chron_t$plot_train + theme(plot.title = element_blank())
+AS_LOSO_plot_test_t <- SVM_eps_eval_chron_t$plot_test + theme(plot.title = element_blank())
+AS_LOSO_AE <- rbind(data.frame(AE = SVM_eps_eval_chron_t$values_AE_test, type = factor_test),
+                    data.frame(AE = SVM_eps_eval_chron_t$values_AE_train, type = factor_train))
+# EH
+load("000_data/007_data_comparison/no_EH_SVM_eps_val.Rdata")
+EH_LOSO_plot_train_t <- SVM_eps_eval_chron_t$plot_train+ theme(plot.title = element_blank())
+EH_LOSO_plot_test_t <- SVM_eps_eval_chron_t$plot_test + theme(plot.title = element_blank())
+EH_LOSO_AE <- rbind(data.frame(AE = SVM_eps_eval_chron_t$values_AE_test, type = factor_test),
+                    data.frame(AE = SVM_eps_eval_chron_t$values_AE_train, type = factor_train))
+# ZF
+load("000_data/007_data_comparison/no_ZF_SVM_eps_val.Rdata")
+ZF_LOSO_plot_train_t <- SVM_eps_eval_chron_t$plot_train + theme(plot.title = element_blank())
+ZF_LOSO_plot_test_t <- SVM_eps_eval_chron_t$plot_test + theme(plot.title = element_blank())
+ZF_LOSO_AE <- rbind(data.frame(AE = SVM_eps_eval_chron_t$values_AE_test, type = factor_test),
+                    data.frame(AE = SVM_eps_eval_chron_t$values_AE_train, type = factor_train))
+
+### plot AE for each LOSO
+
+# AC
+AC_plot_AE_SVM_t <- ggplot(AC_LOSO_AE, aes(x = type, y = AE, pattern = type)) +
+  geom_boxplot_pattern(position = position_dodge(width = .9), outlier.shape = NA, pattern_fill = "transparent", pattern_color = "gray10") + 
+  scale_pattern_manual(values = c("stripe", "circle")) + 
+  labs(y = "Absolute error (years)", x = "Data", pattern = "Data") +
+  theme_bw() + 
+  theme(legend.position = "") +
+  ylim(c(0,2.5)) 
+
+# AS
+AS_plot_AE_SVM_t <- ggplot(AS_LOSO_AE, aes(x = type, y = AE, pattern = type)) +
+  geom_boxplot_pattern(position = position_dodge(width = .9), outlier.shape = NA, pattern_fill = "transparent", pattern_color = "gray10") + 
+  scale_pattern_manual(values = c("stripe", "circle")) + 
+  labs(y = "Absolute error (years)", x = "Data", pattern = "Data") +
+  theme_bw() + 
+  theme(legend.position = "") +
+  ylim(c(0,4.5)) 
+
+# EH
+EH_plot_AE_SVM_t <- ggplot(EH_LOSO_AE, aes(x = type, y = AE, pattern = type)) +
+  geom_boxplot_pattern(position = position_dodge(width = .9), outlier.shape = NA, pattern_fill = "transparent", pattern_color = "gray10") + 
+  scale_pattern_manual(values = c("stripe", "circle")) + 
+  labs(y = "Absolute error (years)", x = "Data", pattern = "Data") +
+  theme_bw() + 
+  theme(legend.position = "") +
+  ylim(c(0,25)) 
+
+# ZF
+ZF_plot_AE_SVM_t <- ggplot(ZF_LOSO_AE, aes(x = type, y = AE, pattern = type)) +
+  geom_boxplot_pattern(position = position_dodge(width = .9), outlier.shape = NA, pattern_fill = "transparent", pattern_color = "gray10") + 
+  scale_pattern_manual(values = c("stripe", "circle")) + 
+  labs(y = "Absolute error (years)", x = "Data", pattern = "Data") +
+  theme_bw() + 
+  theme(legend.position = "") +
+  ylim(c(0,2)) 
+
+plot_LOSO_all_SVM_log <- AC_LOSO_plot_train_t + AC_LOSO_plot_test_t + AC_plot_AE_SVM_t +
+  AS_LOSO_plot_train_t + AS_LOSO_plot_test_t + AS_plot_AE_SVM_t +
+  EH_LOSO_plot_train_t + EH_LOSO_plot_test_t + EH_plot_AE_SVM_t +
+  ZF_LOSO_plot_train_t + ZF_LOSO_plot_test_t + ZF_plot_AE_SVM_t +
+  plot_layout(guides = "collect", axes = "collect", ncol = 3, widths = c(3,3,1)) + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+plot_LOSO_all_SVM_log
+
+ggsave(filename = "002_plots/006_LOSO_SVM_all.pdf", plot = plot_LOSO_all_SVM_log, width = 9, height = 11.5)
+ 

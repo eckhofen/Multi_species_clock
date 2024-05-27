@@ -5,7 +5,7 @@
 # change working directory accordingly extension
 # setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
-extension <- "_no_AC.pdf"
+extension <- ""
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -77,6 +77,7 @@ all_meth_values_selected <- rbind(AC_meth_values_selected,AS_meth_values_selecte
 
 ## NO AC
 extension <- "_no_AC.pdf"
+save_file_name <- "no_AC_SVM_eps_val.Rdata"
 
 meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
 meth_test <- AC_meth_values_selected
@@ -86,34 +87,37 @@ nrow(meth_train) #261
 nrow(meth_test) #110
 
 ## NO ZF
-extension <- "_no_ZF.pdf"
-
-meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, AC_meth_values_selected)
-meth_test <- ZF_meth_values_selected
-
-# checking how many CpGs are present per data set
-nrow(meth_train) #275
-nrow(meth_test) #96
+# extension <- "_no_ZF.pdf"
+# save_file_name <- "no_ZF_SVM_eps_val.Rdata"
+# 
+# meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, AC_meth_values_selected)
+# meth_test <- ZF_meth_values_selected
+# 
+# # checking how many CpGs are present per data set
+# nrow(meth_train) #275
+# nrow(meth_test) #96
 
 ## NO AS
-extension <- "_no_AS.pdf"
-
-meth_train <- rbind(ZF_meth_values_selected, EH_meth_values_selected, AC_meth_values_selected)
-meth_test <- AS_meth_values_selected
-
-# checking how many CpGs are present per data set
-nrow(meth_train) #300
-nrow(meth_test) #71
+# extension <- "_no_AS.pdf"
+# save_file_name <- "no_AS_SVM_eps_val.Rdata"
+# 
+# meth_train <- rbind(ZF_meth_values_selected, EH_meth_values_selected, AC_meth_values_selected)
+# meth_test <- AS_meth_values_selected
+# 
+# # checking how many CpGs are present per data set
+# nrow(meth_train) #300
+# nrow(meth_test) #71
 
 ## NO EH
-extension <- "_no_EH.pdf"
-
-meth_train <- rbind(ZF_meth_values_selected, AS_meth_values_selected, AC_meth_values_selected)
-meth_test <- EH_meth_values_selected
-
-# checking how many CpGs are present per data set
-nrow(meth_train) #277
-nrow(meth_test) #94
+# extension <- "_no_EH.pdf"
+# save_file_name <- "no_EH_SVM_eps_val.Rdata"
+# 
+# meth_train <- rbind(ZF_meth_values_selected, AS_meth_values_selected, AC_meth_values_selected)
+# meth_test <- EH_meth_values_selected
+# 
+# # checking how many CpGs are present per data set
+# nrow(meth_train) #277
+# nrow(meth_test) #94
 
 ### defining data
 # training data
@@ -489,10 +493,6 @@ df_AE_MLM_t <- df_AE_t[,c("MLM","type")]
 # SVM eps only 
 df_AE_SVM_t <- df_AE_t[,c("SVM_eps","type")]
 
-# combining two dfs
-df_AE_long_t$log <- "yes"
-df_AE_long$log <- "no"
-
 df_AE_long_both <- rbind(df_AE_long, df_AE_long_t)
 
 df_AE_LOOCV <- cbind(values_LOOCV_AE$AE, values_LOOCV_t_AE$AE)
@@ -638,3 +638,7 @@ all_models_plot <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test + ENR_ev
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
 ggsave(filename = paste0("002_plots/005_all_models_plot", extension), all_models_plot, width = 15, height = 18)
+
+### save plots as Rdata to compare all LOSO results
+
+save(file = paste0("000_data/007_data_comparison/", save_file_name), SVM_eps_eval_chron, SVM_eps_eval_chron_t)
