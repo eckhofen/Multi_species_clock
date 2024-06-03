@@ -189,6 +189,10 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   values_AE_test <- data.frame(
     AE = round(abs(predictions_test - Y_test), 4)
   )
+  
+  # students t-test for training and testing estimation errors
+  metrics_ttest <- t.test(values_AE_train, values_AE_test)
+  
   # prepare data frames for plotting
   if(is.matrix(predictions_train)) {
     result_df_train <- data.frame(age_predicted = c(predictions_train), age = Y_train, species = species_train)
@@ -228,7 +232,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     theme(plot.title = element_text(hjust = .5, face = "bold"))
   
   # return list containing metrics and plots
-  return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test))
+  return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test, t_test = metrics_ttest))
 }
 
 

@@ -191,6 +191,10 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   values_AE_test <- data.frame(
     AE = round(abs(predictions_test - Y_test), 4)
   )
+  
+  # students t-test for training and testing estimation errors
+  metrics_ttest <- t.test(values_AE_train, values_AE_test)
+  
   # prepare data frames for plotting
   if(is.matrix(predictions_train)) {
     result_df_train <- data.frame(age_predicted = c(predictions_train), age = Y_train, species = species_train)
@@ -230,7 +234,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     theme(plot.title = element_text(hjust = .5, face = "bold"))
   
   # return list containing metrics and plots
-  return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test))
+  return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test, t_test = metrics_ttest))
 }
 
 
@@ -274,11 +278,11 @@ ENR_eval_rel_plot <- ENR_eval_rel$plot_train + ENR_eval_rel$plot_test  + ENR_eva
   plot_layout(nrow = 2, guides = "collect")
 
 # saving plots
-ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_TE", extension), ENR_eval_rel$plot_test, width = 8, height = 7)
-ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_TR", extension), ENR_eval_rel$plot_train, width = 8, height = 7)
-
-ggsave(filename = paste0("002_plots/005_m_ENR_rel_log-age_TE", extension), ENR_eval_rel_t$plot_test, width = 8, height = 7)
-ggsave(filename = paste0("002_plots/005_m_ENR_rel_log-age_TR", extension), ENR_eval_rel_t$plot_train, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_TE", extension), ENR_eval_rel$plot_test, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_TR", extension), ENR_eval_rel$plot_train, width = 8, height = 7)
+# 
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_log-age_TE", extension), ENR_eval_rel_t$plot_test, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_log-age_TR", extension), ENR_eval_rel_t$plot_train, width = 8, height = 7)
 
 ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_all", extension), ENR_eval_rel_plot, width = 10, height = 7)
 
@@ -659,6 +663,9 @@ df_AE_testing_t <- cbind(ENR_eval_rel_t$values_AE_test, mlm_eval_rel_t$values_AE
 colnames(df_AE_testing_t) <- c("ENR", "MLM", "SVM_eps", "SVM_nu", "RF","type")
 # both
 df_AE_t <- rbind(df_AE_training_t, df_AE_testing_t)
+
+save(file= paste0("000_data/007_data_comparison/df_AE", "_REL"), df_AE)
+save(file= paste0("000_data/007_data_comparison/df_AE_t", "_REL"), df_AE_t)
 
 # long transformation
 df_AE_long_t_REL <- as.data.frame(pivot_longer(df_AE_t, cols = -type, names_to = "model", values_to = "value"))

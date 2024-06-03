@@ -5,7 +5,8 @@
 # change working directory accordingly extension
 # setwd("/powerplant/workspace/cfngle/script_GH/Multi_species_clock/")
 setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/")
-extension <- ""
+extension <- "_max_LS.pdf"
+
 
 # setting up color palette 
 colpal_CB <- c("#c06d00", "#f9cf6e", "#6a5d00", "#44a02b", "#008649", "#12ebf0", "#65a9ff", "#004588", "#660077", "#ff98f7", "#954674", "#630041")
@@ -40,51 +41,65 @@ library(svglite)
 load("000_data/006_model_creation/all_meth_values_selected.RData")
 
 #### modifying age (optional) ####
-# AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.4
-# AS_meth_values_selected$rel_age
-# EH_meth_values_selected$rel_age <- EH_meth_values_selected$rel_age / 1
-# ZF_meth_values_selected$rel_age
 
-#### testing chronological age
-AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age * 25
-AS_meth_values_selected$rel_age <- AS_meth_values_selected$rel_age * 54
-EH_meth_values_selected$rel_age <- EH_meth_values_selected$rel_age * 20
-ZF_meth_values_selected$rel_age <- ZF_meth_values_selected$rel_age * 5
+# AC + 30%
+extension <- "_max_LS_AC_p_30.pdf"
+save_file_AE <- "_max_LS_AC_p_30"
+AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.3
+
+# # AC + 40%
+# extension <- "_max_LS_AC_p_40.pdf"
+# save_file_AE <- "_max_LS_AC_p_40"
+# AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.4
+
+# AS+ 30%
+# extension <- "_max_LS_AS_p_30.pdf"
+# save_file_AE <- "_max_LS_AS_p_30"
+# AS_meth_values_selected$rel_age <- AS_meth_values_selected$rel_age / 1.3
+
+# EH + 30%
+# extension <- "_max_LS_EH_p_30.pdf"
+# save_file_AE <- "_max_LS_EH_p_30"
+# EH_meth_values_selected$rel_age <- EH_meth_values_selected$rel_age / 1.3
+
+# EH - 30%
+# extension <- "_max_LS_EH_m_25.pdf"
+# save_file_AE <- "_max_LS_EH_m_25"
+# EH_meth_values_selected$rel_age <- EH_meth_values_selected$rel_age / 0.75
+
 
 all_meth_values_selected <- rbind(AC_meth_values_selected,AS_meth_values_selected,EH_meth_values_selected,ZF_meth_values_selected)
-#### Data splitting ####
-# # defining arguments
-# ds_breaks <- 3
-# ds_prop <- 5/6
-# # using a stratified splitting technique
-# set.seed(123)
-# AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
-# 
-# set.seed(123)
-# AS_split <- initial_split(AS_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
-# 
-# set.seed(123)
-# EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
-# 
-# set.seed(123)
-# ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
 
-# # combining data into training and testing sets
-# meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
-# meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
+#### Data splitting ####
+# defining arguments
+ds_breaks <- 3
+ds_prop <- 5/6
+# using a stratified splitting technique
+set.seed(123)
+AC_split <- initial_split(AC_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+set.seed(123)
+AS_split <- initial_split(AS_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+set.seed(123)
+EH_split <- initial_split(EH_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+set.seed(123)
+ZF_split <- initial_split(ZF_meth_values_selected, strata = "rel_age", breaks = ds_breaks, prop = ds_prop)
+
+# combining data into training and testing sets
+meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
+meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
 
 ### modified for LOSO
 
 ## NO AC
-extension <- "_no_AC.pdf"
-save_file_name <- "no_AC_SVM_eps_val.Rdata"
-
-meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
-meth_test <- AC_meth_values_selected
-
-# checking how many CpGs are present per data set
-nrow(meth_train) #261
-nrow(meth_test) #110
+# extension <- "_no_AC.pdf"
+# save_file_name <- "no_AC_SVM_eps_val_REL.Rdata"
+# 
+# meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
+# meth_test <- AC_meth_values_selected
+# 
+# # checking how many CpGs are present per data set
+# nrow(meth_train) #261
+# nrow(meth_test) #110
 
 ## NO ZF
 # extension <- "_no_ZF.pdf"
@@ -120,15 +135,15 @@ nrow(meth_test) #110
 # nrow(meth_test) #94
 
 ## NO EH only AC training
-extension <- "_no_EH_only_AC.pdf"
-save_file_name <- "no_EH_only_AC_SVM_eps_val.Rdata"
-
-meth_train <- AC_meth_values_selected
-meth_test <- EH_meth_values_selected
-
-# checking how many CpGs are present per data set
-nrow(meth_train) #110
-nrow(meth_test) #94
+# extension <- "_no_EH_only_AC.pdf"
+# save_file_name <- "no_EH_only_AC_SVM_eps_val.Rdata"
+# 
+# meth_train <- AC_meth_values_selected
+# meth_test <- EH_meth_values_selected
+# 
+# # checking how many CpGs are present per data set
+# nrow(meth_train) #110
+# nrow(meth_test) #94
 
 
 ### defining data
@@ -147,7 +162,7 @@ Y_test <- meth_test[,"rel_age"]
 ## function for model testing plus calculating metrics (MSE, MAE, R)
 evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
                            species_test, transform = FALSE, colpalOI = color_species, plot_title = "Model evaluation:", 
-                           y_lim = c(0,12), x_lim = c(-0,12), CpGs = "not defined", s = NA) {
+                           y_lim = c(0,.3), x_lim = c(-0,.3), CpGs = "not defined", s = NA) {
   # calculate predictions
   if (!is.na(s)) {
     predictions_train <- predict(model, X_train, s = s)
@@ -159,8 +174,8 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   
   # optional transformation
   if (transform) {
-    predictions_train <- exp(predictions_train)
-    predictions_test <- exp(predictions_test)
+    predictions_train <- exp(-exp(-predictions_train))
+    predictions_test <- exp(-exp(-predictions_test))
     Y_train
     Y_test
   }
@@ -185,6 +200,10 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   values_AE_test <- data.frame(
     AE = round(abs(predictions_test - Y_test), 4)
   )
+  
+  # students t-test for training and testing estimation errors
+  metrics_ttest <- t.test(values_AE_train, values_AE_test)
+  
   # prepare data frames for plotting
   if(is.matrix(predictions_train)) {
     result_df_train <- data.frame(age_predicted = c(predictions_train), age = Y_train, species = species_train)
@@ -204,10 +223,10 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Chronological age", color = "Species") +
+    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Relative age", color = "Species") +
     # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
     theme_bw() +
-    annotate("text", x = 0, y = 10, label = paste0("R=", metrics_train$R, "\nMSE=", metrics_train$MSE, "\nMAE=", metrics_train$MAE), size = 3.5, hjust = 0, vjust = .1) +
+    annotate("text", x = 0, y = 0.25, label = paste0("R=", metrics_train$R, "\nMSE=", metrics_train$MSE, "\nMAE=", metrics_train$MAE), size = 3.5, hjust = 0, vjust = .1) +
     theme(plot.title = element_text(hjust = .5, face = "bold"))
   
   plot_test <- ggplot(result_df_test, aes(x = age, y = age_predicted, color = species)) +
@@ -217,14 +236,14 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Chronological age", color = "Species") +
+    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Relative age", color = "Species") +
     # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
     theme_bw() +
-    annotate("text", x = 0, y = 10, label = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE), size = 3.5, hjust = 0, vjust = .1) +
+    annotate("text", x = 0, y = 0.25, label = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE), size = 3.5, hjust = 0, vjust = .1) +
     theme(plot.title = element_text(hjust = .5, face = "bold"))
   
   # return list containing metrics and plots
-  return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test))
+  return(list(metrics_train = metrics_train, metrics_test = metrics_test, plot_train = plot_train, plot_test = plot_test, values_AE_train = values_AE_train, values_AE_test = values_AE_test, t_test = metrics_ttest))
 }
 
 
@@ -235,8 +254,8 @@ Y <- meth_train[,"rel_age"]
 Y_test <- meth_test[,"rel_age"]
 
 # age transformation
-Y_log <- log(Y)
-Y_log_test <- log(Y_test)
+Y_log <- -log(-log(Y))
+Y_log_test <- -log(-log(Y_test))
 
 # define alpha for either lasso, rigid or elastic net regression
 glm_alpha <- 0.5
@@ -258,36 +277,33 @@ set.seed(123)
 ENR_test_log <- cv.glmnet(as.matrix(X), Y_log, alpha = glm_alpha)
 
 ### running models on testing data
-ENR_eval_chron <-  evaluate.model(ENR_test, s = ENR_test$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "ENR", CpGs = "40")
+ENR_eval_rel <-  evaluate.model(ENR_test, s = ENR_test$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "ENR", CpGs = "40")
 
-ENR_eval_chron_t <-  evaluate.model(ENR_test_log, s = ENR_test_log$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
-                              colpalOI= color_species, plot_title = "ENR (log(age))", CpGs = "40")
-# combining models
-ENR_eval_chron_plot <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test  + ENR_eval_chron_t$plot_train + ENR_eval_chron_t$plot_test +
+ENR_eval_rel_t <-  evaluate.model(ENR_test_log, s = ENR_test_log$lambda.min, as.matrix(X), Y, as.matrix(X_test), Y_test, meth_train$species, meth_test$species, transform = TRUE, 
+                                  colpalOI= color_species, plot_title = "ENR (-log-log(age))", CpGs = "40")
+##grouped
+# normal age
+ENR_eval_rel_plot <- ENR_eval_rel$plot_train + ENR_eval_rel$plot_test  + ENR_eval_rel_t$plot_train + ENR_eval_rel_t$plot_test +
   plot_layout(nrow = 2, guides = "collect")
 
-ENR_eval_chron_plot
-
 # saving plots
-# ggsave(filename = paste0("002_plots/005_m_ENR_age_TE", extension), ENR_eval_chron$plot_test, width = 8, height = 7)
-# ggsave(filename = paste0("002_plots/005_m_ENR_age_TR", extension), ENR_eval_chron$plot_train, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_TE", extension), ENR_eval_rel$plot_test, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_TR", extension), ENR_eval_rel$plot_train, width = 8, height = 7)
 # 
-# ggsave(filename = paste0("002_plots/005_m_ENR_log-age_TE", extension), ENR_eval_chron_t$plot_test, width = 8, height = 7)
-# ggsave(filename = paste0("002_plots/005_m_ENR_log-age_TR", extension), ENR_eval_chron_t$plot_train, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_log-age_TE", extension), ENR_eval_rel_t$plot_test, width = 8, height = 7)
+# ggsave(filename = paste0("002_plots/005_m_ENR_rel_log-age_TR", extension), ENR_eval_rel_t$plot_train, width = 8, height = 7)
 
-ggsave(filename = paste0("002_plots/005_m_ENR_age_all", extension), ENR_eval_chron_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_ENR_rel_age_all", extension), ENR_eval_rel_plot, width = 10, height = 7)
 
 #### Testing multivariate linear regression models ####
 ### pre-testing with base R package
 mlm_test <- lm(Y ~., data = X)
-mlm_age_summary <- summary(mlm_test)
-
-# save(file = "000_data/007_data_comparison/mlm_age_summary.Rdata", mlm_age_summary)
-# coef(mlm_test)
+summary(mlm_test)
+coef(mlm_test)
 
 
 # with transformed age
-mlm_test_t <- lm(log(Y) ~., data = X)
+mlm_test_t <- lm(Y_log ~., data = X)
 
 ## selecting only significant values
 sign_vec <- as.vector((summary(mlm_test)$coefficients[,4] < 0.05)[-1])
@@ -311,32 +327,32 @@ mlm_test_opt_t <- lm(Y_log ~.,X[sign_vec])
 ### testing and plotting model
 
 # testing normal mlm
-mlm_eval_chron <-  evaluate.model(mlm_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
-                            colpalOI= color_species, plot_title = "MLM", CpGs = length(mlm_test$coefficients)-1)
-# mlm_alt_eval_chron <-  evaluate.model(mlm_alt, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+mlm_eval_rel <-  evaluate.model(mlm_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, 
+                                colpalOI= color_species, plot_title = "MLM", CpGs = length(mlm_test$coefficients)-1)
+# mlm_alt_eval_rel <-  evaluate.model(mlm_alt, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
 
-mlm_eval_chron_t <-  evaluate.model(mlm_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, 
-                              colpalOI= color_species, plot_title = "MLM (log(age))", CpGs = length(mlm_test_t$coefficients)-1)
+mlm_eval_rel_t <-  evaluate.model(mlm_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, 
+                                  colpalOI= color_species, plot_title = "MLM (-log-log(age))", CpGs = length(mlm_test_t$coefficients)-1)
 
 # testing optimized mlm
-mlm_eval_chron_opt <-
+mlm_eval_rel_opt <-
   evaluate.model(mlm_test_opt, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI = color_species, plot_title = "MLM (sign. CpGs only)", CpGs = length(mlm_test_opt$coefficients) - 1)
-mlm_eval_chron_opt_t <-
-  evaluate.model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI = color_species, plot_title = "MLM (sig. only; log(age))", CpGs = length(mlm_test_opt$coefficients) - 1)
+mlm_eval_rel_opt_t <-
+  evaluate.model(mlm_test_opt_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI = color_species, plot_title = "MLM (sig. only; -log-log(age))", CpGs = length(mlm_test_opt$coefficients) - 1)
 
 ## plotting 
 # normal age
-mlm_eval_chron_plot <- mlm_eval_chron$plot_train + mlm_eval_chron$plot_test  + mlm_eval_chron_opt$plot_train + mlm_eval_chron_opt$plot_test +
+mlm_eval_rel_plot <- mlm_eval_rel$plot_train + mlm_eval_rel$plot_test  + mlm_eval_rel_opt$plot_train + mlm_eval_rel_opt$plot_test +
   plot_layout(nrow = 2, guides = "collect")
 # transformed age
-mlm_eval_chron_plot_t <- mlm_eval_chron_t$plot_train + mlm_eval_chron_t$plot_test  + mlm_eval_chron_opt_t$plot_train + mlm_eval_chron_opt_t$plot_test +
+mlm_eval_rel_plot_t <- mlm_eval_rel_t$plot_train + mlm_eval_rel_t$plot_test  + mlm_eval_rel_opt_t$plot_train + mlm_eval_rel_opt_t$plot_test +
   plot_layout(nrow = 2, guides = "collect")
 
-ggsave(filename = paste0("002_plots/005_m_MLM_age_all", extension), mlm_eval_chron_plot, width = 10, height = 7)
-ggsave(filename = paste0("002_plots/005_m_MLM_log-age_all", extension), mlm_eval_chron_plot_t, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_MLM_rel_age_all", extension), mlm_eval_rel_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_MLM_rel_log-age_all", extension), mlm_eval_rel_plot_t, width = 10, height = 7)
 
 
-#### MLM (caret) ####
+#### ENR (caret) ####
 ## pre processing
 # centering means that all the the mean is being subtracted from all values and scale divides them by the standard deviation. 
 
@@ -353,8 +369,8 @@ testingData$rel_age <- Y_test
 testingData_t <- testingData
 trainingData_t <- trainingData
 # -log-log transformation
-trainingData_t$rel_age <- log(trainingData_t$rel_age)
-testingData_t$rel_age <- log(testingData_t$rel_age)
+trainingData_t$rel_age <- -log(-log(trainingData_t$rel_age))
+testingData_t$rel_age <- -log(-log(testingData_t$rel_age))
 
 ### training model 
 set.seed(123)
@@ -377,19 +393,71 @@ MLM_tuned_t <- train(rel_age ~ ., data = testingData_t,  method = "lm", tuneLeng
 
 ## evaluation 
 # normal models
-MLM_eval_chron <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_eval_rel <-  evaluate.model(MLM_model, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "MLM prediction", CpGs = length(mlm_test$coefficients)-1)
 
-MLM_eval_chron_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_eval_rel_tuned <-  evaluate.model(MLM_tuned, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "MLM tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
-MLM_eval_chron$plot_train + MLM_eval_chron$plot_test + MLM_eval_chron_tuned$plot_train + MLM_eval_chron_tuned$plot_test +
+MLM_eval_rel$plot_train + MLM_eval_rel$plot_test + MLM_eval_rel_tuned$plot_train + MLM_eval_rel_tuned$plot_test +
   plot_layout(nrow=2, guides = "collect")
 
 # transformed models
-MLM_t_eval_chron <-  evaluate.model(MLM_model_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "MLM (-log-log(age)) prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_t_eval_rel <-  evaluate.model(MLM_model_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "MLM (-log-log(age)) prediction", CpGs = length(mlm_test$coefficients)-1)
 
-MLM_t_eval_chron_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "MLM (-log-log(age)) tuned prediction", CpGs = length(mlm_test$coefficients)-1)
+MLM_t_eval_rel_tuned <-  evaluate.model(MLM_tuned_t, trainingData, Y, testingData, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "MLM (-log-log(age)) tuned prediction", CpGs = length(mlm_test$coefficients)-1)
 
-#### RF ####
+### LOOCV
+
+# preparing data 
+all_data <- all_meth_values_selected[,-length(all_meth_values_selected)]
+# all_data$rel_age <- -log(-log(all_data$rel_age))
+# all_age <- all_meth_values_selected$rel_age %>% -log(-log(.))
+all_data <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected) %>% 
+  .[,-length(AC_meth_values_selected)]
+
+all_data_t <- all_data
+
+all_data_t$rel_age <- log(all_data_t$rel_age)
+# setting up training method
+loocv_train_control <- trainControl(method = "LOOCV")
+
+# run model
+set.seed(123)
+MLM_LOOCV_model <- train(rel_age ~ ., data = all_data, method = "lm", trControl = loocv_train_control)
+MLM_LOOCV_model_t <- train(rel_age ~ ., data = all_data_t, method = "lm", trControl = loocv_train_control)
+
+MLM_LOOCV_model$results
+MLM_LOOCV_model_t$results
+
+# evaluation
+metrics_LOOCV <- data.frame(
+  R = round(cor(MLM_LOOCV_model$pred$pred, MLM_LOOCV_model$pred$obs, method = "pearson"), 4),
+  MSE = round(mean((MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs)^2), 4),
+  MAE = round(mean(abs(MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs)), 4),
+  N = nrow(all_data))
+
+values_LOOCV_AE <- data.frame(
+  AE = round(abs(MLM_LOOCV_model$pred$pred - MLM_LOOCV_model$pred$obs), 4)
+)
+
+metrics_LOOCV_t <- data.frame(
+  R = round(cor(MLM_LOOCV_model_t$pred$pred, MLM_LOOCV_model_t$pred$obs, method = "pearson"), 4),
+  MSE = round(mean((MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs)^2), 4),
+  MAE = round(mean(abs(MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs)), 4),
+  N = nrow(all_data))
+
+values_LOOCV_t_AE <- data.frame(
+  AE = round(abs(MLM_LOOCV_model_t$pred$pred - MLM_LOOCV_model_t$pred$obs), 4)
+)
+
+# evaluate model
+# MLM_LOOCV_eval_rel <-  evaluate.model(MLM_LOOCV_model, all_data, all_age, testingData, Y_test, all_meth_values_selected$species, meth_test$species, transform = FALSE, colpalOI= colpal_CB_a_01, plot_title = "MLM LOOCV prediction", CpGs = length(mlm_test$coefficients)-1)
+
+#### Testing random forest model ####
+
+### Shortcoming of random forest
+# Random Forests aren't good at generalizing cases with completely new data. For example, if I tell you that one ice-cream costs $1, 2 ice-creams cost $2, and 3 ice-creams cost $3, how much do 10 ice-creams cost? A linear regression can easily figure this out, while a Random Forest has no way of finding the answer.
+# Random forests are biased towards the categorical variable having multiple levels (categories). It is because feature selection based on impurity reduction is biased towards preferring variables with more categories so variable selection (importance) is not accurate for this type of data.
+
 library(randomForest)
 set.seed(123)
 
@@ -401,7 +469,6 @@ importance(RF_test)
 
 which.min(RF_test$mse)
 
-# age transformed model 
 set.seed(123)
 RF_test_t <- randomForest(Y_log ~ ., data = X, mtry = 4, ntree = 1500)
 
@@ -422,16 +489,16 @@ set.seed(123)
 RF_test_tuned <- randomForest(Y ~ ., data = X, mtry = 9, ntree = 1500)
 
 ## evaluation
-RF_eval_chron <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "RF", CpGs = length(mlm_test$coefficients)-1)
+RF_eval_rel <-  evaluate.model(RF_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "RF", CpGs = length(mlm_test$coefficients)-1)
 
-RF_eval_chron_t <-  evaluate.model(RF_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "RF (log age)", CpGs = length(mlm_test$coefficients)-1)
+RF_eval_rel_t <-  evaluate.model(RF_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "RF (-log-log(age))", CpGs = length(mlm_test$coefficients)-1)
 
-RF_eval_chron_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "RF (tuned)", CpGs = length(mlm_test$coefficients)-1)
+RF_eval_rel_tuned <-  evaluate.model(RF_test_tuned, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "RF (tuned)", CpGs = length(mlm_test$coefficients)-1)
 
-RF_eval_chron_plot <- RF_eval_chron$plot_train + RF_eval_chron$plot_test + RF_eval_chron_t$plot_train + RF_eval_chron_t$plot_test +
+RF_eval_rel_plot <- RF_eval_rel$plot_train + RF_eval_rel$plot_test + RF_eval_rel_tuned$plot_train + RF_eval_rel_tuned$plot_test +
   plot_layout(nrow=2, guides = "collect")
 
-ggsave(filename = paste0("002_plots/005_m_RF_age_all", extension), RF_eval_chron_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_RF_rel_age_all", extension), RF_eval_rel_plot, width = 10, height = 7)
 
 #### Testing support vector regression models ####
 library(e1071)
@@ -450,49 +517,51 @@ SVM_nu_test_t <- svm(Y_log ~ ., data = X, type = "nu-regression", kernel = "line
 
 ## evaluation
 # normal
-SVM_eps_eval_chron <-  evaluate.model(SVM_eps_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (eps)", CpGs = length(mlm_test$coefficients)-1)
+SVM_eps_eval_rel <-  evaluate.model(SVM_eps_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (eps, linear)", CpGs = length(mlm_test$coefficients)-1)
 
-SVM_nu_eval_chron <-  evaluate.model(SVM_nu_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (nu)", CpGs = length(mlm_test$coefficients)-1)
+SVM_nu_eval_rel <-  evaluate.model(SVM_nu_test, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = FALSE, colpalOI= color_species, plot_title = "SVM (nu, linear)", CpGs = length(mlm_test$coefficients)-1)
 
-SVM_eval_chron_plot <- SVM_eps_eval_chron$plot_train + SVM_eps_eval_chron$plot_test + SVM_nu_eval_chron$plot_train + SVM_nu_eval_chron$plot_test +
+SVM_eval_rel_plot <- SVM_eps_eval_rel$plot_train + SVM_eps_eval_rel$plot_test + SVM_nu_eval_rel$plot_train + SVM_nu_eval_rel$plot_test +
   plot_layout(nrow = 2, guides = "collect")
 # transformed
-SVM_eps_eval_chron_t <-  evaluate.model(SVM_eps_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (eps) log", CpGs = length(mlm_test$coefficients)-1)
+SVM_eps_eval_rel_t <-  evaluate.model(SVM_eps_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (eps, linear) log", CpGs = length(mlm_test$coefficients)-1)
 
-SVM_nu_eval_chron_t <-  evaluate.model(SVM_nu_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (nu) log", CpGs = length(mlm_test$coefficients)-1)
+SVM_nu_eval_rel_t <-  evaluate.model(SVM_nu_test_t, X, Y, X_test, Y_test, meth_train$species, meth_test$species, transform = TRUE, colpalOI= color_species, plot_title = "SVM (nu, linear) log", CpGs = length(mlm_test$coefficients)-1)
 
-SVM_eval_chron_t_plot <- SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$plot_test + SVM_nu_eval_chron_t$plot_train + SVM_nu_eval_chron_t$plot_test +
+SVM_eval_rel_t_plot <- SVM_eps_eval_rel_t$plot_train + SVM_eps_eval_rel_t$plot_test + SVM_nu_eval_rel_t$plot_train + SVM_nu_eval_rel_t$plot_test +
   plot_layout(nrow = 2, guides = "collect")
 
-ggsave(filename = paste0("002_plots/005_m_SVM_age_all", extension), SVM_eval_chron_plot, width = 10, height = 7)
-ggsave(filename = paste0("002_plots/005_m_SVM_log-age_all", extension), SVM_eval_chron_t_plot, width = 10, height = 7)
-
+ggsave(filename = paste0("002_plots/005_m_SVM_rel_age_all", extension), SVM_eval_rel_plot, width = 10, height = 7)
+ggsave(filename = paste0("002_plots/005_m_SVM_rel_log-age_all", extension), SVM_eval_rel_t_plot, width = 10, height = 7)
 
 #### AE comparison plot ####
 
-## all AE values for plotting age
+## all AE values for plotting REL age
 # train
-df_AE_training <- cbind(ENR_eval_chron$values_AE_train, mlm_eval_chron$values_AE_train, SVM_eps_eval_chron$values_AE_train, SVM_nu_eval_chron$values_AE_train, RF_eval_chron$values_AE_train, Type = as.factor("Training"))
+df_AE_training <- cbind(ENR_eval_rel$values_AE_train, mlm_eval_rel$values_AE_train, SVM_eps_eval_rel$values_AE_train, SVM_nu_eval_rel$values_AE_train, RF_eval_rel$values_AE_train, Type = as.factor("Training"))
 colnames(df_AE_training) <- c("ENR", "MLM", "SVM_eps", "SVM_nu", "RF", "type")
 # test
-df_AE_testing <- cbind(ENR_eval_chron$values_AE_test, mlm_eval_chron$values_AE_test, SVM_eps_eval_chron$values_AE_test, SVM_nu_eval_chron$values_AE_test, RF_eval_chron$values_AE_test,Type = as.factor("Testing"))
+df_AE_testing <- cbind(ENR_eval_rel$values_AE_test, mlm_eval_rel$values_AE_test, SVM_eps_eval_rel$values_AE_test, SVM_nu_eval_rel$values_AE_test, RF_eval_rel$values_AE_test,Type = as.factor("Testing"))
 colnames(df_AE_testing) <- c("ENR", "MLM", "SVM_eps", "SVM_nu", "RF","type")
 # both
 df_AE <- rbind(df_AE_training, df_AE_testing)
 
 # long transformation
-df_AE_long <- as.data.frame(pivot_longer(df_AE, cols = -type, names_to = "model", values_to = "value"))
-colnames(df_AE_long) <- c("type", "model", "AE")
+df_AE_long_REL <- as.data.frame(pivot_longer(df_AE, cols = -type, names_to = "model", values_to = "value"))
+colnames(df_AE_long_REL) <- c("type", "model", "AE")
 
-## all AE values for plotting LOG age
+## all AE values for plotting LOGLOG REL age
 # train
-df_AE_training_t <- cbind(ENR_eval_chron_t$values_AE_train, mlm_eval_chron_t$values_AE_train, SVM_eps_eval_chron_t$values_AE_train, SVM_nu_eval_chron_t$values_AE_train, RF_eval_chron_t$values_AE_train, Type = as.factor("Training"))
+df_AE_training_t <- cbind(ENR_eval_rel_t$values_AE_train, mlm_eval_rel_t$values_AE_train, SVM_eps_eval_rel_t$values_AE_train, SVM_nu_eval_rel_t$values_AE_train, RF_eval_rel_t$values_AE_train, Type = as.factor("Training"))
 colnames(df_AE_training_t) <- c("ENR", "MLM", "SVM_eps", "SVM_nu", "RF", "type")
 # test
-df_AE_testing_t <- cbind(ENR_eval_chron_t$values_AE_test, mlm_eval_chron_t$values_AE_test, SVM_eps_eval_chron_t$values_AE_test, SVM_nu_eval_chron_t$values_AE_test, RF_eval_chron_t$values_AE_test,Type = as.factor("Testing"))
+df_AE_testing_t <- cbind(ENR_eval_rel_t$values_AE_test, mlm_eval_rel_t$values_AE_test, SVM_eps_eval_rel_t$values_AE_test, SVM_nu_eval_rel_t$values_AE_test, RF_eval_rel_t$values_AE_test,Type = as.factor("Testing"))
 colnames(df_AE_testing_t) <- c("ENR", "MLM", "SVM_eps", "SVM_nu", "RF","type")
 # both
 df_AE_t <- rbind(df_AE_training_t, df_AE_testing_t)
+
+save(file= paste0("000_data/007_data_comparison/df_AE", save_file_AE), df_AE)
+save(file= paste0("000_data/007_data_comparison/df_AE_t", save_file_AE), df_AE_t)
 
 # long transformation
 df_AE_long_t <- as.data.frame(pivot_longer(df_AE_t, cols = -type, names_to = "model", values_to = "value"))
@@ -617,40 +686,17 @@ AE_comparison_plot
 ggsave(filename = paste0("002_plots/005_comparison_AE", extension), AE_comparison_plot, width = 10, height = 7)
 
 
-### LOSO comparison plot all in one
-# creating the first row layout with specified widths
-first_row <- SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$plot_test + plot_AE_SVM_t +
-  plot_layout(widths = c(3, 3, 1))
-
-# creating the second row layout with specified widths
-second_row <- plot_AE_comparison_no_out + plot_AE_comparison_no_out_t +
-  plot_layout(widths = c(1, 1))
-
-# combining the rows and adding annotations and themes
-SVM_comparison_plot_all <- first_row / second_row +
-  plot_layout(guides = "collect") + 
-  plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag = element_text(size = 18, face = "bold"))
-
-SVM_comparison_plot_all
-
-ggsave(filename = paste0("002_plots/005_comparison_SVM_eps_t_all", extension), SVM_comparison_plot_all, width = 11, height = 7.5)
-
 ### all models comparison
 
-all_models_plot <- ENR_eval_chron$plot_train + ENR_eval_chron$plot_test + ENR_eval_chron_t$plot_train + ENR_eval_chron_t$plot_test + 
-  mlm_eval_chron$plot_train + mlm_eval_chron$plot_test + mlm_eval_chron_t$plot_train + mlm_eval_chron_t$plot_test +
-  RF_eval_chron$plot_train + RF_eval_chron$plot_test + RF_eval_chron_t$plot_train + RF_eval_chron_t$plot_test +
-  SVM_eps_eval_chron$plot_train + SVM_eps_eval_chron$plot_test +
-  SVM_eps_eval_chron_t$plot_train + SVM_eps_eval_chron_t$plot_test +
-  SVM_nu_eval_chron$plot_train + SVM_nu_eval_chron$plot_test +
-  SVM_nu_eval_chron_t$plot_train + SVM_nu_eval_chron_t$plot_test +
+all_models_plot <- ENR_eval_rel$plot_train + ENR_eval_rel$plot_test + ENR_eval_rel_t$plot_train + ENR_eval_rel_t$plot_test + 
+  mlm_eval_rel$plot_train + mlm_eval_rel$plot_test + mlm_eval_rel_t$plot_train + mlm_eval_rel_t$plot_test +
+  RF_eval_rel$plot_train + RF_eval_rel$plot_test + RF_eval_rel_t$plot_train + RF_eval_rel_t$plot_test +
+  SVM_eps_eval_rel$plot_train + SVM_eps_eval_rel$plot_test +
+  SVM_eps_eval_rel_t$plot_train + SVM_eps_eval_rel_t$plot_test +
+  SVM_nu_eval_rel$plot_train + SVM_nu_eval_rel$plot_test +
+  SVM_nu_eval_rel_t$plot_train + SVM_nu_eval_rel_t$plot_test +
   plot_layout(ncol = 4, guides = "collect", axes = "collect") + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(filename = paste0("002_plots/005_all_models_plot", extension), all_models_plot, width = 15, height = 18)
-
-### save plots as Rdata to compare all LOSO results
-
-save(file = paste0("000_data/007_data_comparison/", save_file_name), SVM_eps_eval_chron, SVM_eps_eval_chron_t)
+ggsave(filename = paste0("002_plots/005_all_models_plot_REL", extension), all_models_plot, width = 15, height = 18)

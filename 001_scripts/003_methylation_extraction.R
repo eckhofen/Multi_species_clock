@@ -7,6 +7,13 @@ setwd("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multisp
 data_folder <- paste0(getwd(), "/000_data/")
 save_folder <- paste0(data_folder, "003_SMR/") # folder where extracted sequences will be saved
 
+# setting up color palette 
+colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
+
+color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
+color_species <- setNames(color_species_df$color, color_species_df$species)
+
+color_compare <- c("#005AB5", "#DC3220")
 #### Preparation ####
 library(GenomicRanges) # https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html
 library(Biostrings) # https://bioconductor.org/packages/release/bioc/html/Biostrings.html
@@ -429,7 +436,11 @@ ZF_meth_values_long$species <- "ZF"
 all_meth_values_long <- rbind(AC_meth_values_long, AS_meth_values_long, EH_meth_values_long, ZF_meth_values_long)
 save(all_meth_values_long, AC_meth_values_long, AS_meth_values_long, EH_meth_values_long, ZF_meth_values_long,  file = paste0(save_folder, "all_meth_values_long.RData"))
 
-
+all_meth_values_long <- all_meth_values_long %>% 
+  group_by(SMR) %>% 
+  mutate(pos_nor = Site_i - min(Site_i)) %>% 
+  mutate(pos_nor_kb = (Site_i - min(Site_i))/1000) %>% 
+  ungroup()
 ### plotting
 save_folder <- paste0(data_folder, "004_methyl_values/")
 load(paste0(save_folder,"all_meth_values_long.RData"))
@@ -441,7 +452,7 @@ ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   scale_color_gradient(low = colpal_CB_c[1], high = colpal_CB_c[5], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
-  labs(title = "Methylation values AS (human rgenome)")
+  labs(title = "Methylation values AS (human rgenome)", color = "Age")
 
 ggplot(AC_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
@@ -450,7 +461,7 @@ ggplot(AC_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   scale_color_gradient(low = colpal_CB_c[2], high = colpal_CB_c[6], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
-  labs(title = "Methylation values AC (human rgenome)")
+  labs(title = "Methylation values AC (human rgenome)", color = "Age")
 
 ggplot(EH_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
@@ -459,7 +470,7 @@ ggplot(EH_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   scale_color_gradient(low = colpal_CB_c[3], high = colpal_CB_c[7], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
-  labs(title = "Methylation values EH (human rgenome)")
+  labs(title = "Methylation values EH (human rgenome)", color = "Age")
 
 ggplot(ZF_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   geom_sina(aes(color = age), alpha = 0.7) +
@@ -468,13 +479,13 @@ ggplot(ZF_meth_values_long, aes(x = Site, y = Methylation_Value)) +
   scale_color_gradient(low = colpal_CB_c[4], high = colpal_CB_c[8], guide = "legend") +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
-  labs(title = "Methylation values ZF (human rgenome)")
+  labs(title = "Methylation values ZF (human rgenome)", color = "Age")
 
 ## all boxplot
 ggplot(all_meth_values_long, aes(x = Site, y = Methylation_Value)) +
-  geom_boxplot(aes(group = Site_f, fill = species), alpha = 0.9) +
+  geom_boxplot(aes(group = Site_f, fill = species), color = NA, alpha = 0.9, outlier.shape = "") +
   facet_wrap(~SMR, scale = "free_x") +
-  scale_fill_manual(values = colpalOI) +
+  scale_fill_manual(values = color_species) +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
   labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (AS), European Hake (EH), Zebrafish (ZF) (human rgenome)")

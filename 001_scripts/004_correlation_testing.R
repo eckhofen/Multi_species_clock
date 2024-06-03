@@ -100,13 +100,13 @@ select.max.cor <- function(cor_tibble, filter_significant = FALSE) {
   
   filtered_data <- filtered_data %>% 
     group_by(SMR) %>%
-    # Add a temporary column for the absolute correlation values
+    # add a temporary column for the absolute correlation values
     mutate(abs_correlation = abs(Correlation)) %>%
-    # For each group, filter the row with the max absolute correlation
+    # for each group, filter the row with the max absolute correlation
     filter(abs_correlation == max(abs_correlation)) %>%
-    # Remove the temporary column
+    # remove the temporary column
     select(-abs_correlation) %>%
-    # Optionally, ensure only one row per group if there are ties
+    # ensure only one row per group if there are ties
     slice(1)
   return(filtered_data)
 }

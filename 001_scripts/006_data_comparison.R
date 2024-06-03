@@ -93,6 +93,22 @@ df_SMR_comparison_all <- df_SMR_comparison_all %>%
     TRUE ~ ""
   ))
 
+#### AE max life changes ####
+## load AE for LF modification
+load("000_data/007_data_comparison/df_AE_t_max_LS_AC_p_30")
+df_AE_t_AC_p_30 <- df_AE_t
+load("000_data/007_data_comparison/df_AE_max_LS_AC_p_30")
+df_AE_AC_p_30 <- df_AE
+
+load("000_data/007_data_comparison/df_AE_REL")
+df_AE_REL <- df_AE
+load("000_data/007_data_comparison/df_AE_t_REL")
+df_AE_t_REL <- df_AE_t
+
+## Students t test
+
+t.test(df_AE_REL$ENR, df_AE_AC_p_30$ENR)
+
 #### Plots ####
 
 ### SMR comparison
@@ -250,4 +266,64 @@ plot_LOSO_all_SVM_log <- AC_LOSO_plot_train_t + AC_LOSO_plot_test_t + AC_plot_AE
 plot_LOSO_all_SVM_log
 
 ggsave(filename = "002_plots/006_LOSO_SVM_all.pdf", plot = plot_LOSO_all_SVM_log, width = 9, height = 11.5)
- 
+
+
+#### plotting SMR methylation ####
+
+load("000_data/004_methyl_values/all_meth_values_long.RData")
+load("000_data/004_methyl_values/all_mix_cor_CpG_common.RData")
+
+all_meth_values_long_sel <- all_meth_values_long[all_meth_values_long$Site %in% all_mix_cor_CpG_common$Site,]
+
+ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +
+  geom_sina(aes(color = age), alpha = 0.7) +
+  geom_boxplot(aes(group = Site_f), alpha = 0.5) +
+  facet_wrap(~SMR, scale = "free_x") +
+  scale_color_gradient(low = colpal_CB_c[1], high = colpal_CB_c[5], guide = "legend") +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Methylation values AS (human rgenome)", color = "Age")
+
+ggplot(AC_meth_values_long, aes(x = Site, y = Methylation_Value)) +
+  geom_sina(aes(color = age), alpha = 0.7) +
+  geom_boxplot(aes(group = Site_f), alpha = 0.5) +
+  facet_wrap(~SMR, scale = "free_x") +
+  scale_color_gradient(low = colpal_CB_c[2], high = colpal_CB_c[6], guide = "legend") +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Methylation values AC (human rgenome)", color = "Age")
+
+ggplot(EH_meth_values_long, aes(x = Site, y = Methylation_Value)) +
+  geom_sina(aes(color = age), alpha = 0.7) +
+  geom_boxplot(aes(group = Site_f), alpha = 0.5) +
+  facet_wrap(~SMR, scale = "free_x") +
+  scale_color_gradient(low = colpal_CB_c[3], high = colpal_CB_c[7], guide = "legend") +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Methylation values EH (human rgenome)", color = "Age")
+
+ggplot(ZF_meth_values_long, aes(x = Site, y = Methylation_Value)) +
+  geom_sina(aes(color = age), alpha = 0.7) +
+  geom_boxplot(aes(group = Site_f), alpha = 0.5) +
+  facet_wrap(~SMR, scale = "free_x") +
+  scale_color_gradient(low = colpal_CB_c[4], high = colpal_CB_c[8], guide = "legend") +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Methylation values ZF (human rgenome)", color = "Age")
+
+## all boxplot
+ggplot(all_meth_values_long, aes(x = Site, y = Methylation_Value)) +
+  geom_boxplot(aes(group = Site_f, fill = species), color = NA, alpha = 0.9, outlier.shape = "") +
+  facet_wrap(~SMR, scale = "free_x") +
+  scale_fill_manual(values = color_species) +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (AS), European Hake (EH), Zebrafish (ZF) (human rgenome)")
+
+ggplot(all_meth_values_long_sel, aes(x = Site, y = Methylation_Value)) +
+  geom_boxplot(aes(group = Site_f, fill = species), outlier.shape = "") +
+  facet_wrap(~SMR, scale = "free_x", nrow = 5) +
+  scale_fill_manual(values = color_species) +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (AS), European Hake (EH), Zebrafish (ZF) (human rgenome)")
