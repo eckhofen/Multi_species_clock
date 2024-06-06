@@ -1,3 +1,12 @@
+# Author: Gabriel Ecker-Eckhofen (gabriel.eckhofen@imbrsea.eu)
+# Date: June 2024
+
+#### Overview ####
+# Testing LOOCV for ENR, MLM and RF
+
+#### Testing ####
+
+### ENR
 # leave one out 
 
 fit_results <- c()
@@ -53,7 +62,9 @@ metrics <- data.frame(
 metrics
 
 
+### MLM
 
+## funciton for LOOCV
 test.loocv.lm <- function(X, Y, transformation = NULL, inv_transformation) {
   fit_results <- numeric(nrow(X)) # pre-allocate for better performance
   
@@ -111,7 +122,9 @@ ggplot(prediction, aes(x = age, y = age_predicted)) +
   ylim(0,0.30) +
   xlim(0,0.30)
 
+### RF
 
+## funciton for LOOCV RF
 test.loocv.rf <- function(X, Y, transformation = NULL, inv_transformation) {
   fit_results <- numeric(nrow(X)) # pre-allocate for better performance
   

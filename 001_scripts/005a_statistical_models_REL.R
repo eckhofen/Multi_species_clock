@@ -81,16 +81,15 @@ nrow(meth_train) #305
 nrow(meth_test) #99
 
 ## plotting age distribution
-plot_age_dist <- ggplot(all_meth_values_selected) +
+plot_age_dist_REL <- ggplot(all_meth_values_selected) +
   geom_density(aes(x = rel_age, color = species), linewidth = 1) +
   geom_density(aes(x = rel_age), fill = "grey", alpha = 0.5, linewidth = 1) +
   scale_color_manual(values = color_species) +
   scale_fill_manual(values = "grey") +
   labs(color = "Species", fill = "Species", y = "Density", x = "Relative age") +
-  theme_bw() +
-  labs(title = "Relative age distribution for all samples")
+  theme_bw()
 
-plot_age_dist
+plot_age_dist_REL
 # >> the plot shows that our dependent variable is not normally distributed (as expected from age)
 
 # comparing data sets with Kolmogorov-Smirnov test
@@ -101,27 +100,28 @@ ks_test_data$statistic
 color_compare_tt <- setNames(color_compare, c("Training", "Testing"))
 
 # visually comparing training and testing sets (BOXPLOTS)
-plot_sample_age_dist_box <- ggplot() +
+plot_sample_age_dist_box_REL <- ggplot() +
   geom_boxplot(data = meth_train, aes(y = rel_age, fill = "Training", x = -.5)) +
   geom_boxplot(data = meth_test, aes(y = rel_age, fill = "Testing", x = .5)) +
   scale_fill_manual(values = color_compare_tt) +
   labs(fill = "Dataset", y = "Density", x = "Relative age") +
   xlab("Datasets") +
-  ylab("Age") +
+  ylab("Relative age") +
   theme_bw() +
   theme(axis.text.x = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", round(ks_test_data$p.value, 8)))
-plot_sample_age_dist_box
+  labs(subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), "\np-value=", round(ks_test_data$p.value, 8)))
+plot_sample_age_dist_box_REL
+
 # visually comparing training and testing sets
-plot_sample_age_dist <- ggplot() +
+plot_sample_age_dist_REL <- ggplot() +
   geom_density(data = meth_train, aes(x = rel_age, fill = "Training"), alpha = 0.5, linewidth = 1) +
   geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = 1) +
   scale_fill_manual(values = color_compare_tt, name = "Dataset") +
   labs(y = "Density", x = "Relative age") +
-  theme_bw() +
+  theme_bw()
   # theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets")
-
+  # ggtitle("Age Distribution in Training and Testing Sets")
+plot_sample_age_dist_REL
 # visually comparing sets (Q-Q plot)
 qqplot(meth_train$rel_age, meth_test$rel_age,
        xlab = "Training data",
@@ -130,12 +130,22 @@ qqplot(meth_train$rel_age, meth_test$rel_age,
 abline(0, 1, col = "black")
 
 # plotting both graphs
-ggsave(filename = paste0("002_plots/005_age_distribution_RE", extension), plot_age_dist, width = 5, height = 5)
-ggsave(filename = paste0("002_plots/005_sample_age_distribution_box_RE", extension), plot_sample_age_dist_box, width = 5, height = 5)
-ggsave(filename = paste0("002_plots/005_sample_age_distribution_RE", extension), plot_sample_age_dist, width = 5, height = 5)
+ggsave(filename = paste0("002_plots/005_age_distribution_RE", extension), plot_age_dist_REL, width = 5, height = 5)
+ggsave(filename = paste0("002_plots/005_sample_age_distribution_box_RE", extension), plot_sample_age_dist_box_REL, width = 5, height = 5)
+ggsave(filename = paste0("002_plots/005_sample_age_distribution_RE", extension), plot_sample_age_dist_REL, width = 5, height = 5)
 
-plot_age_dist + plot_sample_age_dist +
-  plot_layout(nrow=2)
+plot_age_distr_REL_up <- plot_age_dist_REL + plot_sample_age_dist_REL + 
+  plot_layout(guides = "collect", ncol = 1)
+
+plot_age_distr_REL <- plot_age_distr_REL_up + plot_sample_age_dist_box_REL +
+  plot_layout(guides = "collect", 
+  design = "AAAC
+  BBBC") +
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+plot_age_distr_REL
+
+ggsave(filename = paste0("002_plots/005_sample_age_REL_all", extension), plot_age_distr_REL, width = 10, height = 6)
 
 ### defining data
 # training data

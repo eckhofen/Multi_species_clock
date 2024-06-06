@@ -76,15 +76,15 @@ all_meth_values_selected <- rbind(AC_meth_values_selected,AS_meth_values_selecte
 ### modified for LOSO
 
 ## NO AC
-extension <- "_no_AC.pdf"
-save_file_name <- "no_AC_SVM_eps_val.Rdata"
-
-meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
-meth_test <- AC_meth_values_selected
-
-# checking how many CpGs are present per data set
-nrow(meth_train) #261
-nrow(meth_test) #110
+# extension <- "_no_AC.pdf"
+# save_file_name <- "no_AC_SVM_eps_val.Rdata"
+# 
+# meth_train <- rbind(AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
+# meth_test <- AC_meth_values_selected
+# 
+# # checking how many CpGs are present per data set
+# nrow(meth_train) #261
+# nrow(meth_test) #110
 
 ## NO ZF
 # extension <- "_no_ZF.pdf"
@@ -109,26 +109,26 @@ nrow(meth_test) #110
 # nrow(meth_test) #71
 
 ## NO EH
-# extension <- "_no_EH.pdf"
-# save_file_name <- "no_EH_SVM_eps_val.Rdata"
-# 
-# meth_train <- rbind(ZF_meth_values_selected, AS_meth_values_selected, AC_meth_values_selected)
-# meth_test <- EH_meth_values_selected
-# 
-# # checking how many CpGs are present per data set
-# nrow(meth_train) #277
-# nrow(meth_test) #94
+extension <- "_no_EH.pdf"
+save_file_name <- "no_EH_SVM_eps_val.Rdata"
 
-## NO EH only AC training
-extension <- "_no_EH_only_AC.pdf"
-save_file_name <- "no_EH_only_AC_SVM_eps_val.Rdata"
-
-meth_train <- AC_meth_values_selected
+meth_train <- rbind(ZF_meth_values_selected, AS_meth_values_selected, AC_meth_values_selected)
 meth_test <- EH_meth_values_selected
 
 # checking how many CpGs are present per data set
-nrow(meth_train) #110
+nrow(meth_train) #277
 nrow(meth_test) #94
+
+## NO EH only AC training
+# extension <- "_no_EH_only_AC.pdf"
+# save_file_name <- "no_EH_only_AC_SVM_eps_val.Rdata"
+# 
+# meth_train <- AC_meth_values_selected
+# meth_test <- EH_meth_values_selected
+# 
+# # checking how many CpGs are present per data set
+# nrow(meth_train) #110
+# nrow(meth_test) #94
 
 
 ### defining data
@@ -204,7 +204,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Chronological age", color = "Species") +
+    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age (years)", x = "Chronological age (years)", color = "Species") +
     # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
     theme_bw() +
     annotate("text", x = 0, y = 10, label = paste0("R=", metrics_train$R, "\nMSE=", metrics_train$MSE, "\nMAE=", metrics_train$MAE), size = 3.5, hjust = 0, vjust = .1) +
@@ -217,7 +217,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Chronological age", color = "Species") +
+    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age (years)", x = "Chronological age (years)", color = "Species") +
     # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
     theme_bw() +
     annotate("text", x = 0, y = 10, label = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE), size = 3.5, hjust = 0, vjust = .1) +

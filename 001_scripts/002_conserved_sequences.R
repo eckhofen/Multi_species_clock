@@ -1,3 +1,6 @@
+# Author: Gabriel Ecker-Eckhofen (gabriel.eckhofen@imbrsea.eu)
+# Date: June 2024
+
 #### Overview ####
 # Conserved sequences will be extracted from the aligned sequences
 

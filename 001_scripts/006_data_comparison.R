@@ -130,13 +130,13 @@ plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled
   geom_point(aes(color = model), position = position_dodge(width = 0.9)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model), position = position_dodge(width = 0.9)) +
   labs(x = "Normalized regression coefficient", y = "Shared methylation region", fill = "Model", color = "Model") +
-  geom_text(aes(label = significance, x = reg_coef_scaled * 1.1, , color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.8) +
+  geom_text(aes(label = significance, x = reg_coef_scaled * 1.1, , color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.75) +
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare) +
   theme_bw()
 plot_SMR_comparison_all
 
-ggsave(file = paste0("002_plots/006_SMR_comparison_all",extension), plot_SMR_comparison_all, width = 5, height = 5)
+ggsave(file = paste0("002_plots/006_SMR_comparison_all",extension), plot_SMR_comparison_all, width = 10, height = 7)
 
 ### CpG location for SMRs
 ## CpG position for all 

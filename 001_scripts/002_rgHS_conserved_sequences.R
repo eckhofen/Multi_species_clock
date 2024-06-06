@@ -1,3 +1,9 @@
+# Author: Gabriel Ecker-Eckhofen (gabriel.eckhofen@imbrsea.eu)
+# Date: June 2024
+
+# DISCLAIMER:
+# by this time and date the sequencing data is not available yet. For all the results in the paper start from script 004_...R
+
 #### Overview ####
 # Conserved sequences will be extracted from the aligned sequences
 

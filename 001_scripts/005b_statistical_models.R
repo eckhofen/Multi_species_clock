@@ -84,8 +84,8 @@ plot_age_dist <- ggplot(all_meth_values_selected) +
   scale_color_manual(values = color_species) +
   scale_fill_manual(values = "grey") +
   labs(color = "Species", fill = "Species", y = "Density", x = "Chronological age (years)") +
-  theme_bw() +
-  labs(title = "Chronological age distribution for all samples")
+  theme_bw()
+  # labs(title = "Chronological age distribution for all samples")
 
 plot_age_dist
 # >> the plot shows that our dependent variable is not normally distributed (as expected from age)
@@ -104,10 +104,10 @@ plot_sample_age_dist_box <- ggplot() +
   scale_fill_manual(values = color_compare_tt) +
   labs(fill = "Dataset", y = "Density", x = "Chronological age (years)") +
   xlab("Datasets") +
-  ylab("Chronological age") +
+  ylab("Chronological age (years)") +
   theme_bw() +
   theme(axis.text.x = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets", subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), " p-value=", round(ks_test_data$p.value, 8)))
+  labs(subtitle = paste0("KS-test: D=", round(ks_test_data$statistic, 4), "\np-value=", round(ks_test_data$p.value, 8)))
 plot_sample_age_dist_box
 
 # visually comparing training and testing sets
@@ -116,9 +116,9 @@ plot_sample_age_dist <- ggplot() +
   geom_density(data = meth_test, aes(x = rel_age, fill = "Testing"), alpha = 0.5, linewidth = 1) +
   scale_fill_manual(values = color_compare_tt, name = "Dataset") +
   labs(y = "Density", x = "Chronological age (years)") +
-  theme_bw() +
+  theme_bw()
   # theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  ggtitle("Age Distribution in Training and Testing Sets")
+  # ggtitle("Age Distribution in Training and Testing Sets")
 
 # visually comparing sets (Q-Q plot)
 qqplot(meth_train$rel_age, meth_test$rel_age,
@@ -132,8 +132,19 @@ ggsave(filename = paste0("002_plots/005_age_distribution", extension), plot_age_
 ggsave(filename = paste0("002_plots/005_sample_age_distribution_box", extension), plot_sample_age_dist_box, width = 5, height = 5)
 ggsave(filename = paste0("002_plots/005_sample_age_distribution", extension), plot_sample_age_dist, width = 5, height = 5)
 
-plot_age_dist + plot_sample_age_dist +
-  plot_layout(nrow=2, guides = "collect")
+
+plot_age_distr_all <- plot_age_dist + plot_sample_age_dist + plot_sample_age_dist_box +
+  plot_age_dist_REL + plot_sample_age_dist_REL + plot_sample_age_dist_box_REL +
+  plot_layout(guides = "collect",
+              design = "AAAC
+  BBBC
+  DDDF
+  EEEF") +
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+plot_age_distr_all
+
+ggsave(filename = paste0("002_plots/005_sample_age_REL_chron_all", extension), plot_age_distr_all, width = 9, height = 10)
 
 ### defining data
 # training data
@@ -212,7 +223,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age", x = "Chronological age", color = "Species") +
+    labs(title = paste(plot_title, "(Training Set)"), y = "Estimated age (years)", x = "Chronological age (years)", color = "Species") +
     # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
     theme_bw() +
     annotate("text", x = 0, y = 10, label = paste0("R=", metrics_train$R, "\nMSE=", metrics_train$MSE, "\nMAE=", metrics_train$MAE), size = 3.5, hjust = 0, vjust = .1) +
@@ -225,7 +236,7 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     scale_color_manual(values = colpalOI) +
     ylim(y_lim) +
     xlim(x_lim) +
-    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age", x = "Chronological age", color = "Species") +
+    labs(title = paste(plot_title, "(Testing Set)"), y = "Estimated age (years)", x = "Chronological age (years)", color = "Species") +
     # labs(subtitle = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE, "\nN=", nrow(X_test), " CpGs=", CpGs)) +
     theme_bw() +
     annotate("text", x = 0, y = 10, label = paste0("R=", metrics_test$R, "\nMSE=", metrics_test$MSE, "\nMAE=", metrics_test$MAE), size = 3.5, hjust = 0, vjust = .1) +

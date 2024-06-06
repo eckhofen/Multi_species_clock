@@ -3,7 +3,14 @@
 .RData
 .Ruserdata
 .DS_Store
+Multi_species_clock.Rproj
 000_data/001_sequences/
 000_data/000_metdata/metadata_all.RData
 000_data/002_conserved_seq/
+000_data/007_data_comparison/
+001_scripts/002_conserved_sequences.R
+001_scripts/002_rgAC_conserved_sequences.R
+001_scripts/002_rgEH_conserved_sequences.R
+001_scripts/099_temp.R
 002_plots/
+99_age_data_overview_v-1.0.R

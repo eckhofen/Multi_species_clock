@@ -1,5 +1,11 @@
+# Author: Gabriel Ecker-Eckhofen (gabriel.eckhofen@imbrsea.eu)
+# Date: June 2024
+
+# DISCLAIMER:
+# by this time and date the sequencing data is not available yet. For all the results in the paper start from script 004_...R
+
 #### Overview ####
-# Extraction of sequences of methylation data for the AC, EH and AS
+# Extraction of sequences from methylation data for Atlatic cod (AC), European hake (EH), Australasian snapper (AS) and zebrafish (ZF)
 
 #### Settings ####
 bp_ext <- 1000 # this will be the length of the extracted sequences around the CpG 

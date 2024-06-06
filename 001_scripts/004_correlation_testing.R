@@ -1,3 +1,9 @@
+# Author: Gabriel Ecker-Eckhofen (gabriel.eckhofen@imbrsea.eu)
+# Date: June 2024
+
+# DISCLAIMER:
+# by this time and date the sequencing data is not available yet. Start here to reproduce the results
+
 #### Overview ####
 ## correlation testing between the selected CpGs and to age as well
 
@@ -146,32 +152,22 @@ all_mix_cor_CpG_common  <- rbind(all_neg_cor_CpG_common, all_pos_cor_CpG_common[
   filter(n() == 4) %>% 
   ungroup
 
+
 save_path <- paste0(save_folder, "all_mix_cor_CpG_common.RData")
 save(all_mix_cor_CpG_common, file = save_path)
+
+## selecting all and renaming the SMRs before
+all_pos_cor_CpG_common$SMR_cor <- paste0(all_pos_cor_CpG_common$SMR, "_pos")
+all_neg_cor_CpG_common$SMR_cor <- paste0(all_neg_cor_CpG_common$SMR, "_neg")
+
+all_cor_CpG <- rbind(all_pos_cor_CpG_common, all_neg_cor_CpG_common)
 
 # overview of significant values 
 overview_CpGs <- rbind(summary(all_pos_cor_CpG_common$P_value), summary(all_neg_cor_CpG_common$P_value), summary(all_pos_cor_CpG_common$Correlation), summary(abs(all_neg_cor_CpG_common$Correlation)))
 row.names(overview_CpGs) <- c("pos_cor p-value", "neg_cor p-value", "pos_cor correlation", "neg_cor correlation")
 overview_CpGs
 
-
 boxplot(summary(all_neg_cor_CpG_common$P_value), )
-## selecting significant ones
-# AC_sig_CpGs <- select.max.cor(AC_cor_age_filtered_pearson, TRUE)
-# AS_sig_CpGs <- select.max.cor(AS_cor_age_filtered_pearson, TRUE)
-# EH_sig_CpGs <- select.max.cor(EH_cor_age_filtered_pearson, TRUE)
-# ZF_sig_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson, TRUE)
-# 
-# all_sig_CpGs <- rbind(AC_sig_CpGs, AS_sig_CpGs, EH_sig_CpGs, ZF_sig_CpGs)
-# 
-# # only keeping SMR which are present in all species (n = 4)
-# all_sig_CpGs_common <- all_sig_CpGs %>% 
-#   group_by(SMR) %>% 
-#   filter(n() == 4) %>% 
-#   ungroup
-
-#### Retrieving methylation values ####
-# selecting a mixture of pos and neg correlating CpGs
 
 #AC
 AC_meth_values_selected <- AC_meth_values[,colnames(AC_meth_values) %in% all_mix_cor_CpG_common$Site]
@@ -212,6 +208,48 @@ all_meth_values_selected <- rbind(AC_meth_values_selected, AS_meth_values_select
 save_folder <- paste0(data_folder, "006_model_creation/")
 save_path <- paste0(save_folder, "all_meth_values_selected.RData")
 save(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected, all_meth_values_selected, file = save_path)
+
+## extracting all methylvalues for ALL SMRs
+
+#AC
+AC_meth_values_selected_all <- AC_meth_values[,colnames(AC_meth_values) %in% all_cor_CpG$Site]
+AC_name_index <- match(colnames(AC_meth_values_selected_all), all_cor_CpG$Site)
+colnames(AC_meth_values_selected_all) <- all_cor_CpG$SMR_cor[AC_name_index]
+AC_meth_values_selected_all <- AC_meth_values_selected_all[, order(colnames(AC_meth_values_selected_all))]
+AC_meth_values_selected_all$rel_age <- AC_age/25
+AC_meth_values_selected_all$species <- "AC"
+
+#AS
+AS_meth_values_selected_all <- AS_meth_values[,colnames(AS_meth_values) %in% all_cor_CpG$Site]
+AS_name_index <- match(colnames(AS_meth_values_selected_all), all_cor_CpG$Site)
+colnames(AS_meth_values_selected_all) <- all_cor_CpG$SMR_cor[AS_name_index]
+AS_meth_values_selected_all <- AS_meth_values_selected_all[, order(colnames(AS_meth_values_selected_all))]
+AS_meth_values_selected_all$rel_age <- AS_age/54
+AS_meth_values_selected_all$species <- "AS"
+
+#EH
+EH_meth_values_selected_all <- EH_meth_values[,colnames(EH_meth_values) %in% all_cor_CpG$Site]
+EH_name_index <- match(colnames(EH_meth_values_selected_all), all_cor_CpG$Site)
+colnames(EH_meth_values_selected_all) <- all_cor_CpG$SMR_cor[EH_name_index]
+EH_meth_values_selected_all <- EH_meth_values_selected_all[, order(colnames(EH_meth_values_selected_all))]
+EH_meth_values_selected_all$rel_age <- EH_age/20
+EH_meth_values_selected_all$species <- "EH"
+
+#ZF
+ZF_meth_values_selected_all <- ZF_meth_values_imputed[,colnames(ZF_meth_values_imputed) %in% all_cor_CpG$Site]
+ZF_name_index <- match(colnames(ZF_meth_values_selected_all), all_cor_CpG$Site)
+colnames(ZF_meth_values_selected_all) <- all_cor_CpG$SMR_cor[ZF_name_index]
+ZF_meth_values_selected_all <- ZF_meth_values_selected_all[, order(colnames(ZF_meth_values_selected_all))]
+ZF_meth_values_selected_all$rel_age <- ZF_age/5
+ZF_meth_values_selected_all$species <- "ZF"
+
+# combining all data 
+all_meth_values_all_SMR <- rbind(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all)
+
+# saving selected values
+save_folder <- paste0(data_folder, "006_model_creation/")
+save_path <- paste0(save_folder, "all_meth_values_all_SMR.RData")
+save(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all, all_meth_values_all_SMR, file = save_path)
 
 #### plotting ####
 # color palette
