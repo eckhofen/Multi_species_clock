@@ -13,6 +13,6 @@ Multi_species_clock.Rproj
 001_scripts/002_rgAC_conserved_sequences.R
 001_scripts/002_rgEH_conserved_sequences.R
 001_scripts/099_temp.R
-002_plots/
+002_plots/.pdf
 99_age_data_overview_v-1.0.R
 A_alignment/
