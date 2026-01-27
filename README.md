@@ -32,6 +32,13 @@ The pipeline includes a clear split between:
 - **Server-only / external preprocessing inputs**: alignment outputs and sequence-level metadata produced outside this repo and copied into `01_data/02_external_server_outputs/`.
 - **Locally reproducible downstream analysis**: scripts that start from those external inputs and produce intermediate datasets in `01_data/03_intermediate/` and figures in `03_results/`.
 
+Server-only / external inputs expected by the downstream pipeline:
+
+- `01_data/02_external_server_outputs/01_sequences/*_metadata_*1000bp.csv`
+  - Consumed by `02_code/01_pipeline/legacy_001_scripts/002_rgHS_conserved_sequences.R`.
+- `01_data/02_external_server_outputs/02_conserved_seq/HS_AC_AS_EH_ZF_overlaps.Rdata`
+  - Consumed by `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`.
+
 To reproduce results which have been shown in the master thesis, scripts can be looked at and (depending on data availability) run. The main pipeline scripts are numerated. 
 
 
