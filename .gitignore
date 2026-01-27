@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Private/raw inputs (not publicly available)
+01_data/01_raw_private/
+
+# Local logs / runtime artifacts
+03_results/04_logs/
+
+# Result outputs (figures/tables) are not tracked
+03_results/
+
+# Archive (kept locally but not part of paper-ready pipeline)
+02_code/99_archive/
+01_data/99_archive/
+
+# R session artifacts
+.Rhistory
+.RData
+.Ruserdata
+
+# Large derived intermediates can be ignored if needed (adjust as desired)
+# 01_data/03_intermediate/
