@@ -1,20 +1,20 @@
 ---
-title: "Shared methylation regions and multispecies piscine epigenetic clock"
+title: "Shared conserved methylation regions and multispecies piscine epigenetic clock"
 author: "Gabriel Ecker-Eckhofen"
 date: "June 2024"
 ---
 
 
 ### Overview
-This repository has been made for a masters thesis project: **Shared Methylation Regions (SMRs): a New Method in Comparative Epigenetics Used to Create a Multispecies Piscine Epigenetic Clock**, which has not been made publicly available yet. 
+This repository has been made for a masters thesis project: **Shared Conserved Methylation Regions (SCMRs): a New Method in Comparative Epigenetics Used to Create a Multispecies Piscine Epigenetic Clock**, which has not been made publicly available yet. 
 
 
 ### Introduction
-In this project we introduced a new workflow for identifying comparable methylation data across species. This workflow involves 1) expanding CpG methylation sites from methylation data to sequences (in our case 1kb long) using the species genome, 2) aligning these sequences onto a common reference genome for all species and 3) identifying overlapping aligned sequences which we named **shared methylation regions (SMRs)**.
+In this project we introduced a new workflow for identifying comparable methylation data across species. This workflow involves 1) expanding CpG methylation sites from methylation data to sequences (in our case 1kb long) using the species genome, 2) aligning these sequences onto a common reference genome for all species and 3) identifying overlapping aligned sequences which we named **shared conserved methylation regions (SCMRs)**.
 
-These SMRs now included CpG sites from all species which 4) we then used for age correlation testing. *Note, that this could be done with any variable you can test correlation for*. 5) SMRs were grouped into two classes. One class contained CpGs which were positively correlating with age and the other was containing negatively correlating ones. 6) Now, we selected only the highest correlating CpG for each species and CpG in every SMR group. This leaves one CpG (for each species) in each SMR. 7) If there was no agreement in correlation direction within an SMR (not all species had CpGs correlating in the same direction), the SMR was excluded. If there were SMRs with positively correlating and negatively correlating CpGs, only the negatively ones were retained. 
+These SCMRs now included CpG sites from all species which 4) we then used for age correlation testing. *Note, that this could be done with any variable you can test correlation for*. 5) SCMRs were grouped into two classes. One class contained CpGs which were positively correlating with age and the other was containing negatively correlating ones. 6) Now, we selected only the highest correlating CpG for each species and CpG in every SCMR group. This leaves one CpG (for each species) in each SCMR. 7) If there was no agreement in correlation direction within an SCMR (not all species had CpGs correlating in the same direction), the SCMR was excluded. If there were SCMRs with positively correlating and negatively correlating CpGs, only the negatively ones were retained. 
 
-This finally allowed us to 8) use the retained SMRs as independent variables for creating a methylation-based age prediction model (also known as an "epigenetic clock"). 9) We tested various models such as multivariate linear regression and non-parametric random forest regression. We achieved notable accuracy in age prediction for four species using a single model ("multispecies epigegentic clock"), the results of which will be published in a paper separate from the thesis. 
+This finally allowed us to 8) use the retained SCMRs as independent variables for creating a methylation-based age prediction model (also known as an "epigenetic clock"). 9) We tested various models such as multivariate linear regression and non-parametric random forest regression. We achieved notable accuracy in age prediction for four species using a single model ("multispecies epigegentic clock"), the results of which will be published in a paper separate from the thesis. 
 
 
 ### Using this repo

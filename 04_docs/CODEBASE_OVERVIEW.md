@@ -2,34 +2,40 @@
 
 ## High-level purpose
 
-This repository implements a comparative epigenetics workflow to identify **Shared Methylation Regions (SMRs)** across fish species and use them to build a **multispecies piscine epigenetic clock**.
+This repository implements a comparative epigenetics workflow to identify **Shared Conserved Methylation Regions (SCMRs)** across fish species and use them to build a **multispecies piscine epigenetic clock**.
 
 Conceptual pipeline (as implemented by the scripts):
 
 1. **Sample metadata curation** (age, sex, species, max lifespan; relative age).
 2. **(Upstream / not fully reproducible from this repo)** Expand CpG coordinates to sequences and align them to a reference genome (human used in legacy scripts).
-3. Identify overlaps between aligned sequences to define **SMRs**.
-4. Extract CpG methylation values belonging to those SMRs.
-5. Test CpG–age correlations; select best CpG per SMR per species and keep SMRs with consistent cross-species direction.
+3. Identify overlaps between aligned sequences to define **SCMRs**.
+4. Extract CpG methylation values belonging to those SCMRs.
+5. Test CpG–age correlations; select best CpG per SCMR per species and keep SCMRs with consistent cross-species direction.
 6. Build regression models to predict age (relative or chronological).
 7. Compare models and interpret results via genomic annotation / gene context.
 
 ## Repository structure
 
-- **`001_scripts/`**
-  - Numbered R scripts representing the pipeline and analyses.
+- **`01_data/`**
+  - Inputs and derived artifacts (including external server outputs and intermediate data).
+- **`02_code/`**
+  - Refactored analysis code (pipeline scripts, helpers).
+- **`03_results/`**
+  - Result outputs (figures/tables/logs). Not tracked in git.
+- **`04_docs/`**
+  - Documentation.
 
-- **`000_data/`**
-  - Intermediate data artifacts used/produced by scripts.
+- **Legacy folders (kept temporarily during refactor)**
+  - `001_scripts/`, `000_data/`, `002_plots/`, `data/`, `code/`
 
-- **`002_plots/`**
-  - Default plot output folder in many scripts (currently empty in the repository snapshot).
+## External inputs (server-only / not reproducible from this repo)
 
-- **`data/`**
-  - Large methylation datasets in `.RData/.Rdata` used by some scripts.
+The following steps depend on large private datasets and/or a server alignment workflow and are treated as **external inputs** to the locally reproducible pipeline:
 
-- **`code/`**
-  - Utility scripts / partial refactors.
+- **Sequence expansion + metadata**: files copied into `01_data/02_external_server_outputs/01_sequences/` (e.g. `*_metadata_*1000bp.csv`).
+- **Conserved/aligned overlap objects**: files copied into `01_data/02_external_server_outputs/02_conserved_seq/` (e.g. `HS_AC_AS_EH_ZF_overlaps.Rdata`).
+
+Downstream scripts should start from these external inputs and write derived artifacts to `01_data/03_intermediate/` and figures to `03_results/`.
 
 ## Data artifacts (authoritative in-repo I/O)
 

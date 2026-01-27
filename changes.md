@@ -9,3 +9,5 @@
 - Refactor pipeline scripts `003_methylation_extraction.R`, `004_correlation_testing.R`, `005a_statistical_models_REL.R`, `005b_statistical_models.R`, and `006_data_comparison.R` to use the `01_data/` + `03_results/` folder structure, remove JM, and standardize SCMR naming (with backward-compatible handling of older `SMR` columns where needed).
 - Run parse-only smoke tests (`Rscript -e "parse(file=...)"`) for the refactored scripts to confirm no syntax/path string issues.
 - Update `README.md` to use SCMR terminology and describe the refactored folder structure and server-only vs locally reproducible pipeline split.
+- Initialize a git repository and update `.gitignore` to exclude result outputs (`03_results/`) and archive folders.
+- Update `CODEBASE_OVERVIEW.md` (and `04_docs/` copy) to SCMR terminology and add explicit documentation of server-only external inputs vs locally reproducible downstream steps.
