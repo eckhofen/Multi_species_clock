@@ -14,3 +14,5 @@
 - Update `CODEBASE_OVERVIEW.md` (and `04_docs/` copy) to SCMR terminology and add explicit documentation of server-only external inputs vs locally reproducible downstream steps.
 - Update `code.md` and `04_docs/code.md` to label external inputs vs locally reproducible intermediates and to point key plot outputs to `03_results/01_figures/`.
 - Update `04_docs/README.md` to describe the tidy folder structure and external inputs in the same way as the top-level `README.md`.
+- Refactor `02_code/01_pipeline/legacy_001_scripts/007_gene_analysis.R` to repo-relative paths, remove JM palette usage, and route outputs to `01_data/03_intermediate/009_gene_analysis/` and `03_results/01_figures/` (with legacy fallbacks for required annotation inputs where needed).
+- Run parse-only smoke test for `007_gene_analysis.R`.

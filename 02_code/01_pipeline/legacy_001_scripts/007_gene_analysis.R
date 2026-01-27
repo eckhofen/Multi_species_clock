@@ -5,21 +5,34 @@
 # none
 
 #### Overview ####
-## gene analysis of SMR data on the human reference genome 
+## gene analysis of SCMR data on the human reference genome 
 
 #### Settings ####
-setwd("/Users/macether/Nextcloud/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock")
-data_folder <- "/Users/macether/Nextcloud/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Multi_species_clock/000_data/"
-save_folder <- paste0(data_folder, "008_gene_analysis/") # folder where extracted sequences will be saved
+data_folder <- "01_data/"
+intermediate_folder <- paste0(data_folder, "03_intermediate/")
+results_folder <- "03_results/01_figures/"
+save_folder <- paste0(intermediate_folder, "009_gene_analysis/")
 
-## color palette for plotting
-# for species comparison
-colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
+dir.create(results_folder, recursive = TRUE, showWarnings = FALSE)
+dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 
-color_species_df <- data.frame(species = as.factor(c("AC","AS","EH","JM","ZF")), color = colpal_CB_c[c(1, 5, 3, 7, 8)])
-color_species <- setNames(color_species_df$color, color_species_df$species)
-# for comparison of two groups
-color_compare <- c("#005AB5", "#DC3220")
+palette_path <- paste0(data_folder, "04_metadata/color_palettes.RData")
+if (file.exists(palette_path)) {
+  load(palette_path)
+}
+
+if (!exists("color_compare")) {
+  color_compare <- c("#005AB5", "#DC3220")
+}
+
+if (!exists("color_species")) {
+  colpal_CB_c <- c("#332288", "#117733", "#44AA99", "#88CCEE", "#DDCC77", "#CC6677", "#AA4499", "#882255")
+  color_species_df <- data.frame(
+    species = as.factor(c("AC", "AS", "EH", "ZF")),
+    color = colpal_CB_c[c(1, 5, 3, 8)]
+  )
+  color_species <- setNames(color_species_df$color, color_species_df$species)
+}
 
 #### Preparation ####
 library(tidyverse)
@@ -36,7 +49,12 @@ library(AnnotationHub)
 #### Loading data ####
 ### Annotation
 ## (A) loading annotation file (downloaded from NCBI)
-annotation_human <- import.gff("000_data/008_annotation/GRCh38_p14_annotation.gff", genome = "GRCh38")
+annotation_folder_new <- paste0(intermediate_folder, "008_annotation/")
+annotation_folder_legacy <- "000_data/008_annotation/"
+annotation_folder <- if (dir.exists(annotation_folder_new)) annotation_folder_new else annotation_folder_legacy
+
+annotation_gff_path <- paste0(annotation_folder, "GRCh38_p14_annotation.gff")
+annotation_human <- import.gff(annotation_gff_path, genome = "GRCh38")
 str(annotation_human)
 
 
@@ -51,7 +69,7 @@ cpg_data <- hub[["AH5086"]]
 sort(unique(mcols(cpg_data)))
 
 ## (C) annotation from UCSC for CpG Islands
-CpG_isl <- read.table("000_data/008_annotation/UCSC_CpG_islands.gff", sep = "\t", header = TRUE)
+CpG_isl <- read.table(paste0(annotation_folder, "UCSC_CpG_islands.gff"), sep = "\t", header = TRUE)
 
 # transforming into GRanges object
 anno_CpG <- GRanges(seqnames = CpG_isl$chrom, IRanges(start = CpG_isl$chromStart, end = CpG_isl$chromEnd))
@@ -85,14 +103,18 @@ new_names <- ifelse(current_seqnames %in% as.character(chr_names_chr),
 anno_CpG_NC <- GRanges(seqnames = new_names, ranges = ranges(anno_CpG), strand = "*", mcols = mcols(anno_CpG))
 
 ### loading CpGs
-load("000_data/008_annotation/methylsites_all.RData")
+path_methylsites_new <- paste0(annotation_folder_new, "methylsites_all.RData")
+path_methylsites_legacy <- paste0(annotation_folder_legacy, "methylsites_all.RData")
+load(if (file.exists(path_methylsites_new)) path_methylsites_new else path_methylsites_legacy)
 methyl_sites_combined
 
 # transforming df into GRanges 
 CpGs <- GRanges(seqnames = methyl_sites_combined$chr_align, ranges = IRanges(methyl_sites_combined$pos_align, methyl_sites_combined$pos_align, 1))
 
 # load correlation data for all CpGs
-load("000_data/005_correlation_data/cor_all.RData")
+path_cor_all_new <- paste0(intermediate_folder, "005_correlation_data/cor_all.RData")
+path_cor_all_legacy <- "000_data/005_correlation_data/cor_all.RData"
+load(if (file.exists(path_cor_all_new)) path_cor_all_new else path_cor_all_legacy)
 cor_all
 
 # adding metadata and correlation test results as meta column 
@@ -101,7 +123,13 @@ CpGs
 
 ## selecting final CpGs
 # loading selected CpGs
-load("000_data/004_methyl_values/all_mix_cor_CpG_common.RData")
+path_sel_cpg_new <- paste0(intermediate_folder, "005_correlation_data/all_mix_cor_CpG_common.RData")
+path_sel_cpg_legacy <- "000_data/004_methyl_values/all_mix_cor_CpG_common.RData"
+if (file.exists(path_sel_cpg_new)) {
+  load(path_sel_cpg_new)
+} else {
+  load(path_sel_cpg_legacy)
+}
 all_mix_cor_CpG_common
 
 # selecting final CpGs
@@ -125,7 +153,7 @@ gene_hits <- annotation_human$gene[anno_index[which(annotation_human$type[anno_i
 lnc_RNA_hits <- annotation_human$product[anno_index[which(annotation_human$type[anno_index] == "lnc_RNA")]]
 
 # exporting genes
-write.csv(gene_hits, file ="000_data/008_annotation/gene_list.csv")
+write.csv(gene_hits, file = paste0(save_folder, "gene_list.csv"))
 
 # counting the regions in the selected SMRs
 CpG_regions <- split(anno_hits, queryHits(overlaps))
@@ -169,7 +197,7 @@ p_CpGs <- ggplot(CpG_regions_df_long, aes(x = regions, y = occurrences, fill = c
   ylim(0, 1.1*max(CpG_regions_df_long$occurrences))
 p_CpGs
 
-ggsave("002_plots/007_regions_all_cor_group.pdf", p_CpGs, width = 8, height = 6)
+ggsave(paste0(results_folder, "07_regions_all_cor_group.pdf"), p_CpGs, width = 8, height = 6)
 
 # plotting combined 
 p_CpGs_combined <- ggplot(CpG_regions_all_df, aes(x = regions, y = CpGs, fill = regions)) +
@@ -182,7 +210,7 @@ p_CpGs_combined <- ggplot(CpG_regions_all_df, aes(x = regions, y = CpGs, fill = 
   ylim(0, 1.1*max(CpG_regions_all_df$CpGs))
 p_CpGs_combined
 
-ggsave("002_plots/007_regions_all_CpGs_combined.pdf", p_CpGs_combined, width = 8, height = 6)
+ggsave(paste0(results_folder, "07_regions_all_CpGs_combined.pdf"), p_CpGs_combined, width = 8, height = 6)
  
 # adding species of CpGs as dataframe
 CpG_regions_AC <- CpG_regions_uni[CpGs$species == "AC"] %>% 
@@ -221,7 +249,7 @@ p_CpGs_species <- ggplot(CpG_regions_df_species_long, aes(x = regions, y = occur
   ylim(0,1.1*max(CpG_regions_df_species_long$occurrences))
 p_CpGs_species
 
-ggsave("002_plots/007_regions_all_species.pdf", p_CpGs_species, width = 8, height = 6)
+ggsave(paste0(results_folder, "07_regions_all_species.pdf"), p_CpGs_species, width = 8, height = 6)
 
 ## SELECTED CpGs
 # finding overlapping annotations
@@ -252,11 +280,11 @@ genes_sel_count <- data_frame(genes = rownames(genes_sel_count_pos),
                               pos_cor = genes_sel_count_pos$.,
                               neg_cor = genes_sel_count_neg$.)
 # exporting genes
-write.csv(table(gene_hits_sel), file ="000_data/008_annotation/gene_list_sel.csv")
-write.csv(genes_sel_count, file ="000_data/008_annotation/gene_list_count.csv")
+write.csv(table(gene_hits_sel), file = paste0(save_folder, "gene_list_sel.csv"))
+write.csv(genes_sel_count, file = paste0(save_folder, "gene_list_count.csv"))
 
 # compare with age related genes
-GenAge_genes <- read_csv("000_data/008_annotation/genage_human.csv")
+GenAge_genes <- read_csv(paste0(annotation_folder, "genage_human.csv"))
 
 genes_sel_count$genes %in% GenAge_genes$symbol 
 names(gene_hits) %in% GenAge_genes$symbol 
@@ -319,7 +347,8 @@ p_CpGs_sel <- ggplot(CpG_sel_regions_df_long, aes(x = regions, y = occurrences, 
   ylim(0,1.1*max(CpG_sel_regions_df_long$occurrences))
 p_CpGs_sel
 
-ggsave("002_plots/007_regions_sel_cor_group.pdf", p_CpGs_sel, width = 8, height = 6)
+ggsave(paste0(results_folder, "07_regions_sel_cor_group.pdf"), p_CpGs_sel, width = 8, height = 6)
+
 
 # plot of selected CpGs both groups combined
 p_CpGs_sel_combined <- ggplot(CpG_sel_regions_comb_df, aes(x = regions, y = CpGs, fill = regions)) +
@@ -332,7 +361,7 @@ p_CpGs_sel_combined <- ggplot(CpG_sel_regions_comb_df, aes(x = regions, y = CpGs
   ylim(0, 1.1*max(CpG_sel_regions_comb_df$CpGs))
 p_CpGs_sel_combined
 
-ggsave("002_plots/007_regions_sel_CpGs_combined.pdf", p_CpGs_sel_combined, width = 8, height = 6)
+ggsave(paste0(results_folder, "07_regions_sel_CpGs_combined.pdf"), p_CpGs_sel_combined, width = 8, height = 6)
 
 # adding species of CpGs as dataframe
 CpG_sel_regions_AC <- CpG_sel_regions_uni[CpGs_selected$species == "AC"] %>% 
@@ -371,7 +400,7 @@ p_CpGs_sel_species <- ggplot(CpG_sel_regions_df_species_long, aes(x = regions, y
   ylim(0,1.1*max(CpG_sel_regions_df_species_long$occurrences))
 p_CpGs_sel_species
 
-ggsave("002_plots/007_regions_sel_species.pdf", p_CpGs_sel_species, width = 8, height = 6)
+ggsave(paste0(results_folder, "07_regions_sel_species.pdf"), p_CpGs_sel_species, width = 8, height = 6)
 
 #### plots ####
 p_all_CpGs <- p_CpGs + p_CpGs_species + p_CpGs_sel + p_CpGs_sel_species +
@@ -379,11 +408,11 @@ p_all_CpGs <- p_CpGs + p_CpGs_species + p_CpGs_sel + p_CpGs_sel_species +
   theme(legend.position = "top") 
 p_all_CpGs
 
-ggsave("002_plots/007_regions_all.pdf", p_all_CpGs, width = 10, height = 7)
+ggsave(paste0(results_folder, "07_regions_all.pdf"), p_all_CpGs, width = 10, height = 7)
 
 p_genes_sel <- p_genes_sel + theme_classic()
 
-ggsave("002_plots/007_genes_sel_cor.pdf", p_genes_sel, width = 6, height = 8)
+ggsave(paste0(results_folder, "07_genes_sel_cor.pdf"), p_genes_sel, width = 6, height = 8)
 
  ## (C)
 overlaps_CGI <- findOverlaps(CpGs, anno_CpG_NC, type = "within")

@@ -68,6 +68,21 @@
   - **Objects**: `AC_meth_values_selected_all`, `AS_meth_values_selected_all`, `EH_meth_values_selected_all`, `ZF_meth_values_selected_all`, `all_meth_values_all_SMR`
   - **Created by**: `001_scripts/004_correlation_testing.R`
 
+- **`01_data/03_intermediate/009_gene_analysis/gene_list.csv`**
+  - **Objects**: exported gene hit table (from GFF annotation overlaps)
+  - **Created by**: `02_code/01_pipeline/legacy_001_scripts/007_gene_analysis.R`
+  - **Type**: derived intermediate (locally reproducible)
+
+- **`01_data/03_intermediate/009_gene_analysis/gene_list_sel.csv`**
+  - **Objects**: exported gene hits for selected CpGs
+  - **Created by**: `02_code/01_pipeline/legacy_001_scripts/007_gene_analysis.R`
+  - **Type**: derived intermediate (locally reproducible)
+
+- **`01_data/03_intermediate/009_gene_analysis/gene_list_count.csv`**
+  - **Objects**: exported per-gene counts split by correlation direction
+  - **Created by**: `02_code/01_pipeline/legacy_001_scripts/007_gene_analysis.R`
+  - **Type**: derived intermediate (locally reproducible)
+
 ## Key functions by script
 
 - **`001_scripts/001_CpGs_to_sequences.R`**
@@ -105,4 +120,4 @@
 
 - **`03_results/01_figures/005_*`** model evaluation figures: `02_code/01_pipeline/legacy_001_scripts/005a_statistical_models_REL.R` and `02_code/01_pipeline/legacy_001_scripts/005b_statistical_models.R`
 - **`03_results/01_figures/006_*`** comparison / LOSO plots: `02_code/01_pipeline/legacy_001_scripts/006_data_comparison.R`
-- **`002_plots/007_*`** region/gene annotation plots: `007_gene_analysis.R`
+- **`03_results/01_figures/07_*`** region/gene annotation plots: `02_code/01_pipeline/legacy_001_scripts/007_gene_analysis.R`
