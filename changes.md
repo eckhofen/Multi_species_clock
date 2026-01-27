@@ -12,3 +12,5 @@
 - Document the expected external server-only inputs in `README.md` (`01_data/02_external_server_outputs/*`) and which downstream scripts consume them.
 - Initialize a git repository and update `.gitignore` to exclude result outputs (`03_results/`) and archive folders.
 - Update `CODEBASE_OVERVIEW.md` (and `04_docs/` copy) to SCMR terminology and add explicit documentation of server-only external inputs vs locally reproducible downstream steps.
+- Update `code.md` and `04_docs/code.md` to label external inputs vs locally reproducible intermediates and to point key plot outputs to `03_results/01_figures/`.
+- Update `04_docs/README.md` to describe the tidy folder structure and external inputs in the same way as the top-level `README.md`.

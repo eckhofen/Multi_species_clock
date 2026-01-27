@@ -2,6 +2,16 @@
 
 ## Repository-wide objects (files / datasets)
 
+### External inputs (server-only)
+
+- **`01_data/02_external_server_outputs/01_sequences/*_metadata_*1000bp.csv`**
+  - **Objects**: per-sequence metadata tables used to annotate aligned reads (`methyl_pos`, `methyl_n`).
+  - **Used by**: `02_code/01_pipeline/legacy_001_scripts/002_rgHS_conserved_sequences.R`
+
+- **`01_data/02_external_server_outputs/02_conserved_seq/HS_AC_AS_EH_ZF_overlaps.Rdata`**
+  - **Objects**: `HS_overlap_seqs` (or `HS_overlap_seqs_bt2` in older saves)
+  - **Used by**: `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`
+
 - **`000_data/000_metadata/color_palettes.RData`**
   - **Objects**: `color_compare`, `color_species`, `color_sex`
   - **Created by**: `001_scripts/00_data_preparation.R`

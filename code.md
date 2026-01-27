@@ -13,11 +13,13 @@
 - **`01_data/02_external_server_outputs/01_sequences/*_metadata_*1000bp.csv`**
   - **Objects**: per-sequence metadata tables used to annotate aligned reads (`methyl_pos`, `methyl_n`).
   - **Used by**: `02_code/01_pipeline/legacy_001_scripts/002_rgHS_conserved_sequences.R`
+  - **Type**: external input (server-only)
 
 - **`01_data/02_external_server_outputs/02_conserved_seq/HS_AC_AS_EH_ZF_overlaps.Rdata`**
   - **Objects**: `HS_overlap_seqs` (or `HS_overlap_seqs_bt2` in older saves)
   - **Created by**: `02_code/01_pipeline/legacy_001_scripts/002_rgHS_conserved_sequences.R`
   - **Used by**: `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`
+  - **Type**: external input (server-only)
 
 - **`000_data/004_methyl_values/HS_*_meth_values(.Rdata/.csv)`**
   - **Objects**: `AC_meth_values`, `AS_meth_values`, `EH_meth_values`, `ZF_meth_values` / `ZF_meth_values_imputed`
@@ -26,6 +28,7 @@
 - **`01_data/03_intermediate/004_methyl_values/HS_*_meth_values(.Rdata/.csv)`**
   - **Objects**: `AC_meth_values`, `AS_meth_values`, `EH_meth_values`, `ZF_meth_values` / `ZF_meth_values_imputed`
   - **Created by**: `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`
+  - **Type**: derived intermediate (locally reproducible)
 
 - **`000_data/004_methyl_values/HS_*_methyl_sites(.Rdata/.csv)`**
   - **Objects**: `AC_methyl_sites`, `AS_methyl_sites`, `EH_methyl_sites`, `ZF_methyl_sites`
@@ -46,6 +49,7 @@
 - **`01_data/03_intermediate/005_correlation_data/cor_all.RData`**
   - **Objects**: `cor_all`
   - **Created by**: `02_code/01_pipeline/legacy_001_scripts/004_correlation_testing.R`
+  - **Type**: derived intermediate (locally reproducible)
 
 - **`000_data/005_correlation_data/all_mix_cor_CpG_common.RData`**
   - **Objects**: `all_mix_cor_CpG_common`
@@ -58,6 +62,7 @@
 - **`01_data/03_intermediate/006_model_creation/all_meth_values_selected.RData`**
   - **Objects**: `AC_meth_values_selected`, `AS_meth_values_selected`, `EH_meth_values_selected`, `ZF_meth_values_selected`, `all_meth_values_selected`
   - **Created by**: `02_code/01_pipeline/legacy_001_scripts/004_correlation_testing.R`
+  - **Type**: derived intermediate (locally reproducible)
 
 - **`000_data/006_model_creation/all_meth_values_all_SMR.RData`**
   - **Objects**: `AC_meth_values_selected_all`, `AS_meth_values_selected_all`, `EH_meth_values_selected_all`, `ZF_meth_values_selected_all`, `all_meth_values_all_SMR`
@@ -93,11 +98,11 @@
 - **`figures/01_fig_overview_age_rel.PDF`**: `01_data_overview.R`
 - **`figures/01_fig_overview_combined.PDF`**: `01_data_overview.R`
 
-- **`002_plots/003_SMR_position_hist_all.pdf`**: `003_methylation_extraction.R`
-- **`002_plots/003_SMR_position_lines_all.pdf`**: `003_methylation_extraction.R`
-- **`002_plots/003_SMR_position.pdf`**: `003_methylation_extraction.R`
-- **`002_plots/003_PCA_all.pdf`**: `003_methylation_extraction.R`
+- **`03_results/01_figures/003_SMR_position_hist_all.pdf`**: `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`
+- **`03_results/01_figures/003_SMR_position_lines_all.pdf`**: `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`
+- **`03_results/01_figures/003_SMR_position.pdf`**: `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`
+- **`03_results/01_figures/003_PCA_all.pdf`**: `02_code/01_pipeline/legacy_001_scripts/003_methylation_extraction.R`
 
-- **`002_plots/005_*`** model evaluation figures: `005a_statistical_models_REL.R` and `005b_statistical_models.R`
-- **`002_plots/006_*`** comparison / LOSO plots: `006_data_comparison.R`
+- **`03_results/01_figures/005_*`** model evaluation figures: `02_code/01_pipeline/legacy_001_scripts/005a_statistical_models_REL.R` and `02_code/01_pipeline/legacy_001_scripts/005b_statistical_models.R`
+- **`03_results/01_figures/006_*`** comparison / LOSO plots: `02_code/01_pipeline/legacy_001_scripts/006_data_comparison.R`
 - **`002_plots/007_*`** region/gene annotation plots: `007_gene_analysis.R`
