@@ -51,8 +51,30 @@ library(AnnotationHub)
 ## (A) loading annotation file (downloaded from NCBI)
 annotation_folder_new <- paste0(intermediate_folder, "008_annotation/")
 annotation_folder <- annotation_folder_new
+dir.create(annotation_folder, recursive = TRUE, showWarnings = FALSE)
 
 annotation_gff_path <- paste0(annotation_folder, "GRCh38_p14_annotation.gff")
+annotation_ucsc_cpg_path <- paste0(annotation_folder, "UCSC_CpG_islands.gff")
+
+required_inputs <- c(
+  annotation_gff_path,
+  annotation_ucsc_cpg_path,
+  paste0(annotation_folder_new, "methylsites_all.RData"),
+  paste0(intermediate_folder, "005_correlation_data/cor_all.RData"),
+  paste0(intermediate_folder, "005_correlation_data/all_mix_cor_CpG_common.RData")
+)
+
+missing_inputs <- required_inputs[!file.exists(required_inputs)]
+if (length(missing_inputs) > 0) {
+  message(
+    "Missing required inputs for gene analysis.\n",
+    "Missing files:\n- ",
+    paste(missing_inputs, collapse = "\n- "),
+    "\nSkipping gene analysis."
+  )
+  quit(status = 0)
+}
+
 annotation_human <- import.gff(annotation_gff_path, genome = "GRCh38")
 str(annotation_human)
 
@@ -68,7 +90,7 @@ cpg_data <- hub[["AH5086"]]
 sort(unique(mcols(cpg_data)))
 
 ## (C) annotation from UCSC for CpG Islands
-CpG_isl <- read.table(paste0(annotation_folder, "UCSC_CpG_islands.gff"), sep = "\t", header = TRUE)
+CpG_isl <- read.table(annotation_ucsc_cpg_path, sep = "\t", header = TRUE)
 
 # transforming into GRanges object
 anno_CpG <- GRanges(seqnames = CpG_isl$chrom, IRanges(start = CpG_isl$chromStart, end = CpG_isl$chromEnd))

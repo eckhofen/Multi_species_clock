@@ -12,6 +12,8 @@
 
 - Updated `02_code/01_pipeline/01_scripts/06_data_comparison.R` to check for required comparison/correlation intermediate inputs and exit cleanly with a message when they are missing.
 
+- Updated `02_code/01_pipeline/01_scripts/07_gene_analysis.R` to check for required annotation and correlation intermediate inputs and exit cleanly with a message when they are missing.
+
 - Add documentation: codebase overview, suggested improvements, and refactoring roadmap.
 - Add `changes.md` and `code.md` for change tracking and object/function inventory.
 - Update `02_code/01_pipeline/01_scripts/00_data_preparation.R` to exclude JM and use `01_data/04_metadata/` for palettes and metadata.
