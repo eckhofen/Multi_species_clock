@@ -35,9 +35,9 @@ The pipeline includes a clear split between:
 Server-only / external inputs expected by the downstream pipeline:
 
 - `01_data/02_external_server_outputs/01_sequences/*_metadata_*1000bp.csv`
-  - Consumed by `02_code/01_pipeline/01_scripts/002_rgHS_conserved_sequences.R`.
+  - Produced by an external/server-only preprocessing workflow (not reproduced in this repo).
 - `01_data/02_external_server_outputs/02_conserved_seq/HS_AC_AS_EH_ZF_overlaps.Rdata`
-  - Consumed by `02_code/01_pipeline/01_scripts/003_methylation_extraction.R`.
+  - Consumed by `02_code/01_pipeline/01_scripts/03_methylation_extraction.R`.
 
 To reproduce results which have been shown in the master thesis, scripts can be looked at and (depending on data availability) run.
 

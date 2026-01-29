@@ -11,13 +11,17 @@ library(tidyverse)
 library(ggforce)
 library(patchwork)
 
+data_folder <- "01_data/"
+results_folder <- "03_results/01_figures/"
+dir.create(results_folder, recursive = TRUE, showWarnings = FALSE)
+
 # Loading data ------------------------------------------------------------
 
 # Loading colors 
-load("000_data/000_metadata/color_palettes.RData")
+load(paste0(data_folder, "04_metadata/color_palettes.RData"))
 
 # Loading metadata
-load("000_data/000_metadata/metadata.RData")
+load(paste0(data_folder, "04_metadata/metadata.RData"))
 
 
 # Analysis ----------------------------------------------------------------
@@ -93,7 +97,7 @@ fig_overview_age <- meta_data %>%
   labs(y = "Age (years)", title = "Sample age distribution")
 
 # Saving plot
-ggsave(filename = "figures/01_fig_overview_age.PDF", plot = fig_overview_age, width = 7, height = 7)
+ggsave(filename = paste0(results_folder, "01_fig_overview_age.PDF"), plot = fig_overview_age, width = 7, height = 7)
 
 # Overview for relative age
 fig_overview_age_rel <- meta_data %>% 
@@ -103,7 +107,7 @@ fig_overview_age_rel <- meta_data %>%
   labs(y = "Age (relative to max. lifespan)", title = "Sample age (relative) distribution")
 
 # Saving plot
-ggsave(filename = "figures/01_fig_overview_age_rel.PDF", plot = fig_overview_age_rel, width = 7, height = 7)
+ggsave(filename = paste0(results_folder, "01_fig_overview_age_rel.PDF"), plot = fig_overview_age_rel, width = 7, height = 7)
 
 ### Combining plots ---------------------------------------------------------
 # Combined overview figure
@@ -114,4 +118,4 @@ fig_overview_combined <-
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
 # Saving plot
-ggsave(filename = "figures/01_fig_overview_combined.PDF", plot = fig_overview_combined, width = 12, height = 7)
+ggsave(filename = paste0(results_folder, "01_fig_overview_combined.PDF"), plot = fig_overview_combined, width = 12, height = 7)

@@ -50,8 +50,7 @@ library(AnnotationHub)
 ### Annotation
 ## (A) loading annotation file (downloaded from NCBI)
 annotation_folder_new <- paste0(intermediate_folder, "008_annotation/")
-annotation_folder_legacy <- "000_data/008_annotation/"
-annotation_folder <- if (dir.exists(annotation_folder_new)) annotation_folder_new else annotation_folder_legacy
+annotation_folder <- annotation_folder_new
 
 annotation_gff_path <- paste0(annotation_folder, "GRCh38_p14_annotation.gff")
 annotation_human <- import.gff(annotation_gff_path, genome = "GRCh38")
@@ -104,8 +103,7 @@ anno_CpG_NC <- GRanges(seqnames = new_names, ranges = ranges(anno_CpG), strand =
 
 ### loading CpGs
 path_methylsites_new <- paste0(annotation_folder_new, "methylsites_all.RData")
-path_methylsites_legacy <- paste0(annotation_folder_legacy, "methylsites_all.RData")
-load(if (file.exists(path_methylsites_new)) path_methylsites_new else path_methylsites_legacy)
+load(path_methylsites_new)
 methyl_sites_combined
 
 # transforming df into GRanges 
@@ -113,8 +111,7 @@ CpGs <- GRanges(seqnames = methyl_sites_combined$chr_align, ranges = IRanges(met
 
 # load correlation data for all CpGs
 path_cor_all_new <- paste0(intermediate_folder, "005_correlation_data/cor_all.RData")
-path_cor_all_legacy <- "000_data/005_correlation_data/cor_all.RData"
-load(if (file.exists(path_cor_all_new)) path_cor_all_new else path_cor_all_legacy)
+load(path_cor_all_new)
 cor_all
 
 # adding metadata and correlation test results as meta column 
@@ -124,12 +121,7 @@ CpGs
 ## selecting final CpGs
 # loading selected CpGs
 path_sel_cpg_new <- paste0(intermediate_folder, "005_correlation_data/all_mix_cor_CpG_common.RData")
-path_sel_cpg_legacy <- "000_data/004_methyl_values/all_mix_cor_CpG_common.RData"
-if (file.exists(path_sel_cpg_new)) {
-  load(path_sel_cpg_new)
-} else {
-  load(path_sel_cpg_legacy)
-}
+load(path_sel_cpg_new)
 all_mix_cor_CpG_common
 
 # selecting final CpGs

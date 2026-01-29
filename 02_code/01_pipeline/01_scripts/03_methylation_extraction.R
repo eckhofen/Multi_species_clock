@@ -11,6 +11,7 @@
 data_folder <- "01_data/"
 save_folder <- "01_data/03_intermediate/03_SCMR/"
 results_folder <- "03_results/01_figures/"
+raw_private_folder <- paste0(data_folder, "01_raw_private/")
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 dir.create(results_folder, recursive = TRUE, showWarnings = FALSE)
 
@@ -185,7 +186,7 @@ ggsave(filename = paste0(results_folder, "03_SCMR_position.pdf"), plot = plot_SM
 
 #### Methylation metadata ####
 ##AC
-xx <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/AC/meth-corrected-batchcorrected-cod.Rdata")
+xx <- load(paste0(raw_private_folder, "Temp/AC/meth-corrected-batchcorrected-cod.Rdata"))
 # xx <- load("/workspace/cfngle/raw-data/AC/zzz_methyl_data/Meth-complete-nobatchcorrection-cod.RData")
 assign("AC_meth_data", get(xx))
 AC_meth_data <- as.data.frame(AC_meth_data)
@@ -194,22 +195,22 @@ AC_age <- AC_meth_data$age
 AC_age[AC_age == 0] <- 0.01
 
 ##AS
-xx <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/AS/Meth-complete-snapper.RData")
+xx <- load(paste0(raw_private_folder, "Temp/AS/Meth-complete-snapper.RData"))
 assign("AS_meth_data", get(xx))
 # tail(colnames(AS_meth_data))
 AS_age <- AS_meth_data$age
 
 ##EH
-xx <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/EH/Meth-complete-hake.RData")
+xx <- load(paste0(raw_private_folder, "Temp/EH/Meth-complete-hake.RData"))
 assign("EH_meth_data", get(xx))
 # tail(colnames(EH_meth_data))
 EH_age <- EH_meth_data$age # this is the average age and was calculated
-EH_metadata_samples <- read.csv("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/EH/hake-samples.txt", sep = "\t")
+EH_metadata_samples <- read.csv(paste0(raw_private_folder, "Temp/EH/hake-samples.txt"), sep = "\t")
 EH_sex <- EH_metadata_samples$sex
 EH_age <- EH_metadata_samples$age
 
 ##ZF
-ZF_meth_data <- load("/Users/macether/Documents/2 - Studium/1 - Master/ZZ - Thesis/Repo_Multispecies_clock/Temp/ZF/ZF_methyldata_88.RData")
+ZF_meth_data <- load(paste0(raw_private_folder, "Temp/ZF/ZF_methyldata_88.RData"))
 ZF_meth_data <- ZF_methyl_data
 
 ZF_age <- ZF_meth_data$age/52
@@ -254,7 +255,8 @@ meth_columns_tmp <- unlist(meth_columns_tmp)
 ZF_meth_values <- ZF_meth_data[meth_sites_names_tmp]
 
 ## saving data
-save_folder <- paste0(data_folder, "004_methyl_values/")
+save_folder <- paste0(data_folder, "03_intermediate/004_methyl_values/")
+dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 
 ### saving methylation VALUES
 ##AC
