@@ -23,3 +23,4 @@
 - Tweak point sizes in `02_code/01_pipeline/01_scripts/01_data_overview.R` and refresh `01_data/04_metadata/*.(RData)` artifacts.
 - Restore server-only upstream scripts into a tracked folder `02_code/01_pipeline/00_server_only/01_scripts/` (two-digit names) for completeness of the pipeline documentation.
 - Document the post-data-tracking tweaks: adjusted plotting point sizes in 01_data_overview.R and refreshed metadata/palette RData artifacts.
+- Recover missing external overlap object `HS_AC_AS_EH_ZF_overlaps.Rdata` into `01_data/02_external_server_outputs/02_conserved_seq/` from the archived legacy `000_data/` snapshot to enable running `03_methylation_extraction.R`.
