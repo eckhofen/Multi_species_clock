@@ -19,3 +19,4 @@
 - Archive deprecated legacy root folders (e.g. `001_scripts/`, `000_data/`, `002_plots/`, `code/`, `data/`) under `02_code/99_archive/deprecated_root/` (gitignored) and remove them from git tracking.
 - Promote the active pipeline scripts folder to `02_code/01_pipeline/01_scripts/`.
 - Enforce two-digit indexing for active pipeline script filenames (`03_...` instead of `003_...`) and move legacy/non-refactored scripts out of the active pipeline into a gitignored archive under `02_code/99_archive/`.
+- Track `01_data/02_external_server_outputs/` and `01_data/04_metadata/` in git, while keeping derived intermediates (`01_data/03_intermediate/`), private raw inputs (`01_data/01_raw_private/`), and archives (`01_data/99_archive/`) excluded via `.gitignore`.
