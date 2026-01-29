@@ -35,8 +35,17 @@ library(glmnet)
 library(svglite)
 
 #### Loading data ####
+required_input <- "01_data/03_intermediate/006_model_creation/all_meth_values_selected.RData"
+if (!file.exists(required_input)) {
+  message(
+    "Missing required intermediate input: ", required_input, ".\n",
+    "This typically means script 04 did not generate model inputs because script 03 could not generate methylation values (private raw inputs unavailable).\n",
+    "Skipping chronological-age model fitting."
+  )
+  quit(status = 0)
+}
 
-load("01_data/03_intermediate/006_model_creation/all_meth_values_selected.RData")
+load(required_input)
 
 #### modifying age (optional) ####
 # AC_meth_values_selected$rel_age <- AC_meth_values_selected$rel_age / 1.4
