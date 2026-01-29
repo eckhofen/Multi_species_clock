@@ -14,10 +14,13 @@
 02_code/99_archive/
 01_data/99_archive/
 
-# R session artifacts
+# local R cache, histories, and raw-private data
 .Rhistory
 .RData
-.Ruserdata
+.Rproj.user/
+.lintr.R
+Rplots.pdf
 
-# Large derived intermediates can be ignored if needed (adjust as desired)
+# raw private inputs and derived intermediates
+01_data/01_raw_private/
 01_data/03_intermediate/

@@ -12,6 +12,10 @@ data_folder <- "01_data/"
 save_folder <- "01_data/03_intermediate/03_SCMR/"
 results_folder <- "03_results/01_figures/"
 raw_private_folder <- paste0(data_folder, "01_raw_private/")
+annotation_folder <- paste0(data_folder, "03_intermediate/008_annotation/")
+comparison_folder <- paste0(data_folder, "03_intermediate/007_data_comparison/")
+dir.create(annotation_folder, recursive = TRUE, showWarnings = FALSE)
+dir.create(comparison_folder, recursive = TRUE, showWarnings = FALSE)
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 dir.create(results_folder, recursive = TRUE, showWarnings = FALSE)
 
@@ -128,7 +132,7 @@ if ("SMR" %in% colnames(methyl_sites_combined) && !("SCMR" %in% colnames(methyl_
 }
 
 # beware that if this is run, that AC is not corrected yet (see below for correction)
-save(methyl_sites_combined, file = "01_data/03_intermediate/008_annotation/methylsites_all.RData")
+save(methyl_sites_combined, file = paste0(annotation_folder, "methylsites_all.RData"))
 #### plotting data ####
 ### visualizing the genomic locations and the frequency of CpGs per species
 ## all
@@ -139,7 +143,7 @@ methyl_sites_combined_nor <- methyl_sites_combined %>%
   mutate(pos_nor_kb = (pos_align - min(pos_align))/1000) %>% 
   ungroup()
 
-save(file = "01_data/03_intermediate/007_data_comparison/methyl_sites_combined_nor.Rdata", methyl_sites_combined_nor)
+save(file = paste0(comparison_folder, "methyl_sites_combined_nor.Rdata"), methyl_sites_combined_nor)
 
 # add factor and levels to species column
 methyl_sites_combined_nor$species <- factor(methyl_sites_combined_nor$species, levels = c("AC", "AS", "EH", "ZF"))
@@ -186,7 +190,12 @@ ggsave(filename = paste0(results_folder, "03_SCMR_position.pdf"), plot = plot_SM
 
 #### Methylation metadata ####
 ##AC
-xx <- load(paste0(raw_private_folder, "Temp/AC/meth-corrected-batchcorrected-cod.Rdata"))
+ac_private_path <- paste0(raw_private_folder, "Temp/AC/meth-corrected-batchcorrected-cod.Rdata")
+if (!file.exists(ac_private_path)) {
+  message("Missing private methylation inputs under ", raw_private_folder, ". Skipping methylation matrix extraction.")
+  quit(status = 0)
+}
+xx <- load(ac_private_path)
 # xx <- load("/workspace/cfngle/raw-data/AC/zzz_methyl_data/Meth-complete-nobatchcorrection-cod.RData")
 assign("AC_meth_data", get(xx))
 AC_meth_data <- as.data.frame(AC_meth_data)
