@@ -6,6 +6,8 @@
 
 - Updated `02_code/01_pipeline/01_scripts/04_correlation_testing.R` to check for required `01_data/03_intermediate/004_methyl_values/*.Rdata` inputs and exit cleanly with a message when they are missing.
 
+- Updated `02_code/01_pipeline/01_scripts/05a_statistical_models_REL.R` to check for required `01_data/03_intermediate/006_model_creation/all_meth_values_selected.RData` input and exit cleanly with a message when it is missing.
+
 - Add documentation: codebase overview, suggested improvements, and refactoring roadmap.
 - Add `changes.md` and `code.md` for change tracking and object/function inventory.
 - Update `02_code/01_pipeline/01_scripts/00_data_preparation.R` to exclude JM and use `01_data/04_metadata/` for palettes and metadata.
