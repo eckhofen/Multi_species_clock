@@ -85,11 +85,11 @@
 
 ## Key functions by script
 
-- **`001_scripts/001_CpGs_to_sequences.R`**
+- **`02_code/01_pipeline/00_server_only/01_scripts/01_CpGs_to_sequences.R`**
   - **`fix.seq(seq, rgenome, seq_width)`**: clamps extended GRanges to valid reference genome boundaries.
   - **`create.MethylPos(seqs, seqs_GR, methylsites, name = "CpGs")`**: returns per-sequence CpG positions and counts based on overlaps.
 
-- **`001_scripts/002_rgHS_conserved_sequences.R`**
+- **`02_code/01_pipeline/00_server_only/01_scripts/02_rgHS_conserved_sequences.R`**
   - **`find.Overlap(...)`**: iteratively finds overlapping aligned reads across multiple `GAlignments`/`GRanges` inputs and returns overlap subsets per input.
 
 - **`001_scripts/003_methylation_extraction.R`**
