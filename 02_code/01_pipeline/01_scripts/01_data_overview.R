@@ -55,7 +55,7 @@ plot_overview <- function(p) {
   p +
     geom_jitter(aes(shape = sex),
                 inherit.aes = TRUE, 
-                cex = 2.5,
+                cex = 2,
                 alpha = .8,
                 position = position_jitter(seed = 1999,
                                            width = .3,
@@ -74,7 +74,7 @@ plot_overview <- function(p) {
     stat_summary(fun = mean,
                  geom = "point",
                  shape = 18,
-                 size = 5,
+                 size = 2.5,
                  color = "black",
                  alpha = .9,
                  show.legend = FALSE) +

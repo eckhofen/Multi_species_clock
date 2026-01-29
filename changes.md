@@ -20,3 +20,4 @@
 - Promote the active pipeline scripts folder to `02_code/01_pipeline/01_scripts/`.
 - Enforce two-digit indexing for active pipeline script filenames (`03_...` instead of `003_...`) and move legacy/non-refactored scripts out of the active pipeline into a gitignored archive under `02_code/99_archive/`.
 - Track `01_data/02_external_server_outputs/` and `01_data/04_metadata/` in git, while keeping derived intermediates (`01_data/03_intermediate/`), private raw inputs (`01_data/01_raw_private/`), and archives (`01_data/99_archive/`) excluded via `.gitignore`.
+- Document the post-data-tracking tweaks: adjusted plotting point sizes in 01_data_overview.R and refreshed metadata/palette RData artifacts.
