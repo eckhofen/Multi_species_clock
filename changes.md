@@ -4,6 +4,8 @@
 
 - Updated `02_code/01_pipeline/01_scripts/03_methylation_extraction.R` to create required intermediate output folders before `save()` and to exit cleanly when private raw methylation inputs under `01_data/01_raw_private/` are not present.
 
+- Updated `02_code/01_pipeline/01_scripts/04_correlation_testing.R` to check for required `01_data/03_intermediate/004_methyl_values/*.Rdata` inputs and exit cleanly with a message when they are missing.
+
 - Add documentation: codebase overview, suggested improvements, and refactoring roadmap.
 - Add `changes.md` and `code.md` for change tracking and object/function inventory.
 - Update `02_code/01_pipeline/01_scripts/00_data_preparation.R` to exclude JM and use `01_data/04_metadata/` for palettes and metadata.

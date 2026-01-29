@@ -27,6 +27,30 @@ library(caret)
 
 ## loading data 
 # methyl values
+required_inputs <- c(
+  "01_data/03_intermediate/004_methyl_values/HS_AC_meth_values.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_AS_meth_values.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_EH_meth_values.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_ZF_meth_values_imputed.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_AC_methyl_sites.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_AS_methyl_sites.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_EH_methyl_sites.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_ZF_methyl_sites.Rdata",
+  "01_data/03_intermediate/004_methyl_values/HS_all_age.Rdata"
+)
+
+missing_inputs <- required_inputs[!file.exists(required_inputs)]
+if (length(missing_inputs) > 0) {
+  message(
+    "Missing required intermediate inputs under 01_data/03_intermediate/004_methyl_values/. ",
+    "This typically means script 03 could not generate methylation values because private raw inputs are unavailable.\n",
+    "Missing files:\n- ",
+    paste(missing_inputs, collapse = "\n- "),
+    "\nSkipping correlation testing."
+  )
+  quit(status = 0)
+}
+
 load("01_data/03_intermediate/004_methyl_values/HS_AC_meth_values.Rdata")
 load("01_data/03_intermediate/004_methyl_values/HS_AS_meth_values.Rdata")
 load("01_data/03_intermediate/004_methyl_values/HS_EH_meth_values.Rdata")
