@@ -14,6 +14,14 @@
 
 - Updated `02_code/01_pipeline/01_scripts/07_gene_analysis.R` to check for required annotation and correlation intermediate inputs and exit cleanly with a message when they are missing.
 
+- Fix `02_code/01_pipeline/01_scripts/06_data_comparison.R` significant-SCMR selection: remove intercept robustly (without accidental extra row drops), avoid divide-by-zero scaling, and ensure `06_SCMR_combined.pdf` always renders by falling back to a spacer panel when no significant SCMRs exist.
+
+- Fix `02_code/01_pipeline/01_scripts/06_data_comparison.R` key mismatch: map MLM coefficient names from `SMR_###` to `SCMR_###` so significant SCMRs correctly match `methyl_sites_combined_nor$SCMR`.
+
+- Fix `02_code/01_pipeline/01_scripts/07_gene_analysis.R` plot robustness: replace brittle/deprecated selected-gene counting with table-based counts (pos/neg groups) and make the all-species region plot y-limit NA-safe.
+
+- Fix `02_code/01_pipeline/01_scripts/07_gene_analysis.R` join key construction: prefer deriving `Site` from `Chr` (e.g. `AC_1` → `X1.<pos>`) with fallback to `chr_align` parsing, to improve overlap with `cor_all$Site`.
+
 - Add documentation: codebase overview, suggested improvements, and refactoring roadmap.
 - Add `changes.md` and `code.md` for change tracking and object/function inventory.
 - Update `02_code/01_pipeline/01_scripts/00_data_preparation.R` to exclude JM and use `01_data/04_metadata/` for palettes and metadata.

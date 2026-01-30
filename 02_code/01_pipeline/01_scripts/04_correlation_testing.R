@@ -9,7 +9,7 @@
 
 #### Settings ####
 data_folder <- "01_data/"
-save_folder <- "01_data/03_intermediate/005_correlation_data/" # folder where extracted sequences will be saved
+save_folder <- "01_data/03_intermediate/05_correlation_data/" # folder where extracted sequences will be saved
 results_folder <- "03_results/01_figures/"
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 dir.create(results_folder, recursive = TRUE, showWarnings = FALSE)
@@ -28,21 +28,21 @@ library(caret)
 ## loading data 
 # methyl values
 required_inputs <- c(
-  "01_data/03_intermediate/004_methyl_values/HS_AC_meth_values.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_AS_meth_values.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_EH_meth_values.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_ZF_meth_values_imputed.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_AC_methyl_sites.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_AS_methyl_sites.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_EH_methyl_sites.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_ZF_methyl_sites.Rdata",
-  "01_data/03_intermediate/004_methyl_values/HS_all_age.Rdata"
+  "01_data/03_intermediate/04_methyl_values/HS_AC_meth_values.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_AS_meth_values.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_EH_meth_values.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_ZF_meth_values_imputed.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_AC_methyl_sites.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_AS_methyl_sites.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_EH_methyl_sites.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_ZF_methyl_sites.Rdata",
+  "01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata"
 )
 
 missing_inputs <- required_inputs[!file.exists(required_inputs)]
 if (length(missing_inputs) > 0) {
   message(
-    "Missing required intermediate inputs under 01_data/03_intermediate/004_methyl_values/. ",
+    "Missing required intermediate inputs under 01_data/03_intermediate/04_methyl_values/. ",
     "This typically means script 03 could not generate methylation values because private raw inputs are unavailable.\n",
     "Missing files:\n- ",
     paste(missing_inputs, collapse = "\n- "),
@@ -51,17 +51,17 @@ if (length(missing_inputs) > 0) {
   quit(status = 0)
 }
 
-load("01_data/03_intermediate/004_methyl_values/HS_AC_meth_values.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_AS_meth_values.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_EH_meth_values.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_ZF_meth_values_imputed.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_AC_meth_values.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_AS_meth_values.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_EH_meth_values.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_ZF_meth_values_imputed.Rdata")
 # shared methylation sites
-load("01_data/03_intermediate/004_methyl_values/HS_AC_methyl_sites.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_AS_methyl_sites.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_EH_methyl_sites.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_ZF_methyl_sites.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_AC_methyl_sites.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_AS_methyl_sites.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_EH_methyl_sites.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_ZF_methyl_sites.Rdata")
 # age metadata
-load("01_data/03_intermediate/004_methyl_values/HS_all_age.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata")
 
 #### functions ####
 # function to run correlation tests for all the CpGs 
@@ -204,8 +204,6 @@ overview_CpGs <- rbind(summary(all_pos_cor_CpG_common$P_value), summary(all_neg_
 row.names(overview_CpGs) <- c("pos_cor p-value", "neg_cor p-value", "pos_cor correlation", "neg_cor correlation")
 overview_CpGs
 
-boxplot(summary(all_neg_cor_CpG_common$P_value), )
-
 #AC
 AC_meth_values_selected <- AC_meth_values[,colnames(AC_meth_values) %in% all_mix_cor_CpG_common$Site]
 AC_name_index <- match(colnames(AC_meth_values_selected), all_mix_cor_CpG_common$Site)
@@ -242,7 +240,7 @@ ZF_meth_values_selected$species <- "ZF"
 all_meth_values_selected <- rbind(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected)
 
 # saving selected values
-save_folder <- paste0(data_folder, "03_intermediate/006_model_creation/")
+save_folder <- paste0(data_folder, "03_intermediate/06_model_creation/")
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 save_path <- paste0(save_folder, "all_meth_values_selected.RData")
 save(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected, all_meth_values_selected, file = save_path)
@@ -285,7 +283,7 @@ ZF_meth_values_selected_all$species <- "ZF"
 all_meth_values_all_SMR <- rbind(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all)
 
 # saving selected values
-save_folder <- paste0(data_folder, "03_intermediate/006_model_creation/")
+save_folder <- paste0(data_folder, "03_intermediate/06_model_creation/")
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 save_path <- paste0(save_folder, "all_meth_values_all_SMR.RData")
 save(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all, all_meth_values_all_SMR, file = save_path)
@@ -313,11 +311,13 @@ ggplot(subset(cor_all, significant == TRUE), aes()) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ## only selected
-ggplot(all_sig_CpGs_common, aes()) +
-  geom_point(aes(y = Correlation, x = Site, color = species)) +
-  facet_row(~SCMR) +
-  scale_color_manual(values = color_species) +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+if (exists("all_sig_CpGs_common")) {
+  ggplot(all_sig_CpGs_common, aes()) +
+    geom_point(aes(y = Correlation, x = Site, color = species)) +
+    facet_row(~SCMR) +
+    scale_color_manual(values = color_species) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+}
 
 ## only cor positive
 ggplot(all_pos_cor_CpG, aes()) +
@@ -327,9 +327,26 @@ ggplot(all_pos_cor_CpG, aes()) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ## plotting SMR groups 24 and 28
-selected_methyl_values <- subset(all_meth_values_long, Site %in% subset(all_sig_CpGs_common, SCMR == "SCMR_024" | SCMR == "SCMR_026")$Site)
-selected_methyl_values <- subset(all_meth_values_long, Site %in% all_mix_cor_CpG_common$Site)
+all_meth_values_long_path <- "01_data/03_intermediate/04_methyl_values/all_meth_values_long.RData"
+if (!exists("all_meth_values_long") && file.exists(all_meth_values_long_path)) {
+  load(all_meth_values_long_path)
+}
 
+if (exists("all_sig_CpGs_common") && exists("all_meth_values_long")) {
+  selected_methyl_values <- subset(all_meth_values_long, Site %in% subset(all_sig_CpGs_common, SCMR == "SCMR_024" | SCMR == "SCMR_026")$Site)
+}
+if (exists("all_meth_values_long")) {
+  selected_methyl_values <- subset(all_meth_values_long, Site %in% all_mix_cor_CpG_common$Site)
+}
+
+if (exists("selected_methyl_values")) {
+  if (("SMR" %in% colnames(selected_methyl_values)) && !("SCMR" %in% colnames(selected_methyl_values))) {
+    selected_methyl_values <- dplyr::rename(selected_methyl_values, SCMR = SMR)
+  }
+
+  if (!("SCMR" %in% colnames(selected_methyl_values))) {
+    message("selected_methyl_values is missing SCMR column; skipping selected methylation plots.")
+  } else {
 ggplot(selected_methyl_values, aes(x = Site, y = Methylation_Value)) +
   geom_boxplot(aes(group = Site_f, fill = species, color = species), alpha = 0.9, outlier.size = 0.1) +
   facet_wrap(~SCMR, scale = "free_x") +
@@ -340,11 +357,17 @@ ggplot(selected_methyl_values, aes(x = Site, y = Methylation_Value)) +
   labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)",
        subtitle = "Selected values are correlating with age")
 
-ggplot(selected_methyl_values, aes(x = species, y = Methylation_Value)) +
-  geom_sina(aes(color = rel_age, shape = species)) +
-  facet_wrap(~SCMR, scale = "free_x") +
-  scale_color_manual(aesthetics = "legend") +
-  theme_classic() +
-  # theme(axis.text.x = element_blank()) +
-  labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)")
+if (requireNamespace("ggforce", quietly = TRUE)) {
+  ggplot(selected_methyl_values, aes(x = species, y = Methylation_Value)) +
+    ggforce::geom_sina(aes(color = rel_age, shape = species)) +
+    facet_wrap(~SCMR, scale = "free_x") +
+    scale_color_manual(aesthetics = "legend") +
+    theme_classic() +
+    # theme(axis.text.x = element_blank()) +
+    labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)")
+} else {
+  message("Package ggforce is missing; skipping geom_sina plot.")
+}
+  }
+}
 

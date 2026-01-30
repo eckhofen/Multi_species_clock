@@ -125,3 +125,12 @@
 - **`03_results/01_figures/05_*`** model evaluation figures: `02_code/01_pipeline/01_scripts/05a_statistical_models_REL.R` and `02_code/01_pipeline/01_scripts/05b_statistical_models.R`
 - **`03_results/01_figures/06_*`** comparison / LOSO plots: `02_code/01_pipeline/01_scripts/06_data_comparison.R`
 - **`03_results/01_figures/07_*`** region/gene annotation plots: `02_code/01_pipeline/01_scripts/07_gene_analysis.R`
+
+## Notes on key joins/filters (current pipeline)
+
+- **`02_code/01_pipeline/01_scripts/06_data_comparison.R`**
+  - **Significant SCMRs**: derived from `mlm_age_summary$coefficients` / `mlm_rel_age_summary$coefficients` by filtering `Pr(>|t|) < significance` and excluding `"(Intercept)"` by rowname; used to subset `methyl_sites_combined_nor` on `SCMR` for `06_SCMR_position_significant.pdf` and `06_SCMR_combined.pdf`.
+
+- **`02_code/01_pipeline/01_scripts/07_gene_analysis.R`**
+  - **CpG selection key**: `CpGs_selected` is filtered by `Site %in% all_mix_cor_CpG_common$Site`.
+  - **Selected gene counts**: per-gene counts split by correlation direction are derived from GFF `gene` overlaps using table-based counts for positive vs negative correlation hits.

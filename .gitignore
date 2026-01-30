@@ -24,3 +24,12 @@ Rplots.pdf
 # raw private inputs and derived intermediates
 01_data/01_raw_private/
 01_data/03_intermediate/
+!01_data/03_intermediate/02_conserved_seq/
+!01_data/03_intermediate/03_SCMR/
+!01_data/03_intermediate/04_methyl_values/
+!01_data/03_intermediate/05_correlation_data/
+!01_data/03_intermediate/06_model_creation/
+!01_data/03_intermediate/07_data_comparison/
+!01_data/03_intermediate/08_annotation/
+01_data/03_intermediate/08_annotation/methylsites_all.RData
+01_data/03_intermediate/**/.DS_Store

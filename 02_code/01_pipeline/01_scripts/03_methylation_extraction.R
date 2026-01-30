@@ -12,8 +12,8 @@ data_folder <- "01_data/"
 save_folder <- "01_data/03_intermediate/03_SCMR/"
 results_folder <- "03_results/01_figures/"
 raw_private_folder <- paste0(data_folder, "01_raw_private/")
-annotation_folder <- paste0(data_folder, "03_intermediate/008_annotation/")
-comparison_folder <- paste0(data_folder, "03_intermediate/007_data_comparison/")
+annotation_folder <- paste0(data_folder, "03_intermediate/08_annotation/")
+comparison_folder <- paste0(data_folder, "03_intermediate/07_data_comparison/")
 dir.create(annotation_folder, recursive = TRUE, showWarnings = FALSE)
 dir.create(comparison_folder, recursive = TRUE, showWarnings = FALSE)
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
@@ -264,7 +264,7 @@ meth_columns_tmp <- unlist(meth_columns_tmp)
 ZF_meth_values <- ZF_meth_data[meth_sites_names_tmp]
 
 ## saving data
-save_folder <- paste0(data_folder, "03_intermediate/004_methyl_values/")
+save_folder <- paste0(data_folder, "03_intermediate/04_methyl_values/")
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 
 ### saving methylation VALUES
@@ -315,11 +315,11 @@ save(ZF_meth_values_imputed, file = paste0(save_folder, "HS_ZF_meth_values_imput
 
 #### Loading data ####
 
-load("01_data/03_intermediate/004_methyl_values/HS_AC_meth_values.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_AS_meth_values.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_EH_meth_values.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_ZF_meth_values_imputed.Rdata")
-load("01_data/03_intermediate/004_methyl_values/HS_all_age.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_AC_meth_values.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_AS_meth_values.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_EH_meth_values.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_ZF_meth_values_imputed.Rdata")
+load("01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata")
 
 # check how many CpGs were captured in the SMRs for each species
 length(AC_meth_values) #518
@@ -457,7 +457,7 @@ all_meth_values_long <- all_meth_values_long %>%
   mutate(pos_nor_kb = (Site_i - min(Site_i))/1000) %>% 
   ungroup()
 ### plotting
-save_folder <- paste0(data_folder, "03_intermediate/004_methyl_values/")
+save_folder <- paste0(data_folder, "03_intermediate/04_methyl_values/")
 load(paste0(save_folder,"all_meth_values_long.RData"))
 
 ggplot(AS_meth_values_long, aes(x = Site, y = Methylation_Value)) +

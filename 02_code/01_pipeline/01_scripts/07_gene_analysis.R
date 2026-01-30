@@ -49,7 +49,7 @@ library(AnnotationHub)
 #### Loading data ####
 ### Annotation
 ## (A) loading annotation file (downloaded from NCBI)
-annotation_folder_new <- paste0(intermediate_folder, "008_annotation/")
+annotation_folder_new <- paste0(intermediate_folder, "08_annotation/")
 annotation_folder <- annotation_folder_new
 dir.create(annotation_folder, recursive = TRUE, showWarnings = FALSE)
 
@@ -59,9 +59,8 @@ annotation_ucsc_cpg_path <- paste0(annotation_folder, "UCSC_CpG_islands.gff")
 required_inputs <- c(
   annotation_gff_path,
   annotation_ucsc_cpg_path,
-  paste0(annotation_folder_new, "methylsites_all.RData"),
-  paste0(intermediate_folder, "005_correlation_data/cor_all.RData"),
-  paste0(intermediate_folder, "005_correlation_data/all_mix_cor_CpG_common.RData")
+  paste0(intermediate_folder, "05_correlation_data/cor_all.RData"),
+  paste0(intermediate_folder, "05_correlation_data/all_mix_cor_CpG_common.RData")
 )
 
 missing_inputs <- required_inputs[!file.exists(required_inputs)]
@@ -125,24 +124,134 @@ anno_CpG_NC <- GRanges(seqnames = new_names, ranges = ranges(anno_CpG), strand =
 
 ### loading CpGs
 path_methylsites_new <- paste0(annotation_folder_new, "methylsites_all.RData")
-load(path_methylsites_new)
-methyl_sites_combined
+if (file.exists(path_methylsites_new)) {
+  load(path_methylsites_new)
+} else {
+  meth_sites_inputs <- c(
+    paste0(intermediate_folder, "04_methyl_values/HS_AC_methyl_sites.Rdata"),
+    paste0(intermediate_folder, "04_methyl_values/HS_AS_methyl_sites.Rdata"),
+    paste0(intermediate_folder, "04_methyl_values/HS_EH_methyl_sites.Rdata"),
+    paste0(intermediate_folder, "04_methyl_values/HS_ZF_methyl_sites.Rdata")
+  )
+
+  missing_meth_sites <- meth_sites_inputs[!file.exists(meth_sites_inputs)]
+  if (length(missing_meth_sites) > 0) {
+    message(
+      "Missing methyl site inputs for gene analysis.\n",
+      "Missing files:\n- ",
+      paste(missing_meth_sites, collapse = "\n- "),
+      "\nSkipping gene analysis."
+    )
+    quit(status = 0)
+  }
+
+  load(meth_sites_inputs[1])
+  load(meth_sites_inputs[2])
+  load(meth_sites_inputs[3])
+  load(meth_sites_inputs[4])
+
+  methyl_sites_combined <- dplyr::bind_rows(
+    if (exists("AC_methyl_sites")) dplyr::mutate(AC_methyl_sites, species = "AC") else NULL,
+    if (exists("AS_methyl_sites")) dplyr::mutate(AS_methyl_sites, species = "AS") else NULL,
+    if (exists("EH_methyl_sites")) dplyr::mutate(EH_methyl_sites, species = "EH") else NULL,
+    if (exists("ZF_methyl_sites")) dplyr::mutate(ZF_methyl_sites, species = "ZF") else NULL
+  )
+}
+
+ if (!exists("methyl_sites_combined")) {
+   message("methyl_sites_combined is not available after loading inputs. Skipping gene analysis.")
+   quit(status = 0)
+ }
+
+if (("SMR" %in% colnames(methyl_sites_combined)) && !("SCMR" %in% colnames(methyl_sites_combined))) {
+  methyl_sites_combined <- dplyr::rename(methyl_sites_combined, SCMR = SMR)
+}
+
+ if (!("Site" %in% colnames(methyl_sites_combined))) {
+   if (!("pos_rgenome" %in% colnames(methyl_sites_combined))) {
+     message("methyl_sites_combined is missing required column pos_rgenome to construct Site. Skipping gene analysis.")
+     quit(status = 0)
+   }
+
+   if (!("Chr" %in% colnames(methyl_sites_combined)) || !("species" %in% colnames(methyl_sites_combined))) {
+     message("methyl_sites_combined is missing required columns Chr and/or species to construct Site. Skipping gene analysis.")
+     quit(status = 0)
+   }
+
+   methyl_sites_combined <- methyl_sites_combined %>%
+     dplyr::mutate(
+       Site = dplyr::case_when(
+         species == "AC" & grepl("_[0-9]+$", Chr) ~ paste0("X", gsub("^.*_", "", Chr), ".", pos_rgenome),
+         species == "AS" ~ paste0(Chr, "-", pos_rgenome),
+         species == "EH" ~ paste0(gsub("^EH_", "", Chr), ".", pos_rgenome),
+         species == "ZF" ~ paste0(gsub("^ZF_", "", Chr), ":", pos_rgenome),
+         TRUE ~ NA_character_
+       )
+     )
+ }
+
+if (!("chr_align" %in% colnames(methyl_sites_combined)) || !("pos_align" %in% colnames(methyl_sites_combined))) {
+  message("methyl_sites_combined is missing required columns chr_align and/or pos_align. Skipping gene analysis.")
+  quit(status = 0)
+}
 
 # transforming df into GRanges 
 CpGs <- GRanges(seqnames = methyl_sites_combined$chr_align, ranges = IRanges(methyl_sites_combined$pos_align, methyl_sites_combined$pos_align, 1))
 
 # load correlation data for all CpGs
-path_cor_all_new <- paste0(intermediate_folder, "005_correlation_data/cor_all.RData")
+path_cor_all_new <- paste0(intermediate_folder, "05_correlation_data/cor_all.RData")
 load(path_cor_all_new)
 cor_all
 
-# adding metadata and correlation test results as meta column 
-mcols(CpGs) <- cbind(methyl_sites_combined[,-c(1:4)], cor_all)
+# adding metadata and correlation test results as meta column
+# (join by keys instead of cbind to avoid row-count mismatches)
+join_keys_candidates <- list(
+  c("Site", "species"),
+  c("Site")
+)
+
+join_keys <- character(0)
+for (k in join_keys_candidates) {
+  if (all(k %in% colnames(methyl_sites_combined)) && all(k %in% colnames(cor_all))) {
+    join_keys <- k
+    break
+  }
+}
+
+if (length(join_keys) == 0) {
+  message(
+    "Could not find common join keys between methyl_sites_combined and cor_all.\n",
+    "Available columns in methyl_sites_combined: ", paste(colnames(methyl_sites_combined), collapse = ", "), "\n",
+    "Available columns in cor_all: ", paste(colnames(cor_all), collapse = ", "), "\n",
+    "Skipping gene analysis."
+  )
+  quit(status = 0)
+}
+
+methyl_sites_joined <- dplyr::left_join(
+  methyl_sites_combined,
+  cor_all,
+  by = join_keys,
+  suffix = c("", "_cor")
+)
+
+if (nrow(methyl_sites_joined) != length(CpGs)) {
+  message(
+    "Joined methylation/correlation table row count does not match CpGs length (",
+    nrow(methyl_sites_joined), " vs ", length(CpGs), "). Skipping gene analysis."
+  )
+  quit(status = 0)
+}
+
+mcols(CpGs) <- S4Vectors::DataFrame(
+  methyl_sites_joined %>% dplyr::select(-chr_align, -pos_align),
+  check.names = FALSE
+)
 CpGs
 
 ## selecting final CpGs
 # loading selected CpGs
-path_sel_cpg_new <- paste0(intermediate_folder, "005_correlation_data/all_mix_cor_CpG_common.RData")
+path_sel_cpg_new <- paste0(intermediate_folder, "05_correlation_data/all_mix_cor_CpG_common.RData")
 load(path_sel_cpg_new)
 all_mix_cor_CpG_common
 
@@ -176,17 +285,34 @@ CpG_regions <- split(anno_hits, queryHits(overlaps))
 CpG_regions_uni <- lapply(CpG_regions, function(x) unique(x))
 
 # adding correlation direction of CpGs (positive or negative) as dataframe
-CpG_regions_pos <- CpG_regions_uni[CpGs$Correlation > 0] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_regions_neg <- CpG_regions_uni[CpGs$Correlation < 0] %>% 
-  unlist() %>% table() %>% as.data.frame()
+region_counts <- function(x) {
+  tab <- table(unlist(x))
+  if (length(tab) == 0) {
+    return(tibble::tibble(regions = character(), Freq = integer()))
+  }
+  tibble::tibble(regions = names(tab), Freq = as.integer(tab))
+}
 
-# saving into dataframe and discarding absence
-CpG_regions_df <- data_frame(regions = CpG_regions_neg$.,
-                                 pos_cor = CpG_regions_pos$Freq,
-                                 neg_cor = CpG_regions_neg$Freq) %>% 
-  mutate(check = c(pos_cor + neg_cor)) %>% 
-  .[.$check > 0, ] %>% .[!.$regions %in% "mRNA",] 
+CpG_regions_pos <- CpG_regions_uni[which(CpGs$Correlation > 0)] %>% region_counts()
+CpG_regions_neg <- CpG_regions_uni[which(CpGs$Correlation < 0)] %>% region_counts()
+
+CpG_regions_df <- dplyr::full_join(
+  CpG_regions_pos %>% dplyr::rename(pos_cor = Freq),
+  CpG_regions_neg %>% dplyr::rename(neg_cor = Freq),
+  by = "regions"
+) %>%
+  dplyr::mutate(
+    pos_cor = tidyr::replace_na(pos_cor, 0L),
+    neg_cor = tidyr::replace_na(neg_cor, 0L),
+    check = pos_cor + neg_cor
+  ) %>%
+  .[.$check > 0, ] %>%
+  .[!.$regions %in% "mRNA", ]
+
+if (nrow(CpG_regions_df) == 0) {
+  message("No CpG regions could be summarised from overlaps/correlation direction with the provided data. Skipping downstream gene analysis plots.")
+  quit(status = 0)
+}
 
 # saving as dataframe which sums up both correlation groups
 CpG_regions_all_df <- CpG_regions_df %>%
@@ -208,7 +334,7 @@ p_CpGs <- ggplot(CpG_regions_df_long, aes(x = regions, y = occurrences, fill = c
   labs(x = "Regions", y = "CpGs", fill = "Correlation") + 
   scale_fill_manual(labels = c("pos_cor" = "Positive", "neg_cor" = "Negative"), 
                     values = c("pos_cor" = color_compare[1], "neg_cor" = color_compare[2])) +
-  ylim(0, 1.1*max(CpG_regions_df_long$occurrences))
+  ylim(0, 1.1*max(CpG_regions_df_long$occurrences, na.rm = TRUE))
 p_CpGs
 
 ggsave(paste0(results_folder, "07_regions_all_cor_group.pdf"), p_CpGs, width = 8, height = 6)
@@ -221,28 +347,28 @@ p_CpGs_combined <- ggplot(CpG_regions_all_df, aes(x = regions, y = CpGs, fill = 
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12.5), legend.position = "none") +
   labs(x = "Regions", y = "CpGs") +
-  ylim(0, 1.1*max(CpG_regions_all_df$CpGs))
+  ylim(0, 1.1*max(CpG_regions_all_df$CpGs, na.rm = TRUE))
 p_CpGs_combined
 
 ggsave(paste0(results_folder, "07_regions_all_CpGs_combined.pdf"), p_CpGs_combined, width = 8, height = 6)
  
 # adding species of CpGs as dataframe
-CpG_regions_AC <- CpG_regions_uni[CpGs$species == "AC"] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_regions_AS <- CpG_regions_uni[CpGs$species == "AS"] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_regions_EH <- CpG_regions_uni[CpGs$species == "EH"] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_regions_ZF <- CpG_regions_uni[CpGs$species == "ZF"] %>% 
-  unlist() %>% table() %>% as.data.frame()
+species_region_counts <- function(sel_species) {
+  region_counts(CpG_regions_uni[which(CpGs$species == sel_species)]) %>%
+    dplyr::rename(!!sel_species := Freq)
+}
 
-# saving into dataframe and discarding absence
-CpG_regions_df_species <- data_frame(regions = CpG_regions_neg$.,
-                                         AC = CpG_regions_AC$Freq,
-                                         AS = CpG_regions_AS$Freq,
-                                         EH = CpG_regions_EH$Freq,
-                                         ZF = CpG_regions_ZF$Freq) %>% 
-  .[!.$regions %in% "mRNA",] %>% mutate(check = c(AC + AS + EH + ZF)) %>% 
+CpG_regions_df_species <- dplyr::full_join(species_region_counts("AC"), species_region_counts("AS"), by = "regions") %>%
+  dplyr::full_join(species_region_counts("EH"), by = "regions") %>%
+  dplyr::full_join(species_region_counts("ZF"), by = "regions") %>%
+  dplyr::mutate(
+    AC = tidyr::replace_na(AC, 0L),
+    AS = tidyr::replace_na(AS, 0L),
+    EH = tidyr::replace_na(EH, 0L),
+    ZF = tidyr::replace_na(ZF, 0L)
+  ) %>%
+  .[!.$regions %in% "mRNA", ] %>%
+  dplyr::mutate(check = AC + AS + EH + ZF) %>%
   .[.$check > 0, ]
 
 # changing to long format for ggplot 
@@ -260,7 +386,7 @@ p_CpGs_species <- ggplot(CpG_regions_df_species_long, aes(x = regions, y = occur
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(x = "Regions", y = "CpGs", fill = "Species") + 
   scale_fill_manual(values = color_species) +
-  ylim(0,1.1*max(CpG_regions_df_species_long$occurrences))
+  ylim(0, ifelse(all(is.na(CpG_regions_df_species_long$occurrences)), 1, 1.1*max(CpG_regions_df_species_long$occurrences, na.rm = TRUE)))
 p_CpGs_species
 
 ggsave(paste0(results_folder, "07_regions_all_species.pdf"), p_CpGs_species, width = 8, height = 6)
@@ -287,12 +413,12 @@ gene_hits_sel_pos <- annotation_human$gene[anno_index_sel_pos[which(annotation_h
 gene_hits_sel_neg <- annotation_human$gene[anno_index_sel_neg[which(annotation_human$type[anno_index_sel_neg] == "gene")]]
 
 # count how many times each gene appears in each group of correlation direction
-genes_sel_count_pos <- sapply(unique(gene_hits_sel), function(i) sum(gene_hits_sel_pos == i)) %>% as.data.frame()
-genes_sel_count_neg <- sapply(unique(gene_hits_sel), function(i) sum(gene_hits_sel_neg == i)) %>% as.data.frame()
-
-genes_sel_count <- data_frame(genes = rownames(genes_sel_count_pos),
-                              pos_cor = genes_sel_count_pos$.,
-                              neg_cor = genes_sel_count_neg$.)
+gene_levels <- sort(unique(gene_hits_sel))
+genes_sel_count <- tibble::tibble(
+  genes = gene_levels,
+  pos_cor = as.integer(table(factor(gene_hits_sel_pos, levels = gene_levels))),
+  neg_cor = as.integer(table(factor(gene_hits_sel_neg, levels = gene_levels)))
+)
 # exporting genes
 write.csv(table(gene_hits_sel), file = paste0(save_folder, "gene_list_sel.csv"))
 write.csv(genes_sel_count, file = paste0(save_folder, "gene_list_count.csv"))
@@ -311,7 +437,7 @@ genes_sel_count_long <- pivot_longer(genes_sel_count, cols = c("pos_cor", "neg_c
 # plot
 p_genes_sel <- ggplot(genes_sel_count_long, aes(y = genes, x = CpGs, fill = cor)) +
   geom_col(position = position_stack()) +
-  scale_fill_manual(values = rev(color_compare), ) +
+  scale_fill_manual(values = rev(color_compare)) +
   labs(y = "Genes", x = "CpGs", fill = "Correlation") +
   scale_y_discrete(limits = rev(sort(genes_sel_count_long$genes))) +
   theme_minimal()
@@ -325,18 +451,26 @@ CpG_sel_regions <- split(anno_hits_sel, queryHits(overlaps_sel))
 CpG_sel_regions_uni <- lapply(CpG_sel_regions, function(x) unique(x))
 
 # adding correlation direction of CpGs (positive or negative) as dataframe
-CpG_sel_regions_pos <- CpG_sel_regions_uni[CpGs_selected$Correlation > 0] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_sel_regions_neg <- CpG_sel_regions_uni[CpGs_selected$Correlation < 0] %>% 
-  unlist() %>% table() %>% as.data.frame()
+CpG_sel_regions_pos <- CpG_sel_regions_uni[which(CpGs_selected$Correlation > 0)] %>% region_counts()
+CpG_sel_regions_neg <- CpG_sel_regions_uni[which(CpGs_selected$Correlation < 0)] %>% region_counts()
 
+CpG_sel_regions_df <- dplyr::full_join(
+  CpG_sel_regions_pos %>% dplyr::rename(pos_cor = Freq),
+  CpG_sel_regions_neg %>% dplyr::rename(neg_cor = Freq),
+  by = "regions"
+) %>%
+  dplyr::mutate(
+    pos_cor = tidyr::replace_na(pos_cor, 0L),
+    neg_cor = tidyr::replace_na(neg_cor, 0L),
+    check = pos_cor + neg_cor
+  ) %>%
+  .[.$check > 0, ] %>%
+  .[!.$regions %in% "mRNA", ]
 
-# saving into dataframe and discarding absence
-CpG_sel_regions_df <- data_frame(regions = CpG_sel_regions_neg$.,
-                                 pos_cor = CpG_sel_regions_pos$Freq,
-                                 neg_cor = CpG_sel_regions_neg$Freq) %>% 
-  mutate(check = c(pos_cor + neg_cor)) %>% 
-  .[.$check > 0, ] %>% .[!.$regions %in% "mRNA",] 
+if (nrow(CpG_sel_regions_df) == 0) {
+  message("No selected-CpG regions could be summarised with the provided data. Skipping selected-CpG region plots.")
+  quit(status = 0)
+}
 
 # saving both groups combined as dataframe 
 CpG_sel_regions_comb_df <- CpG_sel_regions_df %>% 
@@ -358,7 +492,7 @@ p_CpGs_sel <- ggplot(CpG_sel_regions_df_long, aes(x = regions, y = occurrences, 
   labs(x = "Regions", y = "CpGs", fill = "Correlation") + 
   scale_fill_manual(labels = c("pos_cor" = "Positive", "neg_cor" = "Negative"), 
                     values = c("pos_cor" = color_compare[1], "neg_cor" = color_compare[2])) +
-  ylim(0,1.1*max(CpG_sel_regions_df_long$occurrences))
+  ylim(0, 1.1*max(CpG_sel_regions_df_long$occurrences, na.rm = TRUE))
 p_CpGs_sel
 
 ggsave(paste0(results_folder, "07_regions_sel_cor_group.pdf"), p_CpGs_sel, width = 8, height = 6)
@@ -372,28 +506,28 @@ p_CpGs_sel_combined <- ggplot(CpG_sel_regions_comb_df, aes(x = regions, y = CpGs
   scale_fill_viridis_d(option = "cividis") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12.5), legend.position = "none") +
   labs(x = "Regions", y = "CpGs") +
-  ylim(0, 1.1*max(CpG_sel_regions_comb_df$CpGs))
+  ylim(0, 1.1*max(CpG_sel_regions_comb_df$CpGs, na.rm = TRUE))
 p_CpGs_sel_combined
 
 ggsave(paste0(results_folder, "07_regions_sel_CpGs_combined.pdf"), p_CpGs_sel_combined, width = 8, height = 6)
 
 # adding species of CpGs as dataframe
-CpG_sel_regions_AC <- CpG_sel_regions_uni[CpGs_selected$species == "AC"] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_sel_regions_AS <- CpG_sel_regions_uni[CpGs_selected$species == "AS"] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_sel_regions_EH <- CpG_sel_regions_uni[CpGs_selected$species == "EH"] %>% 
-  unlist() %>% table() %>% as.data.frame()
-CpG_sel_regions_ZF <- CpG_sel_regions_uni[CpGs_selected$species == "ZF"] %>% 
-  unlist() %>% table() %>% as.data.frame()
+species_region_counts_sel <- function(sel_species) {
+  region_counts(CpG_sel_regions_uni[which(CpGs_selected$species == sel_species)]) %>%
+    dplyr::rename(!!sel_species := Freq)
+}
 
-# saving into dataframe and discarding absence
-CpG_sel_regions_df_species <- data_frame(regions = CpG_sel_regions_neg$.,
-                                 AC = CpG_sel_regions_AC$Freq,
-                                 AS = CpG_sel_regions_AS$Freq,
-                                 EH = CpG_sel_regions_EH$Freq,
-                                 ZF = CpG_sel_regions_ZF$Freq) %>% 
-  .[!.$regions %in% "mRNA",] %>% mutate(check = c(AC + AS + EH + ZF)) %>% 
+CpG_sel_regions_df_species <- dplyr::full_join(species_region_counts_sel("AC"), species_region_counts_sel("AS"), by = "regions") %>%
+  dplyr::full_join(species_region_counts_sel("EH"), by = "regions") %>%
+  dplyr::full_join(species_region_counts_sel("ZF"), by = "regions") %>%
+  dplyr::mutate(
+    AC = tidyr::replace_na(AC, 0L),
+    AS = tidyr::replace_na(AS, 0L),
+    EH = tidyr::replace_na(EH, 0L),
+    ZF = tidyr::replace_na(ZF, 0L)
+  ) %>%
+  .[!.$regions %in% "mRNA", ] %>%
+  dplyr::mutate(check = AC + AS + EH + ZF) %>%
   .[.$check > 0, ]
 
 # changing to long format for ggplot 
@@ -411,7 +545,7 @@ p_CpGs_sel_species <- ggplot(CpG_sel_regions_df_species_long, aes(x = regions, y
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(x = "Regions", y = "CpGs", fill = "Species") + 
   scale_fill_manual(values = color_species) +
-  ylim(0,1.1*max(CpG_sel_regions_df_species_long$occurrences))
+  ylim(0, 1.1*max(CpG_sel_regions_df_species_long$occurrences, na.rm = TRUE))
 p_CpGs_sel_species
 
 ggsave(paste0(results_folder, "07_regions_sel_species.pdf"), p_CpGs_sel_species, width = 8, height = 6)
