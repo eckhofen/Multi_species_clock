@@ -10,6 +10,7 @@ library(tidyverse)
 library(patchwork)
 library(ggrepel)
 library(ggtext)
+library(ggnewscale)
 
 #### Setting paths ####
 figures_folder <- "03_results/01_figures/"
@@ -111,15 +112,19 @@ ggsave(file = paste0(figures_folder, "07_scmr_pie.pdf"), plot = p_scmr_pie, widt
 ## Selected CpGs
 
 # per species
-p_selected_counts_species <- ggplot(selected_counts, aes(x = annot.type, y = n, fill = annot.type, group = context)) +
-  geom_col(position = position_dodge2(preserve = "single", padding = 0.1), show.legend = FALSE) +
-  geom_label(aes(label = n), hjust = .5, vjust = -.3, show.legend = FALSE) +
+p_selected_counts_species <- ggplot(selected_counts) +
+  geom_col(aes(x = annot.type, y = n, fill = annot.type, group = context), 
+           position = position_dodge2(preserve = "single", padding = 0.1), show.legend = FALSE) +
+  geom_label(aes(x = annot.type, y = n, label = n, fill = annot.type, group = context),
+             hjust = .5, vjust = -.3, show.legend = FALSE) +
   facet_grid(species ~ context, scales = "free", space = "free_x") +
   ggtheme +
   scale_fill_manual(values = color_types) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
   labs(y = "Selected CpGs for multispecies clock", x = "") +
-  theme(strip.text.x = element_blank(), strip.background.x = element_blank(), strip.background.y = element_rect(fill = "grey95", color = NA))
+  theme(strip.text.x = element_blank(), 
+        strip.background.x = element_blank(), 
+        strip.background.y = element_rect(fill = "grey95", color = NA))
 
 ggsave(file = paste0(figures_folder, "07_selected_counts_species.pdf"), plot = p_selected_counts_species, width = 8, height = 6)
 

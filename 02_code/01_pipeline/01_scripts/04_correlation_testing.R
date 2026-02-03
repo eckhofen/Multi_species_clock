@@ -1,5 +1,9 @@
-# Author: Gabriel Ecker-Eckhofen (gabriel.eckhofen@imbrsea.eu)
-# Date: June 2024
+# Metadata ----------------------------------------------------------------
+# Project: Piscine Multispecies Epigenetic Clock
+# Description: Correlation testing
+# Author: Gabriel Ecker-Eckhofen
+# eckhofen@icm.csic.es
+# Date: 2026-02
 
 # DISCLAIMER:
 # by this time and date the sequencing data is not available yet. Start here to reproduce the results
@@ -9,7 +13,7 @@
 
 #### Settings ####
 data_folder <- "01_data/"
-save_folder <- "01_data/03_intermediate/05_correlation_data/" # folder where extracted sequences will be saved
+save_folder <- "01_data/03_intermediate/05_correlation_data/"
 results_folder <- "03_results/01_figures/"
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 dir.create(results_folder, recursive = TRUE, showWarnings = FALSE)
@@ -27,43 +31,15 @@ library(caret)
 
 ## loading data 
 # methyl values
-required_inputs <- c(
-  "01_data/03_intermediate/04_methyl_values/HS_AC_meth_values.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_AS_meth_values.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_EH_meth_values.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_ZF_meth_values_imputed.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_AC_methyl_sites.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_AS_methyl_sites.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_EH_methyl_sites.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_ZF_methyl_sites.Rdata",
-  "01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata"
-)
+load("01_data/03_intermediate/04_methyl_values/all_meth_values.Rdata")
 
-missing_inputs <- required_inputs[!file.exists(required_inputs)]
-if (length(missing_inputs) > 0) {
-  message(
-    "Missing required intermediate inputs under 01_data/03_intermediate/04_methyl_values/. ",
-    "This typically means script 03 could not generate methylation values because private raw inputs are unavailable.\n",
-    "Missing files:\n- ",
-    paste(missing_inputs, collapse = "\n- "),
-    "\nSkipping correlation testing."
-  )
-  quit(status = 0)
-}
-
-load("01_data/03_intermediate/04_methyl_values/HS_AC_meth_values.Rdata")
-load("01_data/03_intermediate/04_methyl_values/HS_AS_meth_values.Rdata")
-load("01_data/03_intermediate/04_methyl_values/HS_EH_meth_values.Rdata")
-load("01_data/03_intermediate/04_methyl_values/HS_ZF_meth_values_imputed.Rdata")
 # shared methylation sites
-load("01_data/03_intermediate/04_methyl_values/HS_AC_methyl_sites.Rdata")
-load("01_data/03_intermediate/04_methyl_values/HS_AS_methyl_sites.Rdata")
-load("01_data/03_intermediate/04_methyl_values/HS_EH_methyl_sites.Rdata")
-load("01_data/03_intermediate/04_methyl_values/HS_ZF_methyl_sites.Rdata")
+load("01_data/03_intermediate/04_methyl_values/all_methyl_sites.Rdata")
+
 # age metadata
 load("01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata")
 
-#### functions ####
+#### helper functions ####
 # function to run correlation tests for all the CpGs 
 cor.test.age <- function(methyl_values, age, SCMR = "not_defined", species = "undefined", method = "pearson") {
   correlation_results <- list()
@@ -99,44 +75,7 @@ cor.test.age.filter <- function(input, p_value = 0.05) {
   return(input)
 }
 
-#### Correlation tests ####
-
-AC_region_id <- if ("SCMR" %in% colnames(AC_methyl_sites)) AC_methyl_sites$SCMR else AC_methyl_sites$SMR
-AC_cor_age_pearson <- cor.test.age(AC_meth_values, AC_age, AC_region_id, species = "AC")
-AC_cor_age_filtered_pearson <- cor.test.age.filter(AC_cor_age_pearson, 0.05)
-
-AS_region_id <- if ("SCMR" %in% colnames(AS_methyl_sites)) AS_methyl_sites$SCMR else AS_methyl_sites$SMR
-AS_cor_age_pearson <- cor.test.age(AS_meth_values, AS_age, AS_region_id, species = "AS")
-AS_cor_age_filtered_pearson <- cor.test.age.filter(AS_cor_age_pearson, 0.05)
-
-EH_region_id <- if ("SCMR" %in% colnames(EH_methyl_sites)) EH_methyl_sites$SCMR else EH_methyl_sites$SMR
-EH_cor_age_pearson <- cor.test.age(EH_meth_values, EH_age, EH_region_id, species = "EH")
-EH_cor_age_filtered_pearson <- cor.test.age.filter(EH_cor_age_pearson, 0.05)
-
-ZF_region_id <- if ("SCMR" %in% colnames(ZF_methyl_sites)) ZF_methyl_sites$SCMR else ZF_methyl_sites$SMR
-ZF_cor_age_pearson <- cor.test.age(ZF_meth_values_imputed, ZF_age, ZF_region_id, species = "ZF")
-ZF_cor_age_filtered_pearson <- cor.test.age.filter(ZF_cor_age_pearson, 0.05)
-
-cor_all <- rbind(AC_cor_age_filtered_pearson,
-                 AS_cor_age_filtered_pearson,
-                 EH_cor_age_filtered_pearson, 
-                 ZF_cor_age_filtered_pearson)
-
-if ("SMR" %in% colnames(cor_all) && !("SCMR" %in% colnames(cor_all))) {
-  cor_all <- dplyr::rename(cor_all, SCMR = SMR)
-}
-
-save(cor_all, file = paste0(save_folder, "cor_all.RData"))
-
-## check number of selected CpGs which are significant
-ncol(AC_meth_values[AC_cor_age_filtered_pearson$significant] == TRUE)
-ncol(AS_meth_values[AS_cor_age_filtered_pearson$significant] == TRUE)
-ncol(EH_meth_values[EH_cor_age_filtered_pearson$significant] == TRUE)
-ncol(ZF_meth_values_imputed[ZF_cor_age_filtered_pearson$significant] == TRUE)
-### 154, 120, 224, 64
-
-#### function to choose only the highest correlating CpGs per SMR ####
-
+# function to choose only the highest correlating CpGs per SMR
 select.max.cor <- function(cor_tibble, filter_significant = FALSE) {
   filtered_data <- cor_tibble
   if(filter_significant == TRUE) {filtered_data <- filter(filtered_data, significant)}
@@ -154,6 +93,37 @@ select.max.cor <- function(cor_tibble, filter_significant = FALSE) {
   return(filtered_data)
 }
 
+#### Correlation tests ####
+
+AC_region_id <- AC_methyl_sites$SCMR
+AC_cor_age_pearson <- cor.test.age(AC_meth_values, AC_age, AC_region_id, species = "AC")
+AC_cor_age_filtered_pearson <- cor.test.age.filter(AC_cor_age_pearson, 0.05)
+
+AS_region_id <- AS_methyl_sites$SCMR
+AS_cor_age_pearson <- cor.test.age(AS_meth_values, AS_age, AS_region_id, species = "AS")
+AS_cor_age_filtered_pearson <- cor.test.age.filter(AS_cor_age_pearson, 0.05)
+
+EH_region_id <- EH_methyl_sites$SCMR
+EH_cor_age_pearson <- cor.test.age(EH_meth_values, EH_age, EH_region_id, species = "EH")
+EH_cor_age_filtered_pearson <- cor.test.age.filter(EH_cor_age_pearson, 0.05)
+
+ZF_region_id <- ZF_methyl_sites$SCMR
+ZF_cor_age_pearson <- cor.test.age(ZF_meth_values, ZF_age, ZF_region_id, species = "ZF")
+ZF_cor_age_filtered_pearson <- cor.test.age.filter(ZF_cor_age_pearson, 0.05)
+
+cor_all <- rbind(AC_cor_age_filtered_pearson,
+                 AS_cor_age_filtered_pearson,
+                 EH_cor_age_filtered_pearson, 
+                 ZF_cor_age_filtered_pearson)
+
+save(cor_all, file = paste0(save_folder, "cor_all.RData"))
+
+## check number of selected CpGs which are significant
+ncol(AC_meth_values[AC_cor_age_filtered_pearson$significant] == TRUE) # 154
+ncol(AS_meth_values[AS_cor_age_filtered_pearson$significant] == TRUE) # 120
+ncol(EH_meth_values[EH_cor_age_filtered_pearson$significant] == TRUE) # 224
+ncol(ZF_meth_values[ZF_cor_age_filtered_pearson$significant] == TRUE) # 64
+
 ## selecting only positively correlating samples
 AC_pos_cor_CpGs <- select.max.cor(AC_cor_age_filtered_pearson[AC_cor_age_filtered_pearson$Correlation > 0,])
 AS_pos_cor_CpGs <- select.max.cor(AS_cor_age_filtered_pearson[AS_cor_age_filtered_pearson$Correlation > 0,])
@@ -162,10 +132,10 @@ ZF_pos_cor_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson[ZF_cor_age_filtere
 
 all_pos_cor_CpG <- rbind(AC_pos_cor_CpGs, AS_pos_cor_CpGs, EH_pos_cor_CpGs, ZF_pos_cor_CpGs)
 
-# keeping only CpGs when occurring in all species 
-all_pos_cor_CpG_common  <- all_pos_cor_CpG %>% 
-  group_by(SCMR) %>% 
-  filter(n() == 4) %>% 
+# keeping only CpGs when occurring in all species
+all_pos_cor_CpG_common <- all_pos_cor_CpG %>%
+  group_by(SCMR) %>%
+  filter(n() == 4) %>%
   ungroup
 
 ## selecting only negatively correlating samples
@@ -176,19 +146,18 @@ ZF_neg_cor_CpGs <- select.max.cor(ZF_cor_age_filtered_pearson[ZF_cor_age_filtere
 
 all_neg_cor_CpG <- rbind(AC_neg_cor_CpGs, AS_neg_cor_CpGs, EH_neg_cor_CpGs, ZF_neg_cor_CpGs)
 
-# keeping only CpGs when occurring in all species 
-all_neg_cor_CpG_common  <- all_neg_cor_CpG %>% 
-  group_by(SCMR) %>% 
-  filter(n() == 4) %>% 
+# keeping only CpGs when occurring in all species
+all_neg_cor_CpG_common <- all_neg_cor_CpG %>%
+  group_by(SCMR) %>%
+  filter(n() == 4) %>%
   ungroup
 
 ## selecting a mixture of both
 temp_index_vec <- (all_pos_cor_CpG_common$SCMR %in% all_neg_cor_CpG_common$SCMR) == FALSE
-all_mix_cor_CpG_common  <- rbind(all_neg_cor_CpG_common, all_pos_cor_CpG_common[temp_index_vec,]) %>% 
-  group_by(SCMR) %>% 
-  filter(n() == 4) %>% 
+all_mix_cor_CpG_common <- rbind(all_neg_cor_CpG_common, all_pos_cor_CpG_common[temp_index_vec,]) %>%
+  group_by(SCMR) %>%
+  filter(n() == 4) %>%
   ungroup
-
 
 save_path <- paste0(save_folder, "all_mix_cor_CpG_common.RData")
 save(all_mix_cor_CpG_common, file = save_path)
@@ -210,6 +179,7 @@ AC_name_index <- match(colnames(AC_meth_values_selected), all_mix_cor_CpG_common
 colnames(AC_meth_values_selected) <- all_mix_cor_CpG_common$SCMR[AC_name_index]
 AC_meth_values_selected <- AC_meth_values_selected[, order(colnames(AC_meth_values_selected))]
 AC_meth_values_selected$rel_age <- AC_age/25
+AC_meth_values_selected$age <- AC_age
 AC_meth_values_selected$species <- "AC"
 
 #AS
@@ -218,6 +188,7 @@ AS_name_index <- match(colnames(AS_meth_values_selected), all_mix_cor_CpG_common
 colnames(AS_meth_values_selected) <- all_mix_cor_CpG_common$SCMR[AS_name_index]
 AS_meth_values_selected <- AS_meth_values_selected[, order(colnames(AS_meth_values_selected))]
 AS_meth_values_selected$rel_age <- AS_age/54
+AS_meth_values_selected$age <- AS_age
 AS_meth_values_selected$species <- "AS"
 
 #EH
@@ -226,6 +197,7 @@ EH_name_index <- match(colnames(EH_meth_values_selected), all_mix_cor_CpG_common
 colnames(EH_meth_values_selected) <- all_mix_cor_CpG_common$SCMR[EH_name_index]
 EH_meth_values_selected <- EH_meth_values_selected[, order(colnames(EH_meth_values_selected))]
 EH_meth_values_selected$rel_age <- EH_age/20
+EH_meth_values_selected$age <- EH_age
 EH_meth_values_selected$species <- "EH"
 
 #ZF
@@ -234,6 +206,7 @@ ZF_name_index <- match(colnames(ZF_meth_values_selected), all_mix_cor_CpG_common
 colnames(ZF_meth_values_selected) <- all_mix_cor_CpG_common$SCMR[ZF_name_index]
 ZF_meth_values_selected <- ZF_meth_values_selected[, order(colnames(ZF_meth_values_selected))]
 ZF_meth_values_selected$rel_age <- ZF_age/5
+ZF_meth_values_selected$age <- ZF_age
 ZF_meth_values_selected$species <- "ZF"
 
 # combining all data 
@@ -253,6 +226,7 @@ AC_name_index <- match(colnames(AC_meth_values_selected_all), all_cor_CpG$Site)
 colnames(AC_meth_values_selected_all) <- all_cor_CpG$SCMR_cor[AC_name_index]
 AC_meth_values_selected_all <- AC_meth_values_selected_all[, order(colnames(AC_meth_values_selected_all))]
 AC_meth_values_selected_all$rel_age <- AC_age/25
+AC_meth_values_selected_all$age <- AC_age
 AC_meth_values_selected_all$species <- "AC"
 
 #AS
@@ -261,6 +235,7 @@ AS_name_index <- match(colnames(AS_meth_values_selected_all), all_cor_CpG$Site)
 colnames(AS_meth_values_selected_all) <- all_cor_CpG$SCMR_cor[AS_name_index]
 AS_meth_values_selected_all <- AS_meth_values_selected_all[, order(colnames(AS_meth_values_selected_all))]
 AS_meth_values_selected_all$rel_age <- AS_age/54
+AS_meth_values_selected_all$age <- AS_age
 AS_meth_values_selected_all$species <- "AS"
 
 #EH
@@ -269,6 +244,7 @@ EH_name_index <- match(colnames(EH_meth_values_selected_all), all_cor_CpG$Site)
 colnames(EH_meth_values_selected_all) <- all_cor_CpG$SCMR_cor[EH_name_index]
 EH_meth_values_selected_all <- EH_meth_values_selected_all[, order(colnames(EH_meth_values_selected_all))]
 EH_meth_values_selected_all$rel_age <- EH_age/20
+EH_meth_values_selected_all$age <- EH_age
 EH_meth_values_selected_all$species <- "EH"
 
 #ZF
@@ -277,6 +253,7 @@ ZF_name_index <- match(colnames(ZF_meth_values_selected_all), all_cor_CpG$Site)
 colnames(ZF_meth_values_selected_all) <- all_cor_CpG$SCMR_cor[ZF_name_index]
 ZF_meth_values_selected_all <- ZF_meth_values_selected_all[, order(colnames(ZF_meth_values_selected_all))]
 ZF_meth_values_selected_all$rel_age <- ZF_age/5
+ZF_meth_values_selected_all$age <- ZF_age
 ZF_meth_values_selected_all$species <- "ZF"
 
 # combining all data 
@@ -326,27 +303,7 @@ ggplot(all_pos_cor_CpG, aes()) +
   scale_color_manual(values = color_species) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
-## plotting SMR groups 24 and 28
-all_meth_values_long_path <- "01_data/03_intermediate/04_methyl_values/all_meth_values_long.RData"
-if (!exists("all_meth_values_long") && file.exists(all_meth_values_long_path)) {
-  load(all_meth_values_long_path)
-}
-
-if (exists("all_sig_CpGs_common") && exists("all_meth_values_long")) {
-  selected_methyl_values <- subset(all_meth_values_long, Site %in% subset(all_sig_CpGs_common, SCMR == "SCMR_024" | SCMR == "SCMR_026")$Site)
-}
-if (exists("all_meth_values_long")) {
-  selected_methyl_values <- subset(all_meth_values_long, Site %in% all_mix_cor_CpG_common$Site)
-}
-
-if (exists("selected_methyl_values")) {
-  if (("SMR" %in% colnames(selected_methyl_values)) && !("SCMR" %in% colnames(selected_methyl_values))) {
-    selected_methyl_values <- dplyr::rename(selected_methyl_values, SCMR = SMR)
-  }
-
-  if (!("SCMR" %in% colnames(selected_methyl_values))) {
-    message("selected_methyl_values is missing SCMR column; skipping selected methylation plots.")
-  } else {
+# plotting SMR
 ggplot(selected_methyl_values, aes(x = Site, y = Methylation_Value)) +
   geom_boxplot(aes(group = Site_f, fill = species, color = species), alpha = 0.9, outlier.size = 0.1) +
   facet_wrap(~SCMR, scale = "free_x") +
@@ -357,17 +314,11 @@ ggplot(selected_methyl_values, aes(x = Site, y = Methylation_Value)) +
   labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)",
        subtitle = "Selected values are correlating with age")
 
-if (requireNamespace("ggforce", quietly = TRUE)) {
-  ggplot(selected_methyl_values, aes(x = species, y = Methylation_Value)) +
-    ggforce::geom_sina(aes(color = rel_age, shape = species)) +
-    facet_wrap(~SCMR, scale = "free_x") +
-    scale_color_manual(aesthetics = "legend") +
-    theme_classic() +
-    # theme(axis.text.x = element_blank()) +
-    labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)")
-} else {
-  message("Package ggforce is missing; skipping geom_sina plot.")
-}
-  }
-}
+
+ggplot(selected_methyl_values, aes(x = species, y = Methylation_Value)) +
+  ggforce::geom_sina(aes(color = rel_age, shape = species)) +
+  facet_wrap(~SCMR, scale = "free_x") +
+  scale_color_manual(aesthetics = "legend") +
+  theme_classic() +
+  labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)")
 

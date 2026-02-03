@@ -4,7 +4,7 @@
 # Description: Part one of preparing data and general settings
 # Author: Gabriel Ecker-Eckhofen
 # eckhofen@icm.csic.es
-# Date: 2025 06
+# Date: 2026-02
 
 
 # Global settings ---------------------------------------------------------
@@ -50,7 +50,7 @@ color_sex <- c("Females" = "#FFDA66",
                "Unknown" = "grey")
 
 # Saving palettes 
-save(color_compare, color_species, color_sex, file = "01_data/04_metadata/color_palettes.RData")
+save(color_compare, color_species, color_species_common, color_species_sci, color_sex, file = "01_data/04_metadata/color_palettes.RData")
 
 # Loading data ------------------------------------------------------------
 

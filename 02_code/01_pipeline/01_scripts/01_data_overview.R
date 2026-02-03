@@ -4,7 +4,7 @@
 # Description: Overview of data
 # Author: Gabriel Ecker-Eckhofen
 # eckhofen@icm.csic.es
-# Date: 2025 06
+# Date: 2026-02
 
 # Settings ----------------------------------------------------------------
 library(tidyverse)
@@ -38,11 +38,13 @@ n_per_species <- meta_data %>%
 theme_custom <- function() {
   theme(panel.background = element_blank(), 
         plot.title = element_text(size = 18, face = "bold", hjust = .5), 
-        axis.title = element_text(size = 14),
+        axis.title = element_text(size = 12),
         panel.grid = element_blank(), 
         axis.line = element_line(),
         legend.title = element_text(size = 10, face = "bold"),
-        legend.text = element_text(size = 10))
+        legend.text = element_text(size = 10), 
+        axis.text = element_text(size = 10), 
+        axis.text.x = element_text(face = "bold", color = "black"))
 }
 
 # Settings for overview plot
@@ -53,13 +55,12 @@ plot_overview <- function(p) {
   max_y_value <- max(y_values, na.rm = TRUE)
   
   p +
-    geom_jitter(aes(shape = sex),
+    geom_jitter(,
                 inherit.aes = TRUE, 
-                cex = 2,
+                cex = 1.5,
+                position = position_jitter(height = .01, width = .1),
                 alpha = .8,
-                position = position_jitter(seed = 1999,
-                                           width = .3,
-                                           height = .005)) +
+                show.legend = c(color = FALSE, alpha = TRUE)) +
     geom_text(data = n_per_species, aes(x = species, y = 0, label = n),
               inherit.aes = TRUE,
               size = 4.5,
@@ -68,7 +69,7 @@ plot_overview <- function(p) {
               show.legend = FALSE) +
     geom_violin(color = NA,
                 alpha = .2,
-                show.legend = FALSE) +
+                show.legend = (color = FALSE)) +
 
     # Adding mean
     stat_summary(fun = mean,
@@ -77,7 +78,7 @@ plot_overview <- function(p) {
                  size = 2.5,
                  color = "black",
                  alpha = .9,
-                 show.legend = FALSE) +
+                 show.legend = (color = FALSE)) +
     # Adding number of samples
     labs(x = "Species",
          color = "Species",
@@ -115,7 +116,8 @@ fig_overview_combined <-
   fig_overview_age + fig_overview_age_rel +
   plot_layout(nrow = 1, guides = "collect") + 
   plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag = element_text(size = 18, face = "bold"))
+  theme(plot.tag = element_text(size = 18, face = "bold"), legend.position = "right", plot.title = element_blank())
 
 # Saving plot
-ggsave(filename = paste0(results_folder, "01_fig_overview_combined.PDF"), plot = fig_overview_combined, width = 12, height = 7)
+ggsave(filename = paste0(results_folder, "01_fig_overview_combined.PDF"), plot = fig_overview_combined, width = 9, height = 4)
+ggsave(filename = paste0(results_folder, "01_fig_overview_combined.png"), plot = fig_overview_combined, width = 9, height = 4)
