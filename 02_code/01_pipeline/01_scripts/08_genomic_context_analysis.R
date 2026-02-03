@@ -65,7 +65,7 @@ ggtheme <- theme_classic() +
 # total
 p_scmr_counts <- ggplot(total_counts, aes(x = annot.type, y = n, fill = annot.type, group = context)) +
   geom_col(position = position_dodge2(preserve = "single", padding = 0.1), show.legend = FALSE) +
-  geom_label(aes(label = n), hjust = .5, vjust = -.3, show.legend = FALSE) +
+  geom_label(aes(label = n), hjust = .5, vjust = -.3, show.legend = FALSE, border.color = NA) +
   facet_grid(source ~ context, scales = "free", space = "free_x") +
   ggtheme +
   scale_fill_manual(values = color_types) +
@@ -78,7 +78,7 @@ ggsave(file = paste0(figures_folder, "07_scmr_counts.pdf"), plot = p_scmr_counts
 # per species
 p_scmr_counts_species <- ggplot(scmr_counts, aes(x = annot.type, y = n, fill = annot.type, group = context)) +
   geom_col(position = position_dodge2(preserve = "single", padding = 0.1), show.legend = FALSE) +
-  geom_label(aes(label = n), hjust = .5, vjust = -.3, show.legend = FALSE) +
+  geom_label(aes(label = n), hjust = .5, vjust = -.3, show.legend = FALSE, color = "black", border.color = NA) +
   facet_grid(species ~ context, scales = "free", space = "free_x") +
   ggtheme +
   scale_fill_manual(values = color_types) +
@@ -91,7 +91,7 @@ ggsave(file = paste0(figures_folder, "07_scmr_counts_species.pdf"), plot = p_scm
 
 # Pie chart
 
-p_scmr_pie <- ggplot(scmr_counts, aes(x = 3, y = n, fill = annot.type)) +
+p_scmr_pie <- ggplot(total_counts, aes(x = 3, y = n, fill = annot.type)) +
   geom_bar(stat = "identity", aes(alpha = source), show.legend = c(alpha = FALSE)) +
   scale_x_continuous(limits = c(1, NA)) +
   facet_wrap(source ~ context, scales = "free", nrow = 2, strip.position = "bottom") +
@@ -116,7 +116,7 @@ p_selected_counts_species <- ggplot(selected_counts) +
   geom_col(aes(x = annot.type, y = n, fill = annot.type, group = context), 
            position = position_dodge2(preserve = "single", padding = 0.1), show.legend = FALSE) +
   geom_label(aes(x = annot.type, y = n, label = n, fill = annot.type, group = context),
-             hjust = .5, vjust = -.3, show.legend = FALSE) +
+             hjust = .5, vjust = -.3, show.legend = FALSE, border.color = NA) +
   facet_grid(species ~ context, scales = "free", space = "free_x") +
   ggtheme +
   scale_fill_manual(values = color_types) +

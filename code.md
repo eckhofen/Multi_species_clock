@@ -55,6 +55,16 @@
   - **Objects**: `all_mix_cor_CpG_common`
   - **Created by**: `001_scripts/004_correlation_testing.R`
 
+- **`01_data/03_intermediate/006_model_creation/df_SMR_comparison.Rdata`**
+  - **Objects**: `df_SMR_comparison` (significant SCMRs only with regression coefficients, scaled coefficients, p-values, significance labels)
+  - **Created by**: `02_code/01_pipeline/01_scripts/05a_model_creation.R`
+  - **Type**: derived intermediate (locally reproducible)
+
+- **`01_data/03_intermediate/006_model_creation/df_SMR_comparison_all.Rdata`**
+  - **Objects**: `df_SMR_comparison_all` (all SCMRs with regression coefficients, scaled coefficients, p-values, significance labels)
+  - **Created by**: `02_code/01_pipeline/01_scripts/05a_model_creation.R`
+  - **Type**: derived intermediate (locally reproducible)
+
 - **`000_data/006_model_creation/all_meth_values_selected.RData`**
   - **Objects**: `AC_meth_values_selected`, `AS_meth_values_selected`, `EH_meth_values_selected`, `ZF_meth_values_selected`, `all_meth_values_selected`
   - **Created by**: `001_scripts/004_correlation_testing.R`
@@ -123,6 +133,8 @@
 - **`03_results/01_figures/03_PCA_all.pdf`**: `02_code/01_pipeline/01_scripts/03_methylation_extraction.R`
 
 - **`03_results/01_figures/05_*`** model evaluation figures: `02_code/01_pipeline/01_scripts/05a_statistical_models_REL.R` and `02_code/01_pipeline/01_scripts/05b_statistical_models.R`
+- **`03_results/01_figures/05a_SCMR_comparison_significant.pdf`**: `02_code/01_pipeline/01_scripts/05a_model_creation.R`
+- **`03_results/01_figures/05a_SCMR_comparison_all.pdf`**: `02_code/01_pipeline/01_scripts/05a_model_creation.R`
 - **`03_results/01_figures/06_*`** comparison / LOSO plots: `02_code/01_pipeline/01_scripts/06_data_comparison.R`
 - **`03_results/01_figures/07_*`** region/gene annotation plots: `02_code/01_pipeline/01_scripts/07_gene_analysis.R`
 

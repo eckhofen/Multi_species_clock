@@ -178,10 +178,35 @@ mlm_rel_eval <- evaluate.model(
   col = color_species, plot_title = "MLM", 
   y_lim = c(0, .3), x_lim = c(0, .3), ae_lim = c(0, .15), CpGs = "not defined", s = NA, type = "relative")
 
+# comparison plot
 mlm_comparison_plot <- mlm_chron_eval$plot_train + mlm_chron_eval$plot_test + mlm_chron_eval$plot_ae +
   mlm_rel_eval$plot_train + mlm_rel_eval$plot_test + mlm_rel_eval$plot_ae +
   plot_layout(nrow = 2, guides = "collect", width = c(3,3,1)) + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(mlm_comparison_plot, file = "03_results/01_figures/mlm_chron_comparison.png", width = 10, height = 7)
+ggsave(mlm_comparison_plot, file = "03_results/01_figures/05_mlm_comparison.png", width = 10, height = 7)
+
+# Log transformed models
+# chronological age
+mlm_chron_log_eval <- evaluate.model(
+  mlm_chron_log, data_train, log(metadata_train$age), data_test, log(metadata_test$age), 
+  metadata_train$species, metadata_test$species, 
+  col = color_species, plot_title = "log MLM", 
+  y_lim = c(0, 12), x_lim = c(0, 12), ae_lim = c(0, 3.5), CpGs = "not defined", s = NA, type = "chronological")
+
+# relative age
+mlm_rel_log_eval <- evaluate.model(
+  mlm_rel_log, data_train, -log(-log(metadata_train$rel_age)), data_test, -log(-log(metadata_test$rel_age)), 
+  metadata_train$species, metadata_test$species, 
+  col = color_species, plot_title = "log MLM", 
+  y_lim = c(0, .3), x_lim = c(0, .3), ae_lim = c(0, .15), CpGs = "not defined", s = NA, type = "relative")
+
+# comparison plot
+mlm_comparison_plot_log <- mlm_chron_log_eval$plot_train + mlm_chron_log_eval$plot_test + mlm_chron_log_eval$plot_ae +
+  mlm_rel_log_eval$plot_train + mlm_rel_log_eval$plot_test + mlm_rel_log_eval$plot_ae +
+  plot_layout(nrow = 2, guides = "collect", width = c(3,3,1)) + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+ggsave(mlm_comparison_plot_log, file = "03_results/01_figures/05_mlm_comparison_log.png", width = 10, height = 7)
