@@ -41,7 +41,7 @@ load("01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata")
 
 #### helper functions ####
 # function to run correlation tests for all the CpGs 
-cor.test.age <- function(methyl_values, age, SCMR = "not_defined", species = "undefined", method = "pearson") {
+cor.test.age <- function(methyl_values, age, methyl_sites_metadata, species = "undefined", method = "pearson") {
   correlation_results <- list()
   print(paste0("Running correlation test against age with ", method, " method. Results are stored in tibble."))
   
@@ -61,10 +61,18 @@ cor.test.age <- function(methyl_values, age, SCMR = "not_defined", species = "un
   correlation_summary <- tibble(
     Site = names(correlation_results),
     Correlation = sapply(correlation_results, function(x) x$correlation_coefficient),
-    P_value = sapply(correlation_results, function(x) x$p_value),
-    SCMR = SCMR,
-    species = species
+    P_value = sapply(correlation_results, function(x) x$p_value)
   )
+  
+  # Join with methyl_sites metadata (all columns from methyl_sites)
+  # Create a Site column in methyl_sites_metadata to match
+  methyl_sites_metadata <- methyl_sites_metadata %>%
+    mutate(Site = paste0(gsub(paste0(species, "_"), "", .data$Chr), ":", .data$pos_rgenome))
+  
+  correlation_summary <- correlation_summary %>%
+    left_join(methyl_sites_metadata, by = "Site") %>%
+    mutate(species = species)
+  
   return(correlation_summary)
 }
 
@@ -75,7 +83,7 @@ cor.test.age.filter <- function(input, p_value = 0.05) {
   return(input)
 }
 
-# function to choose only the highest correlating CpGs per SMR
+# function to choose only the highest correlating CpGs per SCMR
 select.max.cor <- function(cor_tibble, filter_significant = FALSE) {
   filtered_data <- cor_tibble
   if(filter_significant == TRUE) {filtered_data <- filter(filtered_data, significant)}
@@ -89,26 +97,22 @@ select.max.cor <- function(cor_tibble, filter_significant = FALSE) {
     # remove the temporary column
     select(-abs_correlation) %>%
     # ensure only one row per group if there are ties
-    slice(1)
+    dplyr::slice(1)
   return(filtered_data)
 }
 
 #### Correlation tests ####
 
-AC_region_id <- AC_methyl_sites$SCMR
-AC_cor_age_pearson <- cor.test.age(AC_meth_values, AC_age, AC_region_id, species = "AC")
+AC_cor_age_pearson <- cor.test.age(AC_meth_values, AC_age, AC_methyl_sites, species = "AC")
 AC_cor_age_filtered_pearson <- cor.test.age.filter(AC_cor_age_pearson, 0.05)
 
-AS_region_id <- AS_methyl_sites$SCMR
-AS_cor_age_pearson <- cor.test.age(AS_meth_values, AS_age, AS_region_id, species = "AS")
+AS_cor_age_pearson <- cor.test.age(AS_meth_values, AS_age, AS_methyl_sites, species = "AS")
 AS_cor_age_filtered_pearson <- cor.test.age.filter(AS_cor_age_pearson, 0.05)
 
-EH_region_id <- EH_methyl_sites$SCMR
-EH_cor_age_pearson <- cor.test.age(EH_meth_values, EH_age, EH_region_id, species = "EH")
+EH_cor_age_pearson <- cor.test.age(EH_meth_values, EH_age, EH_methyl_sites, species = "EH")
 EH_cor_age_filtered_pearson <- cor.test.age.filter(EH_cor_age_pearson, 0.05)
 
-ZF_region_id <- ZF_methyl_sites$SCMR
-ZF_cor_age_pearson <- cor.test.age(ZF_meth_values, ZF_age, ZF_region_id, species = "ZF")
+ZF_cor_age_pearson <- cor.test.age(ZF_meth_values, ZF_age, ZF_methyl_sites, species = "ZF")
 ZF_cor_age_filtered_pearson <- cor.test.age.filter(ZF_cor_age_pearson, 0.05)
 
 cor_all <- rbind(AC_cor_age_filtered_pearson,
@@ -162,7 +166,7 @@ all_mix_cor_CpG_common <- rbind(all_neg_cor_CpG_common, all_pos_cor_CpG_common[t
 save_path <- paste0(save_folder, "all_mix_cor_CpG_common.RData")
 save(all_mix_cor_CpG_common, file = save_path)
 
-## selecting all and renaming the SMRs before
+## selecting all and renaming the SCMRs before
 all_pos_cor_CpG_common$SCMR_cor <- paste0(all_pos_cor_CpG_common$SCMR, "_pos")
 all_neg_cor_CpG_common$SCMR_cor <- paste0(all_neg_cor_CpG_common$SCMR, "_neg")
 
@@ -201,7 +205,7 @@ EH_meth_values_selected$age <- EH_age
 EH_meth_values_selected$species <- "EH"
 
 #ZF
-ZF_meth_values_selected <- ZF_meth_values_imputed[,colnames(ZF_meth_values_imputed) %in% all_mix_cor_CpG_common$Site]
+ZF_meth_values_selected <- ZF_meth_values[,colnames(ZF_meth_values) %in% all_mix_cor_CpG_common$Site]
 ZF_name_index <- match(colnames(ZF_meth_values_selected), all_mix_cor_CpG_common$Site)
 colnames(ZF_meth_values_selected) <- all_mix_cor_CpG_common$SCMR[ZF_name_index]
 ZF_meth_values_selected <- ZF_meth_values_selected[, order(colnames(ZF_meth_values_selected))]
@@ -218,7 +222,7 @@ dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 save_path <- paste0(save_folder, "all_meth_values_selected.RData")
 save(AC_meth_values_selected, AS_meth_values_selected, EH_meth_values_selected, ZF_meth_values_selected, all_meth_values_selected, file = save_path)
 
-## extracting all methylvalues for ALL SMRs
+## extracting all methylvalues for ALL SCMRs
 
 #AC
 AC_meth_values_selected_all <- AC_meth_values[,colnames(AC_meth_values) %in% all_cor_CpG$Site]
@@ -248,7 +252,7 @@ EH_meth_values_selected_all$age <- EH_age
 EH_meth_values_selected_all$species <- "EH"
 
 #ZF
-ZF_meth_values_selected_all <- ZF_meth_values_imputed[,colnames(ZF_meth_values_imputed) %in% all_cor_CpG$Site]
+ZF_meth_values_selected_all <- ZF_meth_values[,colnames(ZF_meth_values) %in% all_cor_CpG$Site]
 ZF_name_index <- match(colnames(ZF_meth_values_selected_all), all_cor_CpG$Site)
 colnames(ZF_meth_values_selected_all) <- all_cor_CpG$SCMR_cor[ZF_name_index]
 ZF_meth_values_selected_all <- ZF_meth_values_selected_all[, order(colnames(ZF_meth_values_selected_all))]
@@ -257,20 +261,20 @@ ZF_meth_values_selected_all$age <- ZF_age
 ZF_meth_values_selected_all$species <- "ZF"
 
 # combining all data 
-all_meth_values_all_SMR <- rbind(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all)
+all_meth_values_all_SCMR <- rbind(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all)
 
 # saving selected values
 save_folder <- paste0(data_folder, "03_intermediate/06_model_creation/")
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
-save_path <- paste0(save_folder, "all_meth_values_all_SMR.RData")
-save(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all, all_meth_values_all_SMR, file = save_path)
+save_path <- paste0(save_folder, "all_meth_values_all_SCMR.RData")
+save(AC_meth_values_selected_all, AS_meth_values_selected_all, EH_meth_values_selected_all, ZF_meth_values_selected_all, all_meth_values_all_SCMR, file = save_path)
 
 #### plotting ####
 ## all
 ggplot(cor_all, aes()) +
   geom_point(aes(y = Correlation, x = Site, color = species, alpha = significant)) +
   scale_color_manual(values = color_species) +
-  # facet_row(~SMR) +
+  # facet_row(~SCMR) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
 ggplot(cor_all, aes()) +
@@ -283,7 +287,7 @@ ggplot(cor_all, aes()) +
 ## only significant
 ggplot(subset(cor_all, significant == TRUE), aes()) +
   geom_point(aes(y = Correlation, x = Site, color = species)) +
-  # facet_wrap(~SMR) +
+  # facet_wrap(~SCMR) +
   scale_color_manual(values = color_species) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
@@ -303,16 +307,37 @@ ggplot(all_pos_cor_CpG, aes()) +
   scale_color_manual(values = color_species) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
-# plotting SMR
-ggplot(selected_methyl_values, aes(x = Site, y = Methylation_Value)) +
-  geom_boxplot(aes(group = Site_f, fill = species, color = species), alpha = 0.9, outlier.size = 0.1) +
-  facet_wrap(~SCMR, scale = "free_x") +
+# Long format 
+all_meth_values_selected_long <- pivot_longer(all_meth_values_selected, cols = -c(rel_age, age, species), names_to = "Site", values_to = "Methylation_Value")
+
+# plotting SCMR selected
+ggplot(all_meth_values_selected_long, aes(x = Site, y = Methylation_Value)) +
+  geom_boxplot(aes(fill = species, color = species), alpha = 0.9, outlier.size = 0.1) +
+  facet_wrap(~Site, scale = "free_x") +
   scale_fill_manual(values = color_species) +
   scale_color_manual(values = color_species) +
   theme_classic() +
   theme(axis.text.x = element_blank()) +
   labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)",
        subtitle = "Selected values are correlating with age")
+
+# Long format 
+all_meth_values_selected_all_long <- pivot_longer(all_meth_values_all_SCMR, cols = -c(rel_age, age, species), names_to = "Site", values_to = "Methylation_Value")
+
+
+# plotting SCMR all
+p_CpGs_all <- ggplot(all_meth_values_selected_all_long, aes(x = Site, y = Methylation_Value)) +
+  geom_boxplot(aes(fill = species, color = species), alpha = 0.9, outlier.size = 0.1) +
+  facet_wrap(~Site, scale = "free_x") +
+  scale_fill_manual(values = color_species) +
+  scale_color_manual(values = color_species) +
+  theme_classic() +
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Methylation values Atlantic Cod (AC), Australasian Snapper (ZF), European Hake (EH), Zebrafish (ZF) (human rgenome)",
+       subtitle = "Selected values are correlating with age")
+
+ggsave(p_CpGs_all, filename = "04_all_meth_values_all_SCMR.png", path = "03_results/01_figures/", width = 10, height = 10, units = "in", dpi = 300)
+
 
 
 ggplot(selected_methyl_values, aes(x = species, y = Methylation_Value)) +

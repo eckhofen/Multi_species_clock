@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Update `02_code/01_pipeline/01_scripts/04_correlation_testing.R`: modify `cor.test.age()` function to accept full `methyl_sites` metadata data frame and join all columns (Chr, seq_names, pos_rgenome, pos_seq, pos_align, width_align, chr_align, aligned, seq_number, SCMR) with correlation results. This enriches `XX_cor_age_pearson` outputs with complete CpG metadata.
+
 - Complete `02_code/01_pipeline/01_scripts/05a_model_creation.R`: fix and finish key parameters extraction (regression coefficients, scaled coefficients, p-values, significance labels) and add SMR comparison data frames (`df_SMR_comparison`, `df_SMR_comparison_all`) with corresponding comparison plots (`05a_SCMR_comparison_significant.pdf`, `05a_SCMR_comparison_all.pdf`).
 
 - Updated `02_code/01_pipeline/01_scripts/03_methylation_extraction.R` to create required intermediate output folders before `save()` and to exit cleanly when private raw methylation inputs under `01_data/01_raw_private/` are not present.

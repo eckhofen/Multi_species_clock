@@ -15,6 +15,11 @@ extension <- ".png"
 # color palette
 load(paste0(data_folder, "04_metadata/color_palettes.RData"))
 
+#### Preparation ####
+library(tidyverse)
+library(tidymodels)
+library(patchwork)
+
 # plot settings
 theme_custom <- theme_minimal() + 
       theme(panel.grid.major = element_blank(),
@@ -28,86 +33,16 @@ theme_custom <- theme_minimal() +
 
 theme_set(theme_custom)
 
-#### Preparation ####
-library(tidyverse)
-library(tidymodels)
-library(patchwork)
-
 #### Loading data ####
+
+load(file = paste0(intermediate_folder, "all_data.Rdata"))
+load(file = paste0(intermediate_folder, "models.Rdata"))
+load(file = paste0(intermediate_folder, "models_summary.Rdata"))
 load("01_data/03_intermediate/06_model_creation/all_meth_values_selected.RData")
+load("01_data/03_intermediate/07_data_comparison/methyl_sites_combined_nor.Rdata")
+load("01_data/03_intermediate/05_correlation_data/all_mix_cor_CpG_common.RData")
 
-#### Data preparation ####
-message("Data preparation...")
-# split breaks
-ds_breaks <- 3
-# training/testing set proportion
-ds_prop <- 5/6
-
-# stratified split based on age
-set.seed(123)
-AC_split <- initial_split(AC_meth_values_selected, strata = "age", breaks = ds_breaks, prop = ds_prop)
-
-set.seed(123)
-AS_split <- initial_split(AS_meth_values_selected, strata = "age", breaks = ds_breaks, prop = ds_prop)
-
-set.seed(123)
-EH_split <- initial_split(EH_meth_values_selected, strata = "age", breaks = ds_breaks, prop = ds_prop)
-
-set.seed(123)
-ZF_split <- initial_split(ZF_meth_values_selected, strata = "age", breaks = ds_breaks, prop = ds_prop)
-
-# combining data into training and testing sets
-meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
-meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
-
-metadata_train <- meth_train %>% select(age, rel_age, species)
-metadata_test <- meth_test %>% select(age, rel_age, species)
-
-data_train <- meth_train %>% select(-age, -rel_age, -species)
-data_test <- meth_test %>% select(-age, -rel_age, -species)
-
-# saving
-save(file = paste0(intermediate_folder, "all_data.Rdata"), data_train, data_test, metadata_train, metadata_test)
-
-# model creation
-message("Model creation...")
-mlm_chron <- lm(metadata_train$age ~ ., data = data_train)
-mlm_chron_summary <- summary(mlm_chron)
-
-save(file = paste0(intermediate_folder, "mlm_chron_summary.Rdata"), mlm_chron_summary)
-
-mlm_rel <- lm(metadata_train$rel_age ~ ., data = data_train)
-mlm_rel_summary <- summary(mlm_rel)
-
-save(file = paste0(intermediate_folder, "mlm_rel_summary.Rdata"), mlm_rel_summary)
-
-# log models
-mlm_chron_log <- lm(log(metadata_train$age) ~ ., data = data_train)
-mlm_rel_log <- lm(-log(-log(metadata_train$rel_age)) ~ ., data = data_train)
-
-mlm_chron_log_summary <- summary(mlm_chron_log)
-mlm_rel_log_summary <- summary(mlm_rel_log)
-
-# save models
-save(file = paste0(intermediate_folder, "models.Rdata"), mlm_chron, mlm_rel, mlm_chron_log, mlm_rel_log)
-save(file = paste0(intermediate_folder, "models_summary.Rdata"), mlm_chron_summary, mlm_rel_summary, mlm_chron_log_summary, mlm_rel_log_summary)
-
-# key parameters
-message(paste("MLM (chronological age), R2: ", round(mlm_chron_summary$r.squared, 3)))
-message(paste("MLM (chronological age), R: ", round(sqrt(mlm_chron_summary$r.squared), 3)))
-
-message(paste("MLM (relative age), R2: ", round(mlm_rel_summary$r.squared, 3)))
-message(paste("MLM (relative age), R: ", round(sqrt(mlm_rel_summary$r.squared), 3)))
-
-message(paste("MLM (chronological age, log), R2: ", round(mlm_chron_log_summary$r.squared, 3)))
-message(paste("MLM (chronological age, log), R: ", round(sqrt(mlm_chron_log_summary$r.squared), 3)))
-
-message(paste("MLM (relative age, log), R2: ", round(mlm_rel_log_summary$r.squared, 3)))
-message(paste("MLM (relative age, log), R: ", round(sqrt(mlm_rel_log_summary$r.squared), 3)))
-
-message("Models created and saved.")
-
-# get key parameters
+#### Key parameters ####
 message("Extracting key parameters...")
 
 significance <- 0.05
@@ -187,9 +122,14 @@ save(file = paste0(intermediate_folder, "df_SCMR_comparison.Rdata"), df_SCMR_com
 save(file = paste0(intermediate_folder, "df_SCMR_comparison_all.Rdata"), df_SCMR_comparison_all)
 
 message("Key parameters extracted and saved.")
+#-------------------------
+# Adding SCMR selection
+methyl_sites_combined_nor$selected <- 
+  ifelse(methyl_sites_combined_nor$seq_names %in% df_SCMR_comparison$SCMR, TRUE, FALSE)
 
+#-------------------------
 #### SCMR Comparison Plots ####
-message("Creating SCMR comparison plots...")
+message("Creating plots...")
 
 # Check for color_compare palette, create default if not available
 if (!exists("color_compare")) {
@@ -197,20 +137,20 @@ if (!exists("color_compare")) {
 }
 
 ### SCMR comparison plots
-## Only significant SCMRs
-plot_SCMR_comparison <- ggplot(df_SCMR_comparison, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
+# Only significant SCMRs
+p_SCMR_comparison <- ggplot(df_SCMR_comparison, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
   geom_vline(xintercept = 0, color = "grey60", linetype = "solid") +
-  geom_point(aes(color = model, alpha = significant), position = position_dodge(width = 0.9)) +
-  geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model, alpha = significant), position = position_dodge(width = 0.9)) +
+  geom_point(aes(color = model), position = position_dodge(width = 0.9)) +
+  geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model), position = position_dodge(width = 0.9)) +
   labs(x = "Normalized regression coefficient", y = "Shared co-methylation region", fill = "Model", color = "Model") +
   geom_text(aes(label = significance, x = reg_coef_scaled * 1.15, color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.8) +
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare)
 
-ggsave(file = paste0(results_folder, "05a_SCMR_comparison_significant", extension), plot_SCMR_comparison, width = 5, height = 5)
+ggsave(file = paste0(results_folder, "06_SCMR_comparison_significant", extension), p_SCMR_comparison, width = 5, height = 5)
 
-## All SCMRs
-plot_SCMR_comparison_all <- ggplot(df_SCMR_comparison_all, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
+# All SCMRs
+p_SCMR_comparison_all <- ggplot(df_SCMR_comparison_all, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
   geom_vline(xintercept = 0, color = "grey60", linetype = "solid") +
   geom_point(aes(color = model, alpha = significant), position = position_dodge(width = 0.9), show.legend = c(alpha = FALSE)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model, alpha = significant), position = position_dodge(width = 0.9), show.legend = c(alpha = FALSE)) +
@@ -222,10 +162,10 @@ plot_SCMR_comparison_all <- ggplot(df_SCMR_comparison_all, aes(x = reg_coef_scal
         legend.background = element_rect(fill = "grey95", color = NA), 
         legend.title = element_text(face = "bold", hjust = .5))
 
-ggsave(file = paste0(results_folder, "05a_SCMR_comparison_all", extension), plot_SCMR_comparison_all, width = 8, height = 6)
+ggsave(file = paste0(results_folder, "06_SCMR_comparison_all", extension), p_SCMR_comparison_all, width = 8, height = 6)
 
 # boxplot for comparing coefficients between models
-plot_boxplot <- ggplot(df_SCMR_comparison_all, aes(y = model, x = reg_coef_scaled)) +
+p_boxplot <- ggplot(df_SCMR_comparison_all, aes(y = model, x = reg_coef_scaled)) +
   geom_vline(xintercept = 0, color = "grey60", linetype = "solid") +
   geom_boxplot(fill = "grey95", outlier.colour = NA, show.legend = FALSE) +
   geom_jitter(aes(color = model, alpha = significant),
@@ -238,12 +178,72 @@ plot_boxplot <- ggplot(df_SCMR_comparison_all, aes(y = model, x = reg_coef_scale
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 
-plot_comparison_full <- plot_SCMR_comparison_all + plot_boxplot +
+p_comparison_full <- p_SCMR_comparison_all + p_boxplot +
   plot_layout(nrow = 2, height = c(4,1), axes = "collect") + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(file = paste0(results_folder, "05a_SCMR_comparison_full", extension), plot_comparison_full, width = 8, height = 8)
+ggsave(file = paste0(results_folder, "06_SCMR_comparison_full", extension), p_comparison_full, width = 8, height = 8)
+
+message("Plotting CpG location on SCMRs...")
+
+### CpG location for SCMRs
+## CpG position for all 
+p_SCMR_position_all <- ggplot(methyl_sites_combined_nor) +
+  geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.02, y = SCMR, color = species), linewidth = 2) +
+  labs(x = "CpG position (kb)", y = "Shared co-methylation region", color = "Species") +
+  scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
+  scale_color_manual(values = color_species)
+
+p_SCMR_position_all
+
+ggsave(filename = paste0(results_folder, "06_SCMR_position_all.pdf"), plot = p_SCMR_position_all, width = 10, height = 7)
+
+# distribution of CpG positions 
+p_SCMR_distribtution <- ggplot(methyl_sites_combined_nor) +
+  geom_jitter(aes(x = pos_nor_kb, y = species, alpha = selected), 
+    show.legend = FALSE, cex = 1, shape = 16) +
+  geom_violin(aes(x = pos_nor_kb, y = species, fill = species), 
+    alpha = .4, show.legend = FALSE, outliers = FALSE) +
+  labs(x = "CpG position (kb)", y = "Species") +
+  scale_fill_manual(values = color_species) +
+  scale_color_manual(values = color_species) +
+  scale_alpha_manual(values = c(1, .2))
+
+ggsave(filename = paste0(results_folder, "06_SCMR_distribution_all.pdf"), plot = p_SCMR_distribtution, width = 7, height = 4)
+
+## only significant
+# subsetting for significant SCMRs only
+methyl_sites_significant <- subset(methyl_sites_combined_nor, SCMR %in% df_SCMR_comparison$SCMR)
+ 
+
+p_SCMR_position_significant <- ggplot(methyl_sites_significant) +
+    geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.03, y = SCMR, color = species), linewidth = 5) +
+    labs(x = "CpG position (kb)", y = "Shared co-methylation region", color = "Species") +
+    scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
+    scale_color_manual(values = color_species)
+ 
+ggsave(filename = paste0(results_folder, "06_SCMR_position_significant.pdf"), plot = p_SCMR_position_significant, width = 6, height = 5)
+
+message("Plotting combined plots...")
+# combined
+p_SCMR_combined <- p_SCMR_comparison + p_SCMR_position_significant +
+  plot_layout(guides = "collect", axes = "collect") + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+ggsave(filename = paste0(results_folder, "06_SCMR_combined.pdf"), plot = p_SCMR_combined, width = 10, height = 6)
+
+## both all together
+
+p_SCMR_combined_all <- p_SCMR_comparison_all + p_SCMR_position_all +
+  plot_layout(guides = "collect", axes = "collect") + 
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 18, face = "bold"))
+
+ggsave(filename = paste0(results_folder, "06_SCMR_combined_all.pdf"), plot = p_SCMR_combined_all, width = 10, height = 6)
+
+
 
 message("SCMR comparison plots created and saved.")
-message("05a_model_creation.R completed successfully.")
+

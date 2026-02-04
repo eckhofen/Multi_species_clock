@@ -57,8 +57,20 @@ total_counts <- rbind(scmr_counts, selected_counts) %>%
   summarise(n = sum(n), .groups = "drop")
 
 # ggplot theme settings
-ggtheme <- theme_classic() +
-  theme(strip.background = element_rect(fill = "grey95", color = NA), strip.text = element_text(color = "black", face = "bold"))
+theme_custom <- theme_minimal() + 
+      theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(), 
+            panel.border = element_rect(color = "black", linewidth = 1),
+            plot.title = element_text(face = "bold", hjust = 0.5, size = 12), 
+            axis.ticks = element_line(color = "black"),
+            axis.ticks.length = unit(0.1, "cm"), 
+            axis.title = element_text(size = 10, color = "black"), 
+            axis.text = element_text(color = "black"), 
+            legend.ticks = element_blank(), 
+            strip.background = element_rect(fill = "grey95", color = NA), 
+            strip.text = element_text(color = "black", face = "bold"))
+
+theme_set(theme_custom)
 
 ## SCMR characteristics
 
@@ -67,26 +79,25 @@ p_scmr_counts <- ggplot(total_counts, aes(x = annot.type, y = n, fill = annot.ty
   geom_col(position = position_dodge2(preserve = "single", padding = 0.1), show.legend = FALSE) +
   geom_label(aes(label = n), hjust = .5, vjust = -.3, show.legend = FALSE, border.color = NA) +
   facet_grid(source ~ context, scales = "free", space = "free_x") +
-  ggtheme +
   scale_fill_manual(values = color_types) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
-  labs(y = "CpGs per species", x = "") +
-  theme(strip.text.x = element_blank(), strip.background.x = element_blank(), strip.background.y = element_rect(fill = "grey95", color = NA))
+  labs(y = "CpGs", x = "") + 
+  theme(strip.text.x = element_blank())
 
 ggsave(file = paste0(figures_folder, "07_scmr_counts.pdf"), plot = p_scmr_counts, width = 8, height = 6)
+ggsave(file = paste0(figures_folder, "07_scmr_counts.png"), plot = p_scmr_counts, width = 8, height = 6)
 
 # per species
 p_scmr_counts_species <- ggplot(scmr_counts, aes(x = annot.type, y = n, fill = annot.type, group = context)) +
   geom_col(position = position_dodge2(preserve = "single", padding = 0.1), show.legend = FALSE) +
   geom_label(aes(label = n), hjust = .5, vjust = -.3, show.legend = FALSE, color = "black", border.color = NA) +
   facet_grid(species ~ context, scales = "free", space = "free_x") +
-  ggtheme +
   scale_fill_manual(values = color_types) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
-  labs(y = "CpGs per species", x = "") +
-  theme(strip.text.x = element_blank(), strip.background.x = element_blank(), strip.background.y = element_rect(fill = "grey95", color = NA))
+  labs(y = "CpGs per species", x = "")
 
 ggsave(file = paste0(figures_folder, "07_scmr_counts_species.pdf"), plot = p_scmr_counts_species, width = 8, height = 6)
+ggsave(file = paste0(figures_folder, "07_scmr_counts_species.png"), plot = p_scmr_counts_species, width = 8, height = 6)
 
 
 # Pie chart
@@ -107,6 +118,7 @@ p_scmr_pie <- ggplot(total_counts, aes(x = 3, y = n, fill = annot.type)) +
         legend.key.size = unit(.5, "cm"))
 
 ggsave(file = paste0(figures_folder, "07_scmr_pie.pdf"), plot = p_scmr_pie, width = 8, height = 6)
+ggsave(file = paste0(figures_folder, "07_scmr_pie.png"), plot = p_scmr_pie, width = 8, height = 6)
 
 
 ## Selected CpGs
@@ -118,15 +130,12 @@ p_selected_counts_species <- ggplot(selected_counts) +
   geom_label(aes(x = annot.type, y = n, label = n, fill = annot.type, group = context),
              hjust = .5, vjust = -.3, show.legend = FALSE, border.color = NA) +
   facet_grid(species ~ context, scales = "free", space = "free_x") +
-  ggtheme +
   scale_fill_manual(values = color_types) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.25))) +
-  labs(y = "Selected CpGs for multispecies clock", x = "") +
-  theme(strip.text.x = element_blank(), 
-        strip.background.x = element_blank(), 
-        strip.background.y = element_rect(fill = "grey95", color = NA))
+  labs(y = "Selected CpGs for multispecies clock", x = "")
 
 ggsave(file = paste0(figures_folder, "07_selected_counts_species.pdf"), plot = p_selected_counts_species, width = 8, height = 6)
+ggsave(file = paste0(figures_folder, "07_selected_counts_species.png"), plot = p_selected_counts_species, width = 8, height = 6)
 
 # pie chart
 p_selected_pie <- ggplot(selected_counts, aes(x = 3, y = n, fill = annot.type)) +
@@ -146,3 +155,4 @@ p_selected_pie <- ggplot(selected_counts, aes(x = 3, y = n, fill = annot.type)) 
         legend.key.size = unit(.5, "cm"))
 
 ggsave(file = paste0(figures_folder, "07_selected_pie.pdf"), plot = p_selected_pie, width = 8, height = 4)
+ggsave(file = paste0(figures_folder, "07_selected_pie.png"), plot = p_selected_pie, width = 8, height = 4)

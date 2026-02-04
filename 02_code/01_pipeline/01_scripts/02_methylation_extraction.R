@@ -307,7 +307,7 @@ save(AC_methyl_sites, AS_methyl_sites, EH_methyl_sites, ZF_methyl_sites, file = 
 message("methylation sites saved")
 
 ### saving age metadata
-save(AC_age, AS_age, EH_age, EH_sex, ZF_age, meth_sites_names_tmp_AC, file = paste0(save_folder, "HS_all_age.Rdata"))
+save(AC_age, AS_age, EH_age, ZF_age, file = paste0(save_folder, "HS_all_age.Rdata"))
 
 message("age metadata saved")
 
