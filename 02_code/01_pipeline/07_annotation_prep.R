@@ -1,6 +1,6 @@
 # Metadata ----------------------------------------------------------------
-# Project: Piscine Multispecies Epigenetic Clock
-# Description: SCMR gene analysis data preparation
+# Project: Shared methylation regions
+# Description: SMR gene analysis data preparation
 # Author: Gabriel Ecker-Eckhofen
 # eckhofen@icm.csic.es
 # Date: 2025 06
@@ -14,32 +14,49 @@ library(annotatr)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 
 #### Loading data ####
-load("01_data/03_intermediate/08_annotation/annotation.RData")
-load("01_data/03_intermediate/08_annotation/SCMRs_and_CpGs.RData")
+load("01_data/03_intermediate/05_correlation_data/cor_all.RData")
+
+#### Preparing data ####
+# select CpGs
+cpgs_SMR <- GRanges(seqnames = cor_all$chr_align, 
+                     ranges = IRanges(cor_all$pos_align, cor_all$pos_align, 1))
+
+mcols(cpgs_SMR) <- cor_all
+
+cpgs_selected <- cpgs_SMR[cpgs_SMR$selected == TRUE,]
+
+# changing chromosome style to NCBI
+chrom_info_human <- getChromInfoFromNCBI("GRCh38")
+rename_vector <- chrom_info_human$UCSCStyleName
+names(rename_vector) <- chrom_info_human$RefSeqAccn
+
+# rename chromosomes
+cpgs_selected <- renameSeqlevels(cpgs_selected, rename_vector)
+cpgs_SMR <- renameSeqlevels(cpgs_SMR, rename_vector)
 
 # importing & building annotations
 annots <- c("hg38_cpgs", "hg38_basicgenes", "hg38_lncrna_gencode")
 annotations <- build_annotations(genome = "hg38", annotations = annots)
 
 # setting chromosome style to UCSC to match with annotations
-seqlevelsStyle(cpgs_scmr) <- "UCSC"
+seqlevelsStyle(cpgs_SMR) <- "UCSC"
 seqlevelsStyle(cpgs_selected) <- "UCSC"
 
-# removing non-standard chromosomes
-cpgs_scmr <- keepStandardChromosomes(cpgs_scmr, species = "Homo_sapiens", pruning.mode = "coarse")
-cpgs_selected <- keepStandardChromosomes(cpgs_selected, species = "Homo_sapiens", pruning.mode = "coarse")
-
 # annotate CpGs
-cpgs_scmr_annotated <- annotate_regions(cpgs_scmr, annotations, ignore.strand = TRUE)
+cpgs_SMR_annotated <- annotate_regions(cpgs_SMR, annotations, ignore.strand = TRUE)
 cpgs_selected_annotated <- annotate_regions(cpgs_selected, annotations, ignore.strand = TRUE)
 
+# save
+save(cpgs_SMR_annotated, file = "01_data/03_intermediate/08_annotation/SMR_annotated.RData")
+save(cpgs_selected_annotated, file = "01_data/03_intermediate/08_annotation/Selected_annotated.RData")
+
 # check annotations
-summarize_annotations(cpgs_scmr_annotated)
+summarize_annotations(cpgs_SMR_annotated)
 summarize_annotations(cpgs_selected_annotated)
 
 # get annot. types
-annot_types <- unique(cpgs_scmr_annotated$annot.type)
-annot_names <- unique(cpgs_scmr_annotated$annot.name)
+annot_types <- unique(cpgs_SMR_annotated$annot.type)
+annot_names <- unique(cpgs_SMR_annotated$annot.name)
 
 # helper function to get counts per species
 get_counts <- function(cpgs_annotated) {
@@ -79,11 +96,11 @@ get_counts <- function(cpgs_annotated) {
 }
 
 # select per species
-scmr_counts <- get_counts(cpgs_scmr_annotated)
+SMR_counts <- get_counts(cpgs_SMR_annotated)
 selected_counts <- get_counts(cpgs_selected_annotated)
 
 # save
-save(scmr_counts, file = "01_data/03_intermediate/08_annotation/SCMR_counts.RData")
+save(SMR_counts, file = "01_data/03_intermediate/08_annotation/SMR_counts.RData")
 save(selected_counts, file = "01_data/03_intermediate/08_annotation/Selected_counts.RData")
 
 # get affected genes and lncRNAs helper function
@@ -93,7 +110,7 @@ get_genes <- function(annotated_regions) {
 
     # get genes
     genes <- df %>%
-      dplyr::select(species, annot.gene_id, annot.symbol, SCMR, seq_number, annot.type) %>%
+      dplyr::select(Site, species, annot.gene_id, annot.symbol, SMR, seq_number, annot.type) %>%
       mutate(type = ifelse(grepl("gene", annot.type), "gene", "lncrna")) %>%
       dplyr::select(-annot.type) %>%
       distinct() %>%
@@ -103,13 +120,23 @@ get_genes <- function(annotated_regions) {
 }
 
 # get genes
-genes_scmr <- get_genes(cpgs_scmr_annotated)
+genes_SMR <- get_genes(cpgs_SMR_annotated)
 genes_selected <- get_genes(cpgs_selected_annotated)
 
 # save genes
-save(genes_scmr, file = "01_data/03_intermediate/08_annotation/SCMR_genes.RData")
+save(genes_SMR, file = "01_data/03_intermediate/08_annotation/SMR_genes.RData")
 save(genes_selected, file = "01_data/03_intermediate/08_annotation/Selected_genes.RData")
 
-write.csv(genes_scmr, file = "01_data/03_intermediate/08_annotation/gene_list_scmr.csv")
-write.csv(genes_selected, file = "01_data/03_intermediate/08_annotation/gene_list_selected.csv")
+cpgs_meta_data <- cor_all %>% dplyr::select(Site, Correlation, P_value)
+
+gene_list_SMR <- genes_SMR %>% 
+  left_join(cpgs_meta_data, by = "Site") %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+gene_list_selected <- genes_selected %>% 
+  left_join(cpgs_meta_data, by = "Site") %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+write.csv(gene_list_SMR, file = "03_results/02_tables/gene_list_SMR.csv")
+write.csv(gene_list_selected, file = "03_results/02_tables/gene_list_selected.csv")
 

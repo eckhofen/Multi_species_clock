@@ -1,6 +1,6 @@
 # Metadata ----------------------------------------------------------------
-# Project: Piscine Multispecies Epigenetic Clock
-# Description: Epigenetic model creation and testing
+# Project: Shared methylation regions
+# Description: Epigenetic model creation
 # Author: Gabriel Ecker-Eckhofen
 # eckhofen@icm.csic.es
 # Date: 2026-02
@@ -11,22 +11,11 @@ intermediate_folder <- "01_data/03_intermediate/06_model_creation/"
 dir.create(intermediate_folder, recursive = TRUE, showWarnings = FALSE)
 results_folder <- "03_results/01_figures/"
 
-extension <- ".png"
 # color palette
 load(paste0(data_folder, "04_metadata/color_palettes.RData"))
 
-# plot settings
-theme_custom <- theme_minimal() + 
-      theme(panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(), 
-            panel.background = element_rect(color = "black", linewidth = 1),
-            plot.title = element_text(face = "bold", hjust = 0.5, size = 12), 
-            axis.ticks = element_line(color = "black"),
-            axis.ticks.length = unit(0.1, "cm"), 
-            axis.title = element_text(size = 10), 
-            legend.ticks = element_blank())
-
-theme_set(theme_custom)
+# plot style
+source("02_code/02_helpers/plot_style.R")
 
 #### Preparation ####
 library(tidyverse)
@@ -65,6 +54,9 @@ metadata_test <- meth_test %>% select(age, rel_age, species)
 
 data_train <- meth_train %>% select(-age, -rel_age, -species)
 data_test <- meth_test %>% select(-age, -rel_age, -species)
+
+# comparing data sets with Kolmogorov-Smirnov test
+ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.053502, p-value = 0.9977
 
 # saving
 save(file = paste0(intermediate_folder, "all_data.Rdata"), data_train, data_test, metadata_train, metadata_test)
@@ -124,7 +116,7 @@ df_mlm_age_sign_coef <- data.frame(
   reg_coef = mlm_age_sign_coef[, 1],
   reg_coef_scaled = ifelse(is.na(max_abs_age_sign) || max_abs_age_sign == 0, NA_real_, mlm_age_sign_coef[, 1] / max_abs_age_sign),
   p_value = mlm_age_sign_coef[, 2],
-  SCMR = gsub("^SCMR_", "SCMR_", rownames(mlm_age_sign_coef))
+  SMR = gsub("^SMR_", "SMR_", rownames(mlm_age_sign_coef))
 )
 
 df_mlm_age_all <- data.frame(
@@ -132,7 +124,7 @@ df_mlm_age_all <- data.frame(
   reg_coef = mlm_age_coef[, 1],
   reg_coef_scaled = mlm_age_coef[, 1] / max_abs_age_all,
   p_value = mlm_age_coef[, 4],
-  SCMR = gsub("^SCMR_", "SCMR_", rownames(mlm_age_coef))
+  SMR = gsub("^SMR_", "SMR_", rownames(mlm_age_coef))
 )
 
 # Extract coefficients for relative age model
@@ -147,7 +139,7 @@ df_mlm_rel_age_sign_coef <- data.frame(
   reg_coef = mlm_rel_age_sign_coef[, 1],
   reg_coef_scaled = mlm_rel_age_sign_coef[, 1] / max_abs_rel_age_sign,
   p_value = mlm_rel_age_sign_coef[, 2],
-  SCMR = gsub("^SCMR_", "SCMR_", rownames(mlm_rel_age_sign_coef))
+  SMR = gsub("^SMR_", "SMR_", rownames(mlm_rel_age_sign_coef))
 )
 
 df_mlm_rel_age_all <- data.frame(
@@ -155,12 +147,12 @@ df_mlm_rel_age_all <- data.frame(
   reg_coef = mlm_rel_coef[, 1],
   reg_coef_scaled = mlm_rel_coef[, 1] / max_abs_rel_age_all,
   p_value = mlm_rel_coef[, 4],
-  SCMR = gsub("^SCMR_", "SCMR_", rownames(mlm_rel_coef))
+  SMR = gsub("^SMR_", "SMR_", rownames(mlm_rel_coef))
 )
 
-# Combine significant SCMRs
-df_SCMR_comparison <- rbind(df_mlm_age_sign_coef, df_mlm_rel_age_sign_coef)
-df_SCMR_comparison <- df_SCMR_comparison %>%
+# Combine significant SMRs
+df_SMR_comparison <- rbind(df_mlm_age_sign_coef, df_mlm_rel_age_sign_coef)
+df_SMR_comparison <- df_SMR_comparison %>%
   mutate(significance = case_when(
     p_value < 0.001 ~ "***",
     p_value < 0.01 ~ "**",
@@ -170,9 +162,9 @@ df_SCMR_comparison <- df_SCMR_comparison %>%
   ), 
         significant = ifelse(p_value < .05, TRUE, FALSE))
 
-# Combine all SCMRs
-df_SCMR_comparison_all <- rbind(df_mlm_age_all, df_mlm_rel_age_all)
-df_SCMR_comparison_all <- df_SCMR_comparison_all %>%
+# Combine all SMRs
+df_SMR_comparison_all <- rbind(df_mlm_age_all, df_mlm_rel_age_all)
+df_SMR_comparison_all <- df_SMR_comparison_all %>%
   mutate(significance = case_when(
     p_value < 0.001 ~ "***",
     p_value < 0.01 ~ "**",
@@ -183,38 +175,38 @@ df_SCMR_comparison_all <- df_SCMR_comparison_all %>%
         significant = ifelse(p_value < .05, TRUE, FALSE))
 
 # Save key parameters
-save(file = paste0(intermediate_folder, "df_SCMR_comparison.Rdata"), df_SCMR_comparison)
-save(file = paste0(intermediate_folder, "df_SCMR_comparison_all.Rdata"), df_SCMR_comparison_all)
+save(file = paste0(intermediate_folder, "df_SMR_comparison.Rdata"), df_SMR_comparison)
+save(file = paste0(intermediate_folder, "df_SMR_comparison_all.Rdata"), df_SMR_comparison_all)
 
 message("Key parameters extracted and saved.")
 
-#### SCMR Comparison Plots ####
-message("Creating SCMR comparison plots...")
+#### SMR Comparison Plots ####
+message("Creating SMR comparison plots...")
 
 # Check for color_compare palette, create default if not available
 if (!exists("color_compare")) {
   color_compare <- c("#005AB5", "#DC3220")
 }
 
-### SCMR comparison plots
-## Only significant SCMRs
-plot_SCMR_comparison <- ggplot(df_SCMR_comparison, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
+### SMR comparison plots
+## Only significant SMRs
+plot_SMR_comparison <- ggplot(df_SMR_comparison, aes(x = reg_coef_scaled, y = SMR, fill = model)) +
   geom_vline(xintercept = 0, color = "grey60", linetype = "solid") +
   geom_point(aes(color = model, alpha = significant), position = position_dodge(width = 0.9)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model, alpha = significant), position = position_dodge(width = 0.9)) +
-  labs(x = "Normalized regression coefficient", y = "Shared co-methylation region", fill = "Model", color = "Model") +
+  labs(x = "Normalized regression coefficient", y = "Shared methylation region", fill = "Model", color = "Model") +
   geom_text(aes(label = significance, x = reg_coef_scaled * 1.15, color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.8) +
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare)
 
-ggsave(file = paste0(results_folder, "05a_SCMR_comparison_significant", extension), plot_SCMR_comparison, width = 5, height = 5)
+ggsave(file = paste0(results_folder, "05a_SMR_comparison_significant", extension), plot_SMR_comparison, width = 5, height = 5)
 
-## All SCMRs
-plot_SCMR_comparison_all <- ggplot(df_SCMR_comparison_all, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
+## All SMRs
+plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled, y = SMR, fill = model)) +
   geom_vline(xintercept = 0, color = "grey60", linetype = "solid") +
   geom_point(aes(color = model, alpha = significant), position = position_dodge(width = 0.9), show.legend = c(alpha = FALSE)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model, alpha = significant), position = position_dodge(width = 0.9), show.legend = c(alpha = FALSE)) +
-  labs(x = "Normalized regression coefficient", y = "Shared co-methylation region", fill = "Model", color = "Model") +
+  labs(x = "Normalized regression coefficient", y = "Shared methylation region", fill = "Model", color = "Model") +
   geom_text(aes(label = significance, x = reg_coef_scaled * 1.1, color = model), show.legend = FALSE, position = position_dodge(0.9), vjust = 0.75) +
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare) +
@@ -222,10 +214,10 @@ plot_SCMR_comparison_all <- ggplot(df_SCMR_comparison_all, aes(x = reg_coef_scal
         legend.background = element_rect(fill = "grey95", color = NA), 
         legend.title = element_text(face = "bold", hjust = .5))
 
-ggsave(file = paste0(results_folder, "05a_SCMR_comparison_all", extension), plot_SCMR_comparison_all, width = 8, height = 6)
+ggsave(file = paste0(results_folder, "05a_SMR_comparison_all", extension), plot_SMR_comparison_all, width = 8, height = 6)
 
 # boxplot for comparing coefficients between models
-plot_boxplot <- ggplot(df_SCMR_comparison_all, aes(y = model, x = reg_coef_scaled)) +
+plot_boxplot <- ggplot(df_SMR_comparison_all, aes(y = model, x = reg_coef_scaled)) +
   geom_vline(xintercept = 0, color = "grey60", linetype = "solid") +
   geom_boxplot(fill = "grey95", outlier.colour = NA, show.legend = FALSE) +
   geom_jitter(aes(color = model, alpha = significant),
@@ -238,12 +230,12 @@ plot_boxplot <- ggplot(df_SCMR_comparison_all, aes(y = model, x = reg_coef_scale
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 
-plot_comparison_full <- plot_SCMR_comparison_all + plot_boxplot +
+plot_comparison_full <- plot_SMR_comparison_all + plot_boxplot +
   plot_layout(nrow = 2, height = c(4,1), axes = "collect") + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(file = paste0(results_folder, "05a_SCMR_comparison_full", extension), plot_comparison_full, width = 8, height = 8)
+ggsave(file = paste0(results_folder, "05a_SMR_comparison_full", extension), plot_comparison_full, width = 8, height = 8)
 
-message("SCMR comparison plots created and saved.")
+message("SMR comparison plots created and saved.")
 message("05a_model_creation.R completed successfully.")

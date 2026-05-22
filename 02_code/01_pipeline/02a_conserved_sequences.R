@@ -1,36 +1,33 @@
-# Author: Gabriel Ecker-Eckhofen (gabriel.eckhofen@imbrsea.eu)
-# Date: June 2024
-
-# DISCLAIMER:
-# by this time and date the sequencing data is not available yet. For all the results in the paper start from script 004_...R
-
-#### Overview ####
-# Conserved sequences will be extracted from the aligned sequences
+# Metadata ----------------------------------------------------------------
+# Project: Shared Methylation Regions
+# Description: Extracting conserved sequences from aligned sequences
+# Author: Gabriel Ecker-Eckhofen
+# eckhofen@icm.csic.es
+# Date: 2026-05
 
 #### Settings ####
-save_folder <- "01_data/02_external_server_outputs/02_conserved_seq/" # folder where extracted sequences will be saved
+save_folder <- "01_data/02_external_server_outputs/02_conserved_seq/"
 dir.create(save_folder, recursive = TRUE, showWarnings = FALSE)
 suffix <- ".fasta"
 
 #### Preparation ####
 # loading libraries
-library(GenomicRanges) # https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html
+library(GenomicRanges)
 library(GenomicAlignments)
-library(Biostrings) # https://bioconductor.org/packages/release/bioc/html/Biostrings.html
-library(dplyr)
-library(tidyr)
+library(Biostrings)
+library(tidyverse)
+library(ggVennDiagram)
 library(Rsamtools)
-library(ggplot2)
 
 #### Loading data ####
-# working directory
-setwd("/powerplant/workspace/cfngle")
+# loading color palettes
+load("01_data/04_metadata/color_palettes.RData")
 
 # loading bam files
-HS_AC_1000_bt2 <- readGAlignments("results-data/bowtie2/human_AC_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
-HS_AS_1000_bt2 <- readGAlignments("results-data/bowtie2/human_AS_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
-HS_EH_1000_bt2 <- readGAlignments("results-data/bowtie2/human_EH_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
-HS_ZF_1000_bt2 <- readGAlignments("results-data/bowtie2/human_ZF_757883_CpG_1000bp_bt2.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
+HS_AC_1000_bt2 <- readGAlignments("01_data/02_external_server_outputs/02_conserved_seq/HS_AC_CpG_1000bp.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
+HS_AS_1000_bt2 <- readGAlignments("01_data/02_external_server_outputs/02_conserved_seq/HS_AS_CpG_1000bp.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
+HS_EH_1000_bt2 <- readGAlignments("01_data/02_external_server_outputs/02_conserved_seq/HS_EH_CpG_1000bp.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
+HS_ZF_1000_bt2 <- readGAlignments("01_data/02_external_server_outputs/02_conserved_seq/HS_ZF_CpG_1000bp.bam", use.names = TRUE, param = ScanBamParam(what = c("mapq")))
 
 # adding metadata
 AC_metadata <- read.csv("01_data/02_external_server_outputs/01_sequences/AC_metadata_1000bp.csv")
@@ -82,17 +79,12 @@ HS_seqs <- list(HS_AC_1000_bt2, HS_AS_1000_bt2, HS_EH_1000_bt2, HS_ZF_1000_bt2)
 # getting overlaps
 HS_overlap_seqs <- find.Overlap(HS_seqs[[1]],HS_seqs[[2]],HS_seqs[[3]],HS_seqs[[4]])
 
-# ## optional
-# HS_overlap_seqs <- find.Overlap(HS_seqs[[1]],HS_seqs[[3]],HS_seqs[[5]]) # testing
-# 
-# # checking how many seqs in overlaps
-# unlist(lapply(HS_overlap_seqs, function(x) length(x)))
-# 
-# # check how many SMRs
-# HS_gr_overlap_seqs <- lapply(HS_overlap_seqs, function(x) granges(x))
-# HS_group_gr_overlap <- do.call(c, HS_gr_overlap_seqs)
-# length(GenomicRanges::reduce(HS_group_gr_overlap))
+## optional
+# check how many SMRs
+HS_gr_overlap_seqs <- lapply(HS_overlap_seqs, function(x) granges(x))
+HS_group_gr_overlap <- do.call(c, HS_gr_overlap_seqs)
+length(GenomicRanges::reduce(HS_group_gr_overlap))
 
 # saving overlaps 
-save_path <- paste0(save_folder, "HS_AC_AS_EH_ZF_overlaps.Rdata")
+save_path <- paste0(save_folder, "HS_AC_AS_EH_ZF_overlaps_bt2.Rdata")
 save(HS_overlap_seqs, file = save_path)

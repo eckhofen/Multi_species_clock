@@ -1,6 +1,5 @@
-
 # Metadata ----------------------------------------------------------------
-# Project: Piscine Multispecies Epigenetic Clock
+# Project: Shared methylation regions
 # Description: Overview of data
 # Author: Gabriel Ecker-Eckhofen
 # eckhofen@icm.csic.es
@@ -23,30 +22,17 @@ load(paste0(data_folder, "04_metadata/color_palettes.RData"))
 # Loading metadata
 load(paste0(data_folder, "04_metadata/metadata.RData"))
 
+# plot style
+source("02_code/02_helpers/plot_style.R")
 
-# Analysis ----------------------------------------------------------------
-## General analysis  ------------------------------------------------------
+#### Analysis #### 
 
 # Counts per species 
 n_per_species <- meta_data %>% 
   group_by(species, common_name) %>% 
   summarise(n = n())
 
-## Plots ------------------------------------------------------------------
-### Plot settings -----------------------------------------------------------
-# Custom theme settings
-theme_custom <- function() {
-  theme(panel.background = element_blank(), 
-        plot.title = element_text(size = 18, face = "bold", hjust = .5), 
-        axis.title = element_text(size = 12),
-        panel.grid = element_blank(), 
-        axis.line = element_line(),
-        legend.title = element_text(size = 10, face = "bold"),
-        legend.text = element_text(size = 10), 
-        axis.text = element_text(size = 10), 
-        axis.text.x = element_text(face = "bold", color = "black"))
-}
-
+#### Plots ####
 # Settings for overview plot
 plot_overview <- function(p) {
   # Getting y position for number of species
@@ -98,7 +84,7 @@ fig_overview_age <- meta_data %>%
   labs(y = "Age (years)", title = "Sample age distribution")
 
 # Saving plot
-ggsave(filename = paste0(results_folder, "01_fig_overview_age.PDF"), plot = fig_overview_age, width = 7, height = 7)
+save_plot(filename = paste0(results_folder, "00_fig_overview_age"), plot = fig_overview_age, width = 7, height = 7)
 
 # Overview for relative age
 fig_overview_age_rel <- meta_data %>% 
@@ -108,7 +94,7 @@ fig_overview_age_rel <- meta_data %>%
   labs(y = "Age (relative to max. lifespan)", title = "Sample age (relative) distribution")
 
 # Saving plot
-ggsave(filename = paste0(results_folder, "01_fig_overview_age_rel.PDF"), plot = fig_overview_age_rel, width = 7, height = 7)
+save_plot(filename = paste0(results_folder, "00_fig_overview_age_rel"), plot = fig_overview_age_rel, width = 7, height = 7)
 
 ### Combining plots ---------------------------------------------------------
 # Combined overview figure
@@ -119,5 +105,5 @@ fig_overview_combined <-
   theme(plot.tag = element_text(size = 18, face = "bold"), legend.position = "right", plot.title = element_blank())
 
 # Saving plot
-ggsave(filename = paste0(results_folder, "01_fig_overview_combined.PDF"), plot = fig_overview_combined, width = 9, height = 4)
-ggsave(filename = paste0(results_folder, "01_fig_overview_combined.png"), plot = fig_overview_combined, width = 9, height = 4)
+save_plot(filename = paste0(results_folder, "00_fig_overview_combined"), plot = fig_overview_combined, width = 9, height = 4)
+

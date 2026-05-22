@@ -1,6 +1,5 @@
-
 # Metadata ----------------------------------------------------------------
-# Project: Piscine Multispecies Epigenetic Clock
+# Project: Shared methylation regions
 # Description: Part one of preparing data and general settings
 # Author: Gabriel Ecker-Eckhofen
 # eckhofen@icm.csic.es
@@ -14,16 +13,17 @@
 age_max_AC <- 25
 age_max_AS <- 54
 age_max_EH <- 20
-age_max_ZF <- 5.5
+age_max_ZF <- 5
 
-# Settings ----------------------------------------------------------------
+#### Settings ####
 library(tidyverse)
+library(RColorBrewer)
 
-# Colors -------------------------------------------------------------
+# Colors 
 # This section defines color palettes for the entire work
-# Colors were generated using iwanthue online
 
 # Colors for each species. 
+# Colors were generated using iwanthue online
 color_species <- c("AC" = "#332288",
                    "AS" = "#DDCC77", 
                    "EH" = "#44AA99",
@@ -49,10 +49,21 @@ color_sex <- c("Females" = "#FFDA66",
                "Males" = "#8ACE7E", 
                "Unknown" = "grey")
 
-# Saving palettes 
-save(color_compare, color_species, color_species_common, color_species_sci, color_sex, file = "01_data/04_metadata/color_palettes.RData")
+# color palette for annotation contexts
+color_contexts <- c("gene" = "#1f77b4", "lncrna" = "#ff7f0e", "cpg" = "#2ca02c", "other" = "#d62728")
 
-# Loading data ------------------------------------------------------------
+# color palette for annotation type
+type_names <- c("islands", "shores", "shelves", "open sea", "1to5kb", "promoters", "5UTRs", "exons", "introns", "3UTRs", "lncrna")
+type_names <- factor(type_names, levels = c("islands", "shores", "shelves", "open sea", "1to5kb", "promoters", "5UTRs", "exons", "introns", "3UTRs", "lncrna", "other"))
+type_colors <- c('#d94701','#fd8d3c', '#fdbe85','#feedde', 
+                 "#005A32", "#238B45", "#41AB5D", "#74C476", "#A1D99B", "#C7E9C0", 
+                 "#756bb1")
+color_types <- setNames(type_colors, type_names)
+
+# Saving palettes 
+save(color_compare, color_species, color_species_common, color_species_sci, color_sex, color_contexts, color_types, file = "01_data/04_metadata/color_palettes.RData")
+
+# Loading data
 
 # Loading prepared metadata for every species
 # Atlantic cod (AC) - Gadus morhua
@@ -67,7 +78,7 @@ EH <- read_csv("01_data/04_metadata/EH_age.csv")
 # Zebrafish (ZF) - Danio rerio
 ZF <- read_csv("01_data/04_metadata/ZF_age.csv")
 
-# Data pre-processing ---------------------------------------------------------
+# Data pre-processing
 
 # Creating one tibble with all species
 meta_data <- rbind(AC, AS, EH, ZF) %>% 

@@ -1,5 +1,9 @@
-#### Overview ####
-# Data comparison
+# Metadata ----------------------------------------------------------------
+# Project: Shared methylation regions
+# Description: Data comparisons and combined plots
+# Author: Gabriel Ecker-Eckhofen
+# eckhofen@icm.csic.es
+# Date: 2026 05
 
 #### Settings ####
 
@@ -17,12 +21,13 @@ library(ggplot2)
 library(patchwork)
 
 #### load data ####
-
 load("01_data/03_intermediate/07_data_comparison/mlm_age_summary.Rdata")
 load("01_data/03_intermediate/07_data_comparison/mlm_rel_age_summary.Rdata")
 load("01_data/03_intermediate/07_data_comparison/methyl_sites_combined_nor.Rdata")
 load("01_data/03_intermediate/05_correlation_data/all_mix_cor_CpG_common.RData")
 
+# plot helper
+source("02_code/02_helpers/plot_style.R")
 
 #### data manipulation ####
 # define significance threshold
@@ -43,14 +48,14 @@ df_mlm_age_sign_coef <- data.frame(
   reg_coef = mlm_age_sign_coef[, 1],
   reg_coef_scaled = ifelse(is.na(max_abs_age_sign) || max_abs_age_sign == 0, NA_real_, mlm_age_sign_coef[, 1] / max_abs_age_sign),
   p_value = mlm_age_sign_coef[, 2],
-  SCMR = gsub("^SMR_", "SCMR_", rownames(mlm_age_sign_coef))
+  SMR = gsub("^SMR_", "SMR_", rownames(mlm_age_sign_coef))
 )
 df_mlm_rel_age_sign_coef <- data.frame(
   model = "Relative age",
   reg_coef = mlm_rel_age_sign_coef[, 1],
   reg_coef_scaled = ifelse(is.na(max_abs_rel_age_sign) || max_abs_rel_age_sign == 0, NA_real_, mlm_rel_age_sign_coef[, 1] / max_abs_rel_age_sign),
   p_value = mlm_rel_age_sign_coef[, 2],
-  SCMR = gsub("^SMR_", "SCMR_", rownames(mlm_rel_age_sign_coef))
+  SMR = gsub("^SMR_", "SMR_", rownames(mlm_rel_age_sign_coef))
 )
 
 # only significant
@@ -70,12 +75,12 @@ df_mlm_age <- data.frame(model = "Chronological age",
                          reg_coef = mlm_age_summary$coefficients[-1,1],
                          reg_coef_scaled = mlm_age_summary$coefficients[-1,1]/max(abs(mlm_age_summary$coefficients[-1,1])), 
                          p_value = mlm_age_summary$coefficients[-1,4], 
-                         SCMR = gsub("^SMR_", "SCMR_", rownames(mlm_age_summary$coefficients[-1,])))
+                         SMR = gsub("^SMR_", "SMR_", rownames(mlm_age_summary$coefficients[-1,])))
 df_mlm_rel_age <- data.frame(model = "Relative age", 
                              reg_coef = mlm_rel_age_summary$coefficients[-1,1],
                              reg_coef_scaled = mlm_rel_age_summary$coefficients[-1,1]/max(abs(mlm_rel_age_summary$coefficients[-1,1])), 
                              p_value = mlm_rel_age_summary$coefficients[-1,4], 
-                             SCMR = gsub("^SMR_", "SCMR_", rownames(mlm_rel_age_summary$coefficients[-1,])))
+                             SMR = gsub("^SMR_", "SMR_", rownames(mlm_rel_age_summary$coefficients[-1,])))
 
 # only significant
 df_SMR_comparison_all <- rbind(df_mlm_age, df_mlm_rel_age)
@@ -106,7 +111,7 @@ theme_set(theme_custom)
 
 ### SMR comparison
 ## only significant
-plot_SMR_comparison <- ggplot(df_SMR_comparison, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
+plot_SMR_comparison <- ggplot(df_SMR_comparison, aes(x = reg_coef_scaled, y = SMR, fill = model)) +
   geom_point(aes(color = model), position = position_dodge(width = 0.9)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model), position = position_dodge(width = 0.9)) +
   labs(x = "Normalized regression coefficient", y = "Shared methylation region", fill = "Model", color = "Model") +
@@ -115,10 +120,10 @@ plot_SMR_comparison <- ggplot(df_SMR_comparison, aes(x = reg_coef_scaled, y = SC
   scale_color_manual(values = color_compare) 
 plot_SMR_comparison
 
-ggsave(file = paste0(results_folder, "06_SCMR_comparison",extension), plot_SMR_comparison, width = 5, height = 5)
+save_plot(file = paste0(results_folder, "06_SMR_comparison",extension), plot_SMR_comparison, width = 5, height = 5)
 
 ## all
-plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled, y = SCMR, fill = model)) +
+plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled, y = SMR, fill = model)) +
   geom_point(aes(color = model), position = position_dodge(width = 0.9)) +
   geom_linerange(aes(xmin = 0, xmax = reg_coef_scaled, color = model), position = position_dodge(width = 0.9)) +
   labs(x = "Normalized regression coefficient", y = "Shared methylation region", fill = "Model", color = "Model") +
@@ -127,61 +132,61 @@ plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled
   scale_color_manual(values = color_compare)
 plot_SMR_comparison_all
 
-ggsave(file = paste0(results_folder, "06_SCMR_comparison_all",extension), plot_SMR_comparison_all, width = 10, height = 7)
+save_plot(file = paste0(results_folder, "06_SMR_comparison_all",extension), plot_SMR_comparison_all, width = 10, height = 7)
 
 ### CpG location for SMRs
 ## CpG position for all 
 plot_SMR_position_all <- ggplot(methyl_sites_combined_nor) +
-  geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.02, y = SCMR, color = species), linewidth = 2) +
+  geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.02, y = SMR, color = species), linewidth = 2) +
   labs(x = "CpG position (kb)", y = "Shared methylation region", color = "Species") +
   scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
   scale_color_manual(values = color_species)
 
 plot_SMR_position_all
 
-ggsave(filename = paste0(results_folder, "06_SCMR_position_all.pdf"), plot = plot_SMR_position_all, width = 10, height = 7)
+save_plot(filename = paste0(results_folder, "06_SMR_position_all.pdf"), plot = plot_SMR_position_all, width = 10, height = 7)
 
 # distribution of CpG positions 
-plot_SCMR_distribtution <- ggplot(methyl_sites_combined_nor) +
-  geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.02, y = SCMR, color = species), linewidth = 2) +
+plot_SMR_distribtution <- ggplot(methyl_sites_combined_nor) +
+  geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.02, y = SMR, color = species), linewidth = 2) +
   labs(x = "CpG position (kb)", y = "Shared methylation region", color = "Species") +
   scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
   scale_color_manual(values = color_species)
 
 plot_SMR_position_all
 
-ggsave(filename = paste0(results_folder, "06_SCMR_position_all.pdf"), plot = plot_SMR_position_all, width = 10, height = 7)
+save_plot(filename = paste0(results_folder, "06_SMR_position_all.pdf"), plot = plot_SMR_position_all, width = 10, height = 7)
 
 ## only significant
 # subsetting for significant SMRs only
-methyl_sites_significant <- subset(methyl_sites_combined_nor, SCMR %in% df_SMR_comparison$SCMR)
+methyl_sites_significant <- subset(methyl_sites_combined_nor, SMR %in% df_SMR_comparison$SMR)
  
 if (nrow(methyl_sites_significant) > 0) {
   plot_SMR_position_significant <- ggplot(methyl_sites_significant) +
-    geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.03, y = SCMR, color = species), linewidth = 5) +
+    geom_segment(aes(x = pos_nor_kb, xend = pos_nor_kb+.03, y = SMR, color = species), linewidth = 5) +
     labs(x = "CpG position (kb)", y = "Shared co-methylation region", color = "Species") +
     scale_x_continuous(labels = scales::number_format(accuracy = 0.1)) +
     scale_color_manual(values = color_species)
  
-  ggsave(filename = paste0(results_folder, "06_SCMR_position_significant.pdf"), plot = plot_SMR_position_significant, width = 6, height = 5)
+  save_plot(filename = paste0(results_folder, "06_SMR_position_significant.pdf"), plot = plot_SMR_position_significant, width = 6, height = 5)
 } else {
   plot_SMR_position_significant <- patchwork::plot_spacer()
 }
 
-## both together
+## combined
 
 plot_SMR_combined <- plot_SMR_comparison + plot_SMR_position_significant +
   plot_layout(guides = "collect", axes = "collect") + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(filename = paste0(results_folder, "06_SCMR_combined.pdf"), plot = plot_SMR_combined, width = 10, height = 6)
+save_plot(filename = paste0(results_folder, "06_SMR_combined.pdf"), plot = plot_SMR_combined, width = 10, height = 6)
 
-## both all together
+## combined all together
 
 plot_SMR_combined_all <- plot_SMR_comparison_all + plot_SMR_position_all +
   plot_layout(guides = "collect", axes = "collect") + 
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(filename = paste0(results_folder, "06_SCMR_combined_all.pdf"), plot = plot_SMR_combined_all, width = 10, height = 6)
+save_plot(filename = paste0(results_folder, "06_SMR_combined_all.pdf"), plot = plot_SMR_combined_all, width = 10, height = 6)

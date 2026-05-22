@@ -1,59 +1,90 @@
 ---
-title: "Shared conserved methylation regions and multispecies piscine epigenetic clock"
+title: "A framework for comparative epigenomics using heterogeneous datasets validated in multispecies clocks"
 author: "Gabriel Ecker-Eckhofen"
-date: "June 2024"
+date: "May 2026"
 ---
 
+# Overview
+This repository comes along with the project: **A framework for comparative epigenomics using heterogeneous datasets validated in multispecies clocks**. 
 
-### Overview
-This repository has been made for a masters thesis project: **Shared Conserved Methylation Regions (SCMRs): a New Method in Comparative Epigenetics Used to Create a Multispecies Piscine Epigenetic Clock**, which has not been made publicly available yet. 
+# Introduction
+In this project we introduced a new workflow for identifying comparable methylation data across species. This workflow involves 1) expanding CpG methylation sites from methylation data to sequences (in our case 1kb long) using the species genome, 2) aligning these sequences onto a common reference genome for all species and 3) identifying overlapping aligned sequences which we named **shared methylation regions (SMRs)**.
 
+These SMRs now included CpG sites from all species which 4) we then used for age correlation testing. *Note, that this could be done with any variable you can test correlation for*. 5) SMRs were grouped into two classes. One class contained CpGs which were positively correlating with age and the other was containing negatively correlating ones. 6) Now, we selected only the highest correlating CpG for each species and CpG in every SMR group. This leaves one CpG (for each species) in each SMR. 7) If there was no agreement in correlation direction within an SMR (not all species had CpGs correlating in the same direction), the SMR was excluded. If there were SMRs with positively correlating and negatively correlating CpGs, only the negatively ones were retained. 
 
-### Introduction
-In this project we introduced a new workflow for identifying comparable methylation data across species. This workflow involves 1) expanding CpG methylation sites from methylation data to sequences (in our case 1kb long) using the species genome, 2) aligning these sequences onto a common reference genome for all species and 3) identifying overlapping aligned sequences which we named **shared conserved methylation regions (SCMRs)**.
+This finally allowed us to 8) use the retained SMRs as independent variables for creating a methylation-based age prediction model (also known as an "epigenetic clock"). 9) We tested various models such as multivariate linear regression and non-parametric random forest regression. We achieved notable accuracy in age prediction for four species using a single model ("multispecies epigegentic clock"), the results of which will be published in a paper separate from the thesis. 
 
-These SCMRs now included CpG sites from all species which 4) we then used for age correlation testing. *Note, that this could be done with any variable you can test correlation for*. 5) SCMRs were grouped into two classes. One class contained CpGs which were positively correlating with age and the other was containing negatively correlating ones. 6) Now, we selected only the highest correlating CpG for each species and CpG in every SCMR group. This leaves one CpG (for each species) in each SCMR. 7) If there was no agreement in correlation direction within an SCMR (not all species had CpGs correlating in the same direction), the SCMR was excluded. If there were SCMRs with positively correlating and negatively correlating CpGs, only the negatively ones were retained. 
+# Prerequisites
+This pipeline has been tested on **macOS 15.5**. Hardware requirements are minimal (8 GB RAM recommended), apart from the pre-processing and alignment which largely benefit from having sufficient RAM and storage space.
 
-This finally allowed us to 8) use the retained SCMRs as independent variables for creating a methylation-based age prediction model (also known as an "epigenetic clock"). 9) We tested various models such as multivariate linear regression and non-parametric random forest regression. We achieved notable accuracy in age prediction for four species using a single model ("multispecies epigegentic clock"), the results of which will be published in a paper separate from the thesis. 
+### Software requirements
 
+#### Command-line tools (pre-processing / alignment)
+Used by the scripts in `02_code/00_pre-processing/`:
 
-### Using this repo
-As of now, crucial data which has been used in this project is not published yet. It is to be expected that, during the course of this year, all data sets will be made publicly available in separate articles.
+- [trim_galore](https://github.com/FelixKrueger/TrimGalore) v0.4.1
+- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) (any recent version)
+- [MultiQC](https://multiqc.info/) v1.11
+- [Bismark](https://felixkrueger.github.io/Bismark/) v0.23.0
+- [Bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/) (used by Bismark for alignment / indexing)
+- `samtools` (used by Bismark internally)
+- A SLURM-style scheduler (`sbatch` + the local `abatch` wrapper) on the cluster — scripts can also be adapted to run locally.
 
-This repository is currently being refactored into a tidy structure:
+#### R (downstream analysis)
+Tested with R ≥ 4.3.
 
-- `01_data/`: raw/private inputs, external server outputs, intermediate (derived) files, metadata
-- `02_code/`: analysis code (pipeline scripts, helpers)
-- `03_results/`: figures/tables/logs
-- `04_docs/`: documentation
+CRAN packages:
 
-The pipeline includes a clear split between:
+```r
+install.packages(c(
+  "tidyverse", "tidymodels", "data.table", "reshape2",
+  "patchwork", "ggrepel", "ggtext", "ggnewscale", "ggpattern",
+  "ggforce", "ggfortify", "RColorBrewer",
+  "caret", "Hmisc", "vegan", "zoo"
+))
+```
 
-- **Server-only / external preprocessing inputs**: alignment outputs and sequence-level metadata produced outside this repo and copied into `01_data/02_external_server_outputs/`.
-- **Locally reproducible downstream analysis**: scripts that start from those external inputs and produce intermediate datasets in `01_data/03_intermediate/` and figures in `03_results/`.
+Bioconductor packages (install via `BiocManager::install(...)`):
 
-Server-only / external inputs expected by the downstream pipeline:
+```r
+if (!require("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+BiocManager::install(c(
+  "Biostrings", "GenomicRanges", "GenomicAlignments", "GenomicFeatures",
+  "GenomeInfoDb", "AnnotationHub", "annotatr",
+  "TxDb.Hsapiens.UCSC.hg38.knownGene",
+  "ggbio"
+))
+```
 
-- `01_data/02_external_server_outputs/01_sequences/*_metadata_*1000bp.csv`
-  - Produced by an external/server-only preprocessing workflow (not reproduced in this repo).
-- `01_data/02_external_server_outputs/02_conserved_seq/HS_AC_AS_EH_ZF_overlaps.Rdata`
-  - Consumed by `02_code/01_pipeline/01_scripts/03_methylation_extraction.R`.
+The hg38 genomic-context annotations used by `07_annotation_prep.R`
+(`hg38_cpgs`, `hg38_basicgenes`, `hg38_lncrna_gencode`) are pulled from
+AnnotationHub by `annotatr::build_annotations()` the first time the script
+is run and are cached locally afterwards — **no separate manual download
+is required** beyond the reference genomes and the GenAge file listed below.
 
-To reproduce results which have been shown in the master thesis, scripts can be looked at and (depending on data availability) run. The main pipeline scripts are numerated. 
+### Methylation pre-processing
+The RRBS / BisRADseq data has to be preprocessed according to the methodology described in the respective publication. If raw reads are not available, then proceed with `02_code/01_pipeline.R` scripts. The zebrafish RRBS preprocessing + Bismark alignment workflow lives in `02_code/00_pre-processing/ZF/` (scripts `01_…08_`); outputs are written to `01_data/00_pre-processing/ZF/`.
 
+### Reference genomes
+The reference genomes used in this project are available from the respective sources:
+- European hake: [fMerMel2.1_cnag1.scaffolds.fa](https://denovo.cnag.cat/filebrowser/download/1819)
+- Atlantic cod: [GCF_902167405.1_gadMor3.0_genomic.fasta](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_902167405.1/)
+- Australasian snapper: [Chrysophrys_auratus.v.1.0.all.male.map.fasta](https://doi.org/10.1111/mec.15051)
+- Zebrafish: [GCF_000002035.6_GRCz11_genomic.fasta](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000002035.6/)
+- Human: [GRCh38.fa](https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna/)
 
-### Documentation
-- `CODEBASE_OVERVIEW.md`: Script-by-script overview (data inputs/outputs, objects created, plots generated).
-- `code.md`: Inventory of key functions, objects, and stored datasets.
-- `SUGGESTIONS_AND_IMPROVEMENTS.md`: Suggested improvements and best-practice recommendations.
-- `REFACTORING_ROADMAP.md`: A phased roadmap for refactoring and maintainability.
-- `changes.md`: Changelog for repository changes.
+Place the per-species FASTAs into `01_data/01_raw_private/genomes/`.
 
+The human reference (`GRCh38.fa`) is the alignment *target* used by `01b_index_rgenome.sh` and `01c_align_to_rgenome.sh`; place the FASTA at `01_data/01_raw_private/GRCh38.fa` and the resulting bowtie2 index will be written to `01_data/01_raw_private/rgenome/` automatically.
 
-#### Disclaimer 
-- Sequencing data is not published yet and therefore, only scripts involved in the downstream processes can be used as of now.
-- This repository is under development and is therefore subject to changes.
+### Aging gene reference
+- GenAge human: [genage_human.csv](https://genomics.senescence.info/genes/human_genes.zip)
 
+# Running pipeline
 
+To run this pipeline make sure that all the [prerequisites](#prerequisites) are met. 
 
-For any questions, recommendations or remarks, reach out to me via eckhofen@icm.csic.es
+Based on the available data, follow the appropriate workflow:
+- If raw methylation reads are available, then follow the `02_code/00_pre-processing/` workflow. 
+- If methylation positions for each species are available, then proceed to `02_code/01_pipeline.R` and follow the scripts via indices starting with `00a_data_preparation.R`. 
+- If no data is available, then follow the `02_code/01_pipeline/04_correlation_testing.R` and continue chronologically from there.

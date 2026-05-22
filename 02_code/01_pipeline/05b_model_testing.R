@@ -1,5 +1,9 @@
-#### Overview ####
-# multivariate linear model (MLM) for chronological age
+# Metadata ----------------------------------------------------------------
+# Project: Shared methylation regions
+# Description: Epigenetic model testing
+# Author: Gabriel Ecker-Eckhofen
+# eckhofen@icm.csic.es
+# Date: 2026-02
 
 #### Settings ####
 data_folder <- "01_data/"
@@ -51,7 +55,7 @@ plot.prediction.results <- function(df, metrics, title, colpal, x_lim, y_lim, x_
     ) +
     annotate("richtext", 
              x = anno_x, y = anno_y, 
-             label = paste0("**R** = ", metrics$R, "<br>**MSE** = ", metrics$MSE, "<br>**MAE** = ", metrics$MAE), 
+             label = paste0("**R** = ", metrics$R, "<br>**MAE** = ", metrics$MAE), 
              size = 3.5, hjust = 0, vjust = 1, fill = NA, label.color = NA) 
 }
 
@@ -77,14 +81,14 @@ plot.error.comparison <- function(ae_train, ae_test, y_lim = c(0, 0.125), y_titl
 }
 
 evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_train,
-                           species_test, transform = FALSE, col = color_species, 
+                           species_test, transform = "none", col = color_species, 
                            plot_title = "Model evaluation:", 
-                           type = "relative", # New parameter: "relative" or "chronological"
+                           type = "relative",
                            y_lim = c(0,.3), x_lim = c(0,.3), 
                            ae_lim = c(0, 0.125), 
                            CpGs = "not defined", s = NA) {
   
-  # --- 1. Define Axis Titles based on type ---
+  # Define labs based on type
   if (type == "chronological") {
     mod_x_title <- "Chronological age (years)"
     mod_y_title <- "Estimated age (years)"
@@ -95,18 +99,30 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
     ae_y_title  <- "Absolute Error"
   }
   
-  # --- 2. Predictions ---
+  # transform actual values to original scale
+  if (transform == "log") {
+    Y_train <- exp(Y_train)
+    Y_test  <- exp(Y_test)
+  } else if (transform == "double_log" || transform == TRUE) {
+    Y_train <- exp(-exp(-Y_train))
+    Y_test  <- exp(-exp(-Y_test))
+  }
+  
   get_preds <- function(X) {
     p <- if (!is.na(s)) predict(model, X, s = s) else predict(model, X)
     p <- as.vector(p) 
-    if (transform) p <- exp(-exp(-p))
+    
+    if (transform == "log") {
+      p <- exp(p)
+    } else if (transform == "double_log" || transform == TRUE) {
+      p <- exp(-exp(-p))
+    }
     return(p)
   }
   
   preds_train <- get_preds(X_train)
   preds_test  <- get_preds(X_test)
   
-  # --- 3. Metrics ---
   metrics_train <- compute.metrics(Y_train, preds_train)
   metrics_test  <- compute.metrics(Y_test, preds_test)
   
@@ -115,11 +131,11 @@ evaluate.model <- function(model, X_train, Y_train, X_test, Y_test, species_trai
   
   metrics_ttest <- t.test(ae_train$AE, ae_test$AE)
   
-  # --- 4. Data Prep ---
+  # clean up
   df_train <- data.frame(age_predicted = preds_train, age = Y_train, species = species_train)
   df_test  <- data.frame(age_predicted = preds_test, age = Y_test, species = species_test)
   
-  # --- 5. Plotting ---
+  # Plot
   plot_train <- plot.prediction.results(
     df_train, metrics_train, paste(plot_title, "(Training)"), 
     col, x_lim, y_lim, 
@@ -159,7 +175,8 @@ theme_custom <- theme_minimal() +
             axis.ticks = element_line(color = "black"),
             axis.ticks.length = unit(0.1, "cm"), 
             axis.title = element_text(size = 10), 
-            legend.ticks = element_blank())
+            legend.ticks = element_blank(), 
+            legend.title = element_text(face = "bold"))
 
 theme_set(theme_custom)
 
@@ -169,13 +186,13 @@ message("Model evaluation...")
 mlm_chron_eval <- evaluate.model(
   mlm_chron, data_train, metadata_train$age, data_test, metadata_test$age, 
   metadata_train$species, metadata_test$species, 
-  col = color_species, plot_title = "MLM", 
+  col = color_species, plot_title = "Chronological Age", 
   y_lim = c(0, 12), x_lim = c(0, 12), ae_lim = c(0, 3.5), CpGs = "not defined", s = NA, type = "chronological")
 
 mlm_rel_eval <- evaluate.model(
   mlm_rel, data_train, metadata_train$rel_age, data_test, metadata_test$rel_age, 
   metadata_train$species, metadata_test$species, 
-  col = color_species, plot_title = "MLM", 
+  col = color_species, plot_title = "Relative Age", 
   y_lim = c(0, .3), x_lim = c(0, .3), ae_lim = c(0, .15), CpGs = "not defined", s = NA, type = "relative")
 
 # comparison plot
@@ -186,20 +203,23 @@ mlm_comparison_plot <- mlm_chron_eval$plot_train + mlm_chron_eval$plot_test + ml
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
 ggsave(mlm_comparison_plot, file = "03_results/01_figures/05_mlm_comparison.png", width = 10, height = 7)
+ggsave(mlm_comparison_plot, file = "03_results/01_figures/05_mlm_comparison.pdf", width = 10, height = 7)
 
 # Log transformed models
 # chronological age
 mlm_chron_log_eval <- evaluate.model(
   mlm_chron_log, data_train, log(metadata_train$age), data_test, log(metadata_test$age), 
   metadata_train$species, metadata_test$species, 
-  col = color_species, plot_title = "log MLM", 
+  transform = "log", # <--- ADD THIS
+  col = color_species, plot_title = "log-transformed", 
   y_lim = c(0, 12), x_lim = c(0, 12), ae_lim = c(0, 3.5), CpGs = "not defined", s = NA, type = "chronological")
 
 # relative age
 mlm_rel_log_eval <- evaluate.model(
   mlm_rel_log, data_train, -log(-log(metadata_train$rel_age)), data_test, -log(-log(metadata_test$rel_age)), 
   metadata_train$species, metadata_test$species, 
-  col = color_species, plot_title = "log MLM", 
+  transform = "double_log", # <--- ADD THIS
+  col = color_species, plot_title = "log-transformed", 
   y_lim = c(0, .3), x_lim = c(0, .3), ae_lim = c(0, .15), CpGs = "not defined", s = NA, type = "relative")
 
 # comparison plot
@@ -210,3 +230,4 @@ mlm_comparison_plot_log <- mlm_chron_log_eval$plot_train + mlm_chron_log_eval$pl
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
 ggsave(mlm_comparison_plot_log, file = "03_results/01_figures/05_mlm_comparison_log.png", width = 10, height = 7)
+ggsave(mlm_comparison_plot_log, file = "03_results/01_figures/05_mlm_comparison_log.pdf", width = 10, height = 7)
