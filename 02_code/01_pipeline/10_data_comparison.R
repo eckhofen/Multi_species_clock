@@ -21,8 +21,8 @@ library(ggplot2)
 library(patchwork)
 
 #### load data ####
-load("01_data/03_intermediate/07_data_comparison/mlm_age_summary.Rdata")
-load("01_data/03_intermediate/07_data_comparison/mlm_rel_age_summary.Rdata")
+load("01_data/03_intermediate/06_model_creation/mlm_chron_summary.Rdata")
+load("01_data/03_intermediate/06_model_creation/mlm_rel_summary.Rdata")
 load("01_data/03_intermediate/07_data_comparison/methyl_sites_combined_nor.Rdata")
 load("01_data/03_intermediate/05_correlation_data/all_mix_cor_CpG_common.RData")
 
@@ -34,8 +34,8 @@ source("02_code/02_helpers/plot_style.R")
 significance <- 0.05
 
 ##select significant regression coefficients 
-mlm_age_sign_coef <- mlm_age_summary$coefficients[mlm_age_summary$coefficients[, 4] < significance, c(1, 4), drop = FALSE]
-mlm_rel_age_sign_coef <- mlm_rel_age_summary$coefficients[mlm_rel_age_summary$coefficients[, 4] < significance, c(1, 4), drop = FALSE]
+mlm_age_sign_coef <- mlm_chron_summary$coefficients[mlm_chron_summary$coefficients[, 4] < significance, c(1, 4), drop = FALSE]
+mlm_rel_age_sign_coef <- mlm_rel_summary$coefficients[mlm_rel_summary$coefficients[, 4] < significance, c(1, 4), drop = FALSE]
 
 mlm_age_sign_coef <- mlm_age_sign_coef[rownames(mlm_age_sign_coef) != "(Intercept)", , drop = FALSE]
 mlm_rel_age_sign_coef <- mlm_rel_age_sign_coef[rownames(mlm_rel_age_sign_coef) != "(Intercept)", , drop = FALSE]
@@ -72,15 +72,15 @@ df_SMR_comparison <- df_SMR_comparison %>%
 
 ### all SMRs
 df_mlm_age <- data.frame(model = "Chronological age", 
-                         reg_coef = mlm_age_summary$coefficients[-1,1],
-                         reg_coef_scaled = mlm_age_summary$coefficients[-1,1]/max(abs(mlm_age_summary$coefficients[-1,1])), 
-                         p_value = mlm_age_summary$coefficients[-1,4], 
-                         SMR = gsub("^SMR_", "SMR_", rownames(mlm_age_summary$coefficients[-1,])))
+                         reg_coef = mlm_chron_summary$coefficients[-1,1],
+                         reg_coef_scaled = mlm_chron_summary$coefficients[-1,1]/max(abs(mlm_chron_summary$coefficients[-1,1])), 
+                         p_value = mlm_chron_summary$coefficients[-1,4], 
+                         SMR = gsub("^SMR_", "SMR_", rownames(mlm_chron_summary$coefficients[-1,])))
 df_mlm_rel_age <- data.frame(model = "Relative age", 
-                             reg_coef = mlm_rel_age_summary$coefficients[-1,1],
-                             reg_coef_scaled = mlm_rel_age_summary$coefficients[-1,1]/max(abs(mlm_rel_age_summary$coefficients[-1,1])), 
-                             p_value = mlm_rel_age_summary$coefficients[-1,4], 
-                             SMR = gsub("^SMR_", "SMR_", rownames(mlm_rel_age_summary$coefficients[-1,])))
+                             reg_coef = mlm_rel_summary$coefficients[-1,1],
+                             reg_coef_scaled = mlm_rel_summary$coefficients[-1,1]/max(abs(mlm_rel_summary$coefficients[-1,1])), 
+                             p_value = mlm_rel_summary$coefficients[-1,4], 
+                             SMR = gsub("^SMR_", "SMR_", rownames(mlm_rel_summary$coefficients[-1,])))
 
 # only significant
 df_SMR_comparison_all <- rbind(df_mlm_age, df_mlm_rel_age)
