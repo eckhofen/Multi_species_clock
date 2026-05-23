@@ -75,18 +75,18 @@ genic_context_wider <- total_counts %>%
 # Test if different between selected and SMR
 n_fisher_replicates <- 100000
 # CpG context
-chisq.test(cpg_context_wider %>% select(SMR, Selected))
+chisq.test(cpg_context_wider %>% dplyr::select(SMR, Selected))
 # X-squared = 3.984, df = 3, p-value = 0.2632
 
 set.seed(1999)
-fisher.test(as.matrix(cpg_context_wider %>% select(SMR, Selected)), simulate.p.value = TRUE, B = n_fisher_replicates)
+fisher.test(as.matrix(cpg_context_wider %>% dplyr::select(SMR, Selected)), simulate.p.value = TRUE, B = n_fisher_replicates)
 # p-value = 0.2812
 
-chisq.test(genic_context_wider %>% select(SMR, Selected)) # Numbers are too small in some categories
+chisq.test(genic_context_wider %>% dplyr::select(SMR, Selected)) # Numbers are too small in some categories
 # X-squared = 6.1334, df = 6, p-value = 0.4084
 
 set.seed(1999)
-fisher.test(as.matrix(genic_context_wider %>% select(SMR, Selected)), simulate.p.value = TRUE, B = n_fisher_replicates)
+fisher.test(as.matrix(genic_context_wider %>% dplyr::select(SMR, Selected)), simulate.p.value = TRUE, B = n_fisher_replicates)
 # p-value = 0.2878
 
 
@@ -305,10 +305,10 @@ p_cpg_cor <- ggplot(cpgs_per_cor %>% filter(significant == TRUE), aes(x = cor_di
 save_plot(paste0(figures_folder, "08_cpg_cor"), plot = p_cpg_cor, width = 4, height = 7)
 
 # Test if distributions are different between correlation directions
-cor_cpgs <- cpgs_per_cor %>% filter(significant) %>% select(-pct) %>% pivot_wider(names_from = cor_dir, values_from = n, values_fill = 0)
+cor_cpgs <- cpgs_per_cor %>% filter(significant) %>% dplyr::select(-pct) %>% pivot_wider(names_from = cor_dir, values_from = n, values_fill = 0)
 
-cor_cpgs_genic <- cor_cpgs %>% filter(context == "gene") %>% select(negative, positive)
-cor_cpgs_cpg <- cor_cpgs %>% filter(context == "cpg") %>% select(negative, positive)
+cor_cpgs_genic <- cor_cpgs %>% filter(context == "gene") %>% dplyr::select(negative, positive)
+cor_cpgs_cpg <- cor_cpgs %>% filter(context == "cpg") %>% dplyr::select(negative, positive)
 
 # Genic context
 set.seed(1999)
