@@ -21,6 +21,9 @@ load("01_data/03_intermediate/04_methyl_values/all_methyl_sites.Rdata")
 
 load("01_data/04_metadata/color_palettes.RData")
 
+# plot helper
+source("02_code/02_helpers/plot_style.R")
+
 # check how many CpGs were captured in the SMRs for each species
 length(AC_meth_values) #518
 length(AS_meth_values) #281
@@ -63,18 +66,6 @@ PCA_ZF_sum <- summary(PCA_ZF)
 
 
 ### plotting PCA
-# custom theme
-theme_custom <- theme_minimal() + 
-      theme(panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(), 
-            panel.background = element_rect(color = "black", linewidth = 1),
-            plot.title = element_text(face = "bold", hjust = 0.5), 
-            axis.ticks = element_line(color = "black"),
-            axis.ticks.length = unit(0.1, "cm"), 
-            legend.ticks = element_blank())
-
-# setting theme 
-theme_set(theme_custom) 
 
 message("plotting PCAs...")
 # color palettes

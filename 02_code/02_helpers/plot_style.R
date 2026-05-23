@@ -23,4 +23,3 @@ save_plot <- function(filename, plot = last_plot(), width = 10, height = 8, dpi 
     ggsave(paste0(filename, ".", fmt), plot, width = width, height = height, dpi = dpi, ...)
   }
 }
-
