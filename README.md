@@ -28,7 +28,7 @@ To run this pipeline make sure that the [requirements](#requirements) are met, b
 Based on the available data, follow the appropriate workflow:
 - **(A)** If raw methylation reads are available, then follow the `02_code/00_pre-processing/` workflow. 
 - **(B)** If methylation positions for each species are available, then proceed to `02_code/01_pipeline.R` and follow the scripts via indices starting with `00a_data_preparation.R`. 
-- **(C)** If no data is available, then follow the `02_code/01_pipeline/03_SMR_plotting.R` and continue chronologically from there. This allows to reproduce all results from the paper.
+- **(C)** If no data is available, then follow the `02_code/01_pipeline/03_SMR_plotting.R` and continue chronologically from there. This allows to reproduce all results from the paper apart from the autocorrelaiton of the whole methylation data (`02_code/01_pipeline/09_auto-correlation.R`). Please request these files if reproduction of those results is required.
 
 ## Demo / Replicating results
 
