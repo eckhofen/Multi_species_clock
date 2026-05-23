@@ -13,6 +13,9 @@ data_folder <- "01_data/"
 save_folder <- "01_data/03_intermediate/03_SMR/"
 results_folder <- "03_results/01_figures/"
 
+# setting up folder structure
+source("02_code/01_pipeline/00a_folder_structure.R")
+
 #### Loading data ####
 
 load("01_data/03_intermediate/04_methyl_values/all_meth_values.Rdata")
@@ -99,8 +102,7 @@ ZF_pca_plot <- ggplot(PCA_values_ZF, aes(x = PC1, y = PC2, color = ZF_age)) +
 PCA_plot_all <- (AC_pca_plot + AS_pca_plot + EH_pca_plot + ZF_pca_plot) +
   plot_layout(nrow=2)
 
-ggsave(filename = paste0(results_folder, "03_PCA_all.pdf"), plot = PCA_plot_all, width = 8, height = 7)
-ggsave(filename = paste0(results_folder, "03_PCA_all.png"), plot = PCA_plot_all, width = 8, height = 7)
+save_plot(filename = paste0(results_folder, "03_PCA_all"), plot = PCA_plot_all, width = 8, height = 7)
 
 message("plotting completed")
 message("Pipeline completed!")
