@@ -10,11 +10,14 @@
 01_data/03_intermediate/*
 !01_data/03_intermediate/04_methyl_values/
 01_data/03_intermediate/04_methyl_values/*
+!01_data/03_intermediate/07_data_comparison/
+01_data/03_intermediate/07_data_comparison/*
 
 # Requirements for running pipeline
 !01_data/03_intermediate/04_methyl_values/all_meth_values.Rdata
 !01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata
 !01_data/03_intermediate/04_methyl_values/all_methyl_sites.Rdata
+!01_data/03_intermediate/07_data_comparison/methyl_sites_combined_nor.Rdata
 
 # Result outputs
 03_results/

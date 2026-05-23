@@ -136,6 +136,14 @@ if ("SMR" %in% colnames(methyl_sites_combined) && !("SMR" %in% colnames(methyl_s
   methyl_sites_combined <- dplyr::rename(methyl_sites_combined, SMR = SMR)
 }
 
+methyl_sites_combined_nor <- methyl_sites_combined %>% 
+  group_by(SMR) %>% 
+  mutate(pos_nor = pos_align - min(pos_align)) %>% 
+  mutate(pos_nor_kb = (pos_align - min(pos_align))/1000) %>% 
+  ungroup()
+
+save(file = "01_data/03_intermediate/07_data_comparison/methyl_sites_combined_nor.Rdata", methyl_sites_combined_nor)
+
 save(methyl_sites_combined, file = paste0(annotation_folder, "methylsites_all.RData"))
 
 #### Methylation metadata ####
