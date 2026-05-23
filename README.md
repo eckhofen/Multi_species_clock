@@ -14,12 +14,34 @@ These SMRs now included CpG sites from all species which 4) we then used for age
 
 This finally allowed us to 8) use the retained SMRs as independent variables for creating a methylation-based age prediction model (also known as an "epigenetic clock"). 9) We tested various models such as multivariate linear regression and non-parametric random forest regression. We achieved notable accuracy in age prediction for four species using a single model ("multispecies epigegentic clock"), the results of which will be published in a paper separate from the thesis. 
 
-# Prerequisites
-This pipeline has been tested on **macOS 15.5**. Hardware requirements are minimal (8 GB RAM recommended), apart from the pre-processing and alignment which largely benefit from having sufficient RAM and storage space.
+# Installation guide
+
+Close the github repo:
+```bash
+git clone https://github.com/eckhofen/Multi_species_clock.git
+```
+
+To run this pipeline make sure that the [requirements](#requirements) are met, based on either workflow (A), (B), or (C). See below for more information.
+
+## Instructions for use
+
+Based on the available data, follow the appropriate workflow:
+- **(A)** If raw methylation reads are available, then follow the `02_code/00_pre-processing/` workflow. 
+- **(B)** If methylation positions for each species are available, then proceed to `02_code/01_pipeline.R` and follow the scripts via indices starting with `00a_data_preparation.R`. 
+- **(C)** If no data is available, then follow the `02_code/01_pipeline/03_SMR_plotting.R` and continue chronologically from there. This allows to reproduce all results from the paper.
+
+## Demo / Replicating results
+
+See `replicate_results.md` for detailed instructions on reproducing all numbers and figures from the paper.
+
+# Requirements
+
+### Hardware requirements
+This pipeline has been tested on **macOS 15.5**. Hardware requirements are minimal (8 GB RAM recommended), apart from the pre-processing and alignment which largely benefit from having sufficient RAM and storage space. No special hardware needed. 
 
 ### Software requirements
 
-#### Command-line tools (pre-processing / alignment)
+#### Command-line tools (pre-processing / alignment) (A, B)
 Used by the scripts in `02_code/00_pre-processing/`:
 
 - [trim_galore](https://github.com/FelixKrueger/TrimGalore) v0.4.1
@@ -30,11 +52,17 @@ Used by the scripts in `02_code/00_pre-processing/`:
 - `samtools` (used by Bismark internally)
 - A SLURM-style scheduler (`sbatch` + the local `abatch` wrapper) on the cluster — scripts can also be adapted to run locally.
 
-#### R (downstream analysis)
-Tested with R ≥ 4.3.
+#### R (downstream analysis) (A, B, C)
+Tested with `R 4.0` and `R 4.5.2`
 
 CRAN packages:
 
+In R, use the helper script to install all required packages:
+```r
+source("02_code/02_helpers/install_requirements.R")
+```
+
+Or install manually:
 ```r
 install.packages(c(
   "tidyverse", "tidymodels", "data.table", "reshape2",
@@ -45,7 +73,6 @@ install.packages(c(
 ```
 
 Bioconductor packages (install via `BiocManager::install(...)`):
-
 ```r
 if (!require("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 BiocManager::install(c(
@@ -59,13 +86,14 @@ BiocManager::install(c(
 The hg38 genomic-context annotations used by `07_annotation_prep.R`
 (`hg38_cpgs`, `hg38_basicgenes`, `hg38_lncrna_gencode`) are pulled from
 AnnotationHub by `annotatr::build_annotations()` the first time the script
-is run and are cached locally afterwards — **no separate manual download
-is required** beyond the reference genomes and the GenAge file listed below.
+is run and are cached locally afterwards, meaning **no separate manual download
+is required** beyond the reference genomes and the GenAge file listed below. 
+The installation time may vary depending on the internet connection, but typically takes about 10-20 mins.
 
-### Methylation pre-processing
+### Methylation pre-processing (required for (A))
 The RRBS / BisRADseq data has to be preprocessed according to the methodology described in the respective publication. If raw reads are not available, then proceed with `02_code/01_pipeline.R` scripts. The zebrafish RRBS preprocessing + Bismark alignment workflow lives in `02_code/00_pre-processing/ZF/` (scripts `01_…08_`); outputs are written to `01_data/00_pre-processing/ZF/`.
 
-### Reference genomes
+### Reference genomes (required for (A, B))
 The reference genomes used in this project are available from the respective sources:
 - European hake: [fMerMel2.1_cnag1.scaffolds.fa](https://denovo.cnag.cat/filebrowser/download/1819)
 - Atlantic cod: [GCF_902167405.1_gadMor3.0_genomic.fasta](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_902167405.1/)
@@ -77,14 +105,12 @@ Place the per-species FASTAs into `01_data/01_raw_private/genomes/`.
 
 The human reference (`GRCh38.fa`) is the alignment *target* used by `01b_index_rgenome.sh` and `01c_align_to_rgenome.sh`; place the FASTA at `01_data/01_raw_private/GRCh38.fa` and the resulting bowtie2 index will be written to `01_data/01_raw_private/rgenome/` automatically.
 
-### Aging gene reference
-- GenAge human: [genage_human.csv](https://genomics.senescence.info/genes/human_genes.zip)
+### Aging gene reference (required for (A, B, C))
+- GenAge human: [genage_human.csv](https://genomics.senescence.info/genes/human_genes.zip). Place the csv into the `01_data/03_intermediate/08_annotation` folder.
 
-# Running pipeline
+# License
+This project is licensed under the **GNU General Public License v3.0.**
 
-To run this pipeline make sure that all the [prerequisites](#prerequisites) are met. 
+## Contact
 
-Based on the available data, follow the appropriate workflow:
-- If raw methylation reads are available, then follow the `02_code/00_pre-processing/` workflow. 
-- If methylation positions for each species are available, then proceed to `02_code/01_pipeline.R` and follow the scripts via indices starting with `00a_data_preparation.R`. 
-- If no data is available, then follow the `02_code/01_pipeline/04_correlation_testing.R` and continue chronologically from there.
+For any questions or inquiries, contact me at `eckhofen@icm.csic.es`.
