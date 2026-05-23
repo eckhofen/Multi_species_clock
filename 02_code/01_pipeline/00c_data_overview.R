@@ -68,8 +68,7 @@ plot_overview <- function(p) {
     # Adding number of samples
     labs(x = "Species",
          color = "Species",
-         fill = "Species",
-         shape = "Sex") +
+         fill = "Species") +
     scale_color_manual(values = color_species_common) +
     scale_fill_manual(values = color_species_common)
 }
@@ -80,7 +79,7 @@ plot_overview <- function(p) {
 fig_overview_age <- meta_data %>% 
   ggplot(aes(x = species, y = age, color = common_name, fill = common_name)) %>% 
   plot_overview() + 
-  theme_custom() + 
+  theme_custom + 
   labs(y = "Age (years)", title = "Sample age distribution")
 
 # Saving plot
@@ -90,7 +89,7 @@ save_plot(filename = paste0(results_folder, "00_fig_overview_age"), plot = fig_o
 fig_overview_age_rel <- meta_data %>% 
   ggplot(aes(x = species, y = age_rel, color = common_name, fill = common_name)) %>% 
   plot_overview() + 
-  theme_custom() + 
+  theme_custom + 
   labs(y = "Age (relative to max. lifespan)", title = "Sample age (relative) distribution")
 
 # Saving plot

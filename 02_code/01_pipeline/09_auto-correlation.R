@@ -277,9 +277,9 @@ p_all_sample <- plot_cpg_correlation(combined_all_cor, "pearson_r", "Pearson Cor
 p_all_loess <- plot_cpg_correlation(combined_all_cor, "pearson_r", "Pearson Correlation (r)")
 p_all_loess_normed <- plot_cpg_correlation(combined_all_cor_normed, "pearson_r_norm", "Pearson Correlation normalized (r)")
 
-save_plot("03_results/01_figures/10_all_sample_auto_correlation", p_all_sample, width = 6, height = 8)
-save_plot("03_results/01_figures/10_all_loess_auto_correlation", p_all_loess, width = 6, height = 4)
-save_plot("03_results/01_figures/10_all_loess_auto_correlation_normed", p_all_loess_normed, width = 6, height = 4)
+save_plot("03_results/01_figures/09_all_sample_auto_correlation", p_all_sample, width = 6, height = 8)
+save_plot("03_results/01_figures/09_all_loess_auto_correlation", p_all_loess, width = 6, height = 4)
+save_plot("03_results/01_figures/09_all_loess_auto_correlation_normed", p_all_loess_normed, width = 6, height = 4)
 
 # SMR results
 # Normalize as well
@@ -292,10 +292,10 @@ p_smr_loess <- plot_cpg_correlation(combined_smr_cor_normed, "pearson_r", "Pears
 p_smr_loess_sample <- plot_cpg_correlation(combined_smr_cor_normed, "pearson_r", "Pearson Correlation (r)", y_limits = c(-0.4, 1), show_samples = TRUE)
 p_smr_loess_normed <- plot_cpg_correlation(combined_smr_cor_normed, "pearson_r_norm", "Pearson Correlation normalized (r)", y_limits = c(-0.4, 1))
 
-save_plot("03_results/01_figures/10_smr_sample_auto_correlation", p_smr_sample, width = 6, height = 8)
-save_plot("03_results/01_figures/10_smr_loess_auto_correlation", p_smr_loess, width = 6, height = 4)
-save_plot("03_results/01_figures/10_smr_loess_sample_auto_correlation", p_smr_loess_sample, width = 6, height = 4)
-save_plot("03_results/01_figures/10_smr_loess_auto_correlation_normed", p_smr_loess_normed, width = 6, height = 4)
+save_plot("03_results/01_figures/09_smr_sample_auto_correlation", p_smr_sample, width = 6, height = 8)
+save_plot("03_results/01_figures/09_smr_loess_auto_correlation", p_smr_loess, width = 6, height = 4)
+save_plot("03_results/01_figures/09_smr_loess_sample_auto_correlation", p_smr_loess_sample, width = 6, height = 4)
+save_plot("03_results/01_figures/09_smr_loess_auto_correlation_normed", p_smr_loess_normed, width = 6, height = 4)
 
 # Combined plots in one
 combined_smr_cor$dataset <- "SMR"
@@ -307,7 +307,7 @@ p_combined_all <- plot_cpg_correlation(combined_all, "pearson_r", "Pearson Corre
   geom_smooth(aes(group = interaction(species, dataset), color = species, linetype = dataset), method = "loess", se = FALSE, span = 0.2) +
   labs(linetype = "CpGs")
 
-save_plot("03_results/01_figures/10_combined_all.png", p_combined_all, width = 6, height = 6)
+save_plot("03_results/01_figures/09_combined_all.png", p_combined_all, width = 6, height = 6)
 
 # Combined panel plots
 p_comparison_smr_all <- (p_smr_loess + theme(legend.position = c(0.89, 0.80))) + (p_all_loess + theme(legend.position = "none")) + 
@@ -316,7 +316,7 @@ p_comparison_smr_all <- (p_smr_loess + theme(legend.position = c(0.89, 0.80))) +
   theme(plot.tag = element_text(size = 18, face = "bold")) &
   labs(color = "")
 
-save_plot("03_results/01_figures/10_comparison_smr_all.png", p_comparison_smr_all, width = 6, height = 6)
+save_plot("03_results/01_figures/09_comparison_smr_all.png", p_comparison_smr_all, width = 6, height = 6)
 
 # Normalized
 p_comparison_smr_all_normed <- p_smr_loess_normed + p_all_loess_normed + 
@@ -324,7 +324,7 @@ p_comparison_smr_all_normed <- p_smr_loess_normed + p_all_loess_normed +
   plot_annotation(tag_levels = "a") & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-save_plot("03_results/01_figures/10_comparison_smr_all_normed.png", p_comparison_smr_all_normed, width = 6, height = 6)
+save_plot("03_results/01_figures/09_comparison_smr_all_normed.png", p_comparison_smr_all_normed, width = 6, height = 6)
 
 # Combined plot for figure 2/3
 # loading plot saved by 08_genomic_context_analysis.R
@@ -335,4 +335,4 @@ p_combined_cor_context <- (p_comparison_smr_all | p_combined_count) +
   plot_annotation(tag_levels = "a") & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-save_plot("03_results/01_figures/10_combined_cor_context.png", p_combined_cor_context, width = 10, height = 8)
+save_plot("03_results/01_figures/09_combined_cor_context.png", p_combined_cor_context, width = 10, height = 8)
