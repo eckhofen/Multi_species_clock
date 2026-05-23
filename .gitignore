@@ -1,14 +1,22 @@
 # macOS
 .DS_Store
 
-# Private/raw inputs (not publicly available)
+# Private/raw inputs
 01_data/01_raw_private/
 01_data/00_pre-processing/
 01_data/02_external_server_outputs/01_sequences/
-01_data/01_raw_private/
-01_data/03_intermediate/
 
-# Result outputs (figures/tables) are not tracked
+# Intermediate data
+01_data/03_intermediate/*
+!01_data/03_intermediate/04_methyl_values/
+01_data/03_intermediate/04_methyl_values/*
+
+# Requirements for running pipeline
+!01_data/03_intermediate/04_methyl_values/all_meth_values.Rdata
+!01_data/03_intermediate/04_methyl_values/HS_all_age.Rdata
+!01_data/03_intermediate/04_methyl_values/all_methyl_sites.Rdata
+
+# Result outputs
 03_results/
 
 # local R cache, histories, and raw-private data
@@ -17,6 +25,3 @@
 .Rproj.user/
 .lintr.R
 Rplots.pdf
-
-# Required outputs for standalone run 
-!01_data/03_intermediate/04_methyl_values/
