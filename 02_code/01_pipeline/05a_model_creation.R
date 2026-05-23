@@ -49,11 +49,11 @@ ZF_split <- initial_split(ZF_meth_values_selected, strata = "age", breaks = ds_b
 meth_train <- rbind(training(AC_split), training(AS_split), training(EH_split), training(ZF_split))
 meth_test <- rbind(testing(AC_split), testing(AS_split), testing(EH_split), testing(ZF_split))
 
-metadata_train <- meth_train %>% select(age, rel_age, species)
-metadata_test <- meth_test %>% select(age, rel_age, species)
+metadata_train <- meth_train %>% dplyr::select(age, rel_age, species)
+metadata_test <- meth_test %>% dplyr::select(age, rel_age, species)
 
-data_train <- meth_train %>% select(-age, -rel_age, -species)
-data_test <- meth_test %>% select(-age, -rel_age, -species)
+data_train <- meth_train %>% dplyr::select(-age, -rel_age, -species)
+data_test <- meth_test %>% dplyr::select(-age, -rel_age, -species)
 
 # comparing data sets with Kolmogorov-Smirnov test
 ks_test_data <- ks.test(meth_train$rel_age, meth_test$rel_age) # D = 0.053502, p-value = 0.9977
@@ -199,7 +199,7 @@ plot_SMR_comparison <- ggplot(df_SMR_comparison, aes(x = reg_coef_scaled, y = SM
   scale_fill_manual(values = color_compare) +
   scale_color_manual(values = color_compare)
 
-ggsave(file = paste0(results_folder, "05a_SMR_comparison_significant", extension), plot_SMR_comparison, width = 5, height = 5)
+save_plot(file = paste0(results_folder, "05a_SMR_comparison_significant"), plot_SMR_comparison, width = 5, height = 5)
 
 ## All SMRs
 plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled, y = SMR, fill = model)) +
@@ -214,7 +214,7 @@ plot_SMR_comparison_all <- ggplot(df_SMR_comparison_all, aes(x = reg_coef_scaled
         legend.background = element_rect(fill = "grey95", color = NA), 
         legend.title = element_text(face = "bold", hjust = .5))
 
-ggsave(file = paste0(results_folder, "05a_SMR_comparison_all", extension), plot_SMR_comparison_all, width = 8, height = 6)
+save_plot(file = paste0(results_folder, "05a_SMR_comparison_all"), plot_SMR_comparison_all, width = 8, height = 6)
 
 # boxplot for comparing coefficients between models
 plot_boxplot <- ggplot(df_SMR_comparison_all, aes(y = model, x = reg_coef_scaled)) +
@@ -235,7 +235,7 @@ plot_comparison_full <- plot_SMR_comparison_all + plot_boxplot +
   plot_annotation(tag_levels = 'a') & 
   theme(plot.tag = element_text(size = 18, face = "bold"))
 
-ggsave(file = paste0(results_folder, "05a_SMR_comparison_full", extension), plot_comparison_full, width = 8, height = 8)
+save_plot(file = paste0(results_folder, "05a_SMR_comparison_full"), plot_comparison_full, width = 8, height = 8)
 
 message("SMR comparison plots created and saved.")
 message("05a_model_creation.R completed successfully.")
