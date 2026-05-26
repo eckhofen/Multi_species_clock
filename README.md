@@ -37,7 +37,7 @@ See `replicate_results.md` for detailed instructions on reproducing all numbers 
 # Requirements
 
 ### Hardware requirements
-This pipeline has been tested on **macOS 15.5**. Hardware requirements are minimal (8 GB RAM recommended), apart from the pre-processing and alignment which largely benefit from having sufficient RAM and storage space. No special hardware needed. 
+This pipeline has been tested on **macOS 15.5** and **Red Hat Enterprise Linux 9.7**. Hardware requirements are minimal (8 GB RAM recommended), apart from the pre-processing and alignment which largely benefit from having sufficient RAM and storage space. No special hardware needed. 
 
 ### Software requirements
 
@@ -53,7 +53,7 @@ Used by the scripts in `02_code/00_pre-processing/`:
 - A SLURM-style scheduler (`sbatch` + the local `abatch` wrapper) on the cluster — scripts can also be adapted to run locally.
 
 #### R (downstream analysis) (A, B, C)
-Tested with `R 4.0` and `R 4.5.2`
+Tested with `R 4.0`, `R 4.3.3` and `R 4.5.2`
 
 CRAN packages:
 
@@ -101,7 +101,7 @@ The methylation data has to be requested for Australasian snapper and European h
 The reference genomes used in this project are available from the respective sources:
 - European hake: [fMerMel2.1_cnag1.scaffolds.fa](https://denovo.cnag.cat/filebrowser/download/1819)
 - Atlantic cod: [GCF_902167405.1_gadMor3.0_genomic.fasta](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_902167405.1/)
-- Australasian snapper: [Chrysophrys_auratus.v.1.0.all.male.map.fasta](https://doi.org/10.1111/mec.15051)
+- Australasian snapper: Chrysophrys_auratus.v.1.0.all.male.map.fasta. Note, that this genome is managed by Aotearoa Genomic Data Repository (AGDR; [64](https://doi.org/10.1016/j.ygeno.2024.110929)) and can be accessed via application at https://data.agdr.org.nz/.
 - Zebrafish: [GCF_000002035.6_GRCz11_genomic.fasta](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000002035.6/)
 - Human: [GRCh38.fa](https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna/)
 
