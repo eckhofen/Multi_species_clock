@@ -34,7 +34,6 @@ tryCatch({
     # 5/7 Annotation preparation
     source("02_code/01_pipeline/07_annotation_prep.R")
     rm(list = ls())
-    detach("package:annotatr", unload=TRUE)
 
     # 6/7 Annotation
     source("02_code/01_pipeline/08_genomic_context_analysis.R")
