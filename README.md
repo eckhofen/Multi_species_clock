@@ -28,7 +28,7 @@ To run this pipeline make sure that the [requirements](#requirements) are met, b
 Based on the available data, follow the appropriate workflow:
 - **(A)** If raw methylation reads are available, then follow the `02_code/00_pre-processing/` workflow. 
 - **(B)** If methylation positions for each species are available, then proceed to `02_code/01_pipeline.R` and follow the scripts via indices starting with `00a_data_preparation.R`. 
-- **(C)** If no data is available, then follow the `02_code/01_pipeline/03_SMR_plotting.R` and continue chronologically from there. This allows to reproduce all results from the paper apart from the autocorrelaiton of the whole methylation data (`02_code/01_pipeline/09_auto-correlation.R`). Please request these files if reproduction of those results is required.
+- **(C)** If no data is available, then follow the `02_code/01_pipeline/03_SMR_plotting.R` and continue chronologically from there, or use the convenient orchestrator script: `02_code/02_helpers/C_pipeline.R`. This allows to reproduce all results from the paper apart from the autocorrelaiton of the whole methylation data (`02_code/01_pipeline/09_auto-correlation.R`). Please request these files if reproduction of those results is required.
 
 ## Demo / Replicating results
 
@@ -93,6 +93,10 @@ The installation time may vary depending on the internet connection, but typical
 ### Methylation pre-processing (required for (A))
 The RRBS / BisRADseq data has to be preprocessed according to the methodology described in the respective publication. If raw reads are not available, then proceed with `02_code/01_pipeline.R` scripts. The zebrafish RRBS preprocessing + Bismark alignment workflow lives in `02_code/00_pre-processing/ZF/` (scripts `01_…08_`); outputs are written to `01_data/00_pre-processing/ZF/`.
 
+The methylation data has to be requested for Australasian snapper and European hake, while the others can be downloaded here: 
+- Atlantic cod: [methylation data](https://doi.org/10.5061/dryad.tmpg4f565) and related [paper](https://doi.org/10.1111/1755-0998.70109)
+- Zebrafish: [methylation data](https://data.csiro.au/collection/csiro:46344v3) and related [paper](https://doi.org/10.18632/aging.202400)
+
 ### Reference genomes (required for (A, B))
 The reference genomes used in this project are available from the respective sources:
 - European hake: [fMerMel2.1_cnag1.scaffolds.fa](https://denovo.cnag.cat/filebrowser/download/1819)
@@ -106,7 +110,7 @@ Place the per-species FASTAs into `01_data/01_raw_private/genomes/`.
 The human reference (`GRCh38.fa`) is the alignment *target* used by `01b_index_rgenome.sh` and `01c_align_to_rgenome.sh`; place the FASTA at `01_data/01_raw_private/GRCh38.fa` and the resulting bowtie2 index will be written to `01_data/01_raw_private/rgenome/` automatically.
 
 ### Aging gene reference (required for (A, B, C))
-- GenAge human: [genage_human.csv](https://genomics.senescence.info/genes/human_genes.zip). Place the csv into the `01_data/03_intermediate/08_annotation` folder.
+- GenAge human: [genage_human.csv](https://genomics.senescence.info/genes/human_genes.zip). Place the unzipped csv into the `01_data/03_intermediate/08_annotation` folder.
 
 # License
 This project is licensed under the **GNU General Public License v3.0.**

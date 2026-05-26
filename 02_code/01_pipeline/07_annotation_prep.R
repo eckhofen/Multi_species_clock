@@ -140,3 +140,5 @@ gene_list_selected <- genes_selected %>%
 write.csv(gene_list_SMR, file = "03_results/02_tables/gene_list_SMR.csv")
 write.csv(gene_list_selected, file = "03_results/02_tables/gene_list_selected.csv")
 
+# detaching conflicting package (with patchwork)
+detach("package:annotatr", unload=TRUE)
