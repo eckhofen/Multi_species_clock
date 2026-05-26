@@ -34,6 +34,8 @@ Based on the available data, follow the appropriate workflow:
 
 See `replicate_results.md` for detailed instructions on reproducing all numbers and figures from the paper.
 
+For reviewers, please read the `for_reviewers.md` file for additional information and access to required data.
+
 # Requirements
 
 ### Hardware requirements
