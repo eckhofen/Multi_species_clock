@@ -41,16 +41,10 @@ tryCatch({
 
     # Optional (files required)
     try(
-<<<<<<< HEAD
         source("02_code/01_pipeline/09_auto-correlation.R")
     )
     
     rm(list = ls())
-=======
-        source("02_code/01_pipeline/09_auto-correlation.R"),
-        rm(list = ls())
-    )
->>>>>>> d6da5ec9e78c60ff04eb00d3771fc18e2444b82d
     
     # 7/7 Additional data comparisons
     source("02_code/01_pipeline/10_data_comparison.R")
