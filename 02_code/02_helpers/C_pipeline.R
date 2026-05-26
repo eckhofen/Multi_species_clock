@@ -40,12 +40,10 @@ tryCatch({
     rm(list = ls())
 
     # Optional (files required)
-    try({
-        source("02_code/01_pipeline/09_auto-correlation.R")
+    try(
+        source("02_code/01_pipeline/09_auto-correlation.R"),
         rm(list = ls())
-    }, error = function(e) {
-        message("Auto-correlation not available, probably private files not downloaded: ", e$message)
-    })
+    )
     
     # 7/7 Additional data comparisons
     source("02_code/01_pipeline/10_data_comparison.R")
